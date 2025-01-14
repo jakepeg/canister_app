@@ -9,6 +9,7 @@
   import RequestsIcon from "./icons/RequestsIcon.svelte";
   import UploadIcon from "./icons/UploadIcon.svelte";
   import { uploadInProgress } from "$lib/services/upload";
+  import ModeToggle from "$lib/components/mode-toggle.svelte";
 
   let showMobileMenu = false;
 

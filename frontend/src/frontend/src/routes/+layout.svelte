@@ -1,11 +1,13 @@
 <script lang="ts">
   import Navbar from "$lib/components/Navbar.svelte";
+  import Sidebar from "$lib/components/Sidebar.svelte";
   import RegistrationModal from "$lib/components/RegistrationModal.svelte";
   import { authService, authStore } from "$lib/services/auth";
   import { userStore } from "$lib/services/user";
   import { onMount } from "svelte";
   import "../app.css";
   import Disclaimer from "$lib/components/Disclaimer.svelte";
+  import { ModeWatcher } from "mode-watcher";
 
   const title = "DocuTrack – Encrypted document sharing and requesting";
   const description =
@@ -45,12 +47,16 @@
   <meta property="twitter:domain" content={domain} />
 </svelte:head>
 
-<div class="pb-20">
-  <Navbar />
-  <Disclaimer />
-  <div class="max-w-5xl px-4 mx-auto pt-6">
-    <slot />
-  </div>
+<div class="flex min-h-screen">
+  <ModeWatcher />
+  <Sidebar />
+  <main class="flex-1 p-4">
+    <Navbar />
+    <Disclaimer />
+    <div class="max-w-5xl px-4 mx-auto pt-6">
+      <slot />
+    </div>
+  </main>
 </div>
 
 {#if $authStore.state === "authenticated" && $userStore.state === "unregistered"}
