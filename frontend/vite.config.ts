@@ -7,9 +7,15 @@ import {
   network,
   readCanisterIds,
 } from "./scripts/readCanisterIds";
+import path from "path";
 
 const config: UserConfig = {
   plugins: [sveltekit()],
+  resolve: {
+    alias: {
+      $lib: path.resolve("./src/frontend/src/lib"),
+    },
+  },
   build: {
     target: "es2020",
     rollupOptions: {},
