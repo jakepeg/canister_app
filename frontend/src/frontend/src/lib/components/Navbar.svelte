@@ -25,84 +25,64 @@
   }
 </script>
 
-<nav class="bg-background-200 rounded-b-3xl relative z-20">
-  <div class="flex h-14 md:h-16 items-center max-w-5xl mx-auto px-4">
-    <a href="/" class="shrink-0">
-      <img src="/logo.svg" alt="" class="hidden lg:block" />
-      <img src="/mobile-logo.svg" alt="" class="lg:hidden" />
-    </a>
+<nav class="bg-background w-full rounded-b-3xl relative z-20">
+  <div class="flex h-14 md:h-16 items-center px-4 justify-between">
+    <!-- Left side with logo -->
+    <div class="flex items-center gap-2">
+      <a href="/" class="shrink-0">
+        <img src="/logo.svg" alt="" class="hidden lg:block" />
+        <img src="/mobile-logo.svg" alt="" class="lg:hidden" />
+      </a>
 
-    {#if $authStore.state === "authenticated" && $userStore.state === "registered"}
-      <div class="flex ml-2">
-        <div class="bg-accent-100/10">
-          <div class="bg-background-200 w-3 h-full rounded-br-lg" />
-        </div>
+      {#if $authStore.state === "authenticated" && $userStore.state === "registered"}
         <div
           class="bg-accent-100/10 p-2 rounded-lg rounded-bl-none text-accent-100 body-1"
         >
-          Hi, {$userStore.username}
+          Hi, {$userStore.username}. Thiss is an alpha version. Use at your own
+          risk!
         </div>
-      </div>
-    {/if}
-    <div class="flex-1" />
-    {#if $authStore.state === "unauthenticated"}
-      <button class="btn btn-accent" on:click={() => authService.login()}>
-        <LogoIcon />
-        Login
-      </button>
-    {:else if $authStore.state === "authenticated"}
-      <button
-        class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
-        on:click={() => (showMobileMenu = !showMobileMenu)}
-      >
-        <span
-          class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
-            ? 'rotate-45 translate-y-[7px]'
-            : 'rotate-0'}"
-        />
-        <span
-          class="h-[2px] bg-accent-100 rounded-full transition-opacity {showMobileMenu
-            ? 'opacity-0'
-            : 'opacity-100'}"
-        />
-        <span
-          class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
-            ? '-rotate-45 translate-y-[-7px]'
-            : 'rotate-0'}"
-        />
-      </button>
+      {/if}
+    </div>
 
-      <div class="hidden md:flex gap-2 lg:gap-8">
-        <a
-          href="/"
-          class="btn btn-ghost"
-          class:btn-ghost-active={$page.route.id === "/"}
+    <!-- Right side with buttons -->
+    <div class="flex items-center gap-4 ml-auto">
+      <ModeToggle />
+
+      {#if $authStore.state === "unauthenticated"}
+        <button class="btn btn-accent" on:click={() => authService.login()}>
+          <LogoIcon />
+          Login
+        </button>
+      {:else if $authStore.state === "authenticated"}
+        <button
+          class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
+          on:click={() => (showMobileMenu = !showMobileMenu)}
         >
-          <IconFile />
-          Files</a
-        >
-        <a
-          href="/upload"
-          class="btn btn-ghost"
-          class:btn-ghost-active={$page.route.id === "/upload"}
-        >
-          <UploadIcon />
-          Upload</a
-        >
-        <a
-          href="/requests"
-          class="btn btn-ghost"
-          class:btn-ghost-active={$page.route.id === "/requests"}
-        >
-          <RequestsIcon />
-          Requests</a
-        >
-        <button on:click={() => logout()} class="btn btn-ghost">
-          <LogoutIcon />
-          Logout</button
-        >
-      </div>
-    {/if}
+          <span
+            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+              ? 'rotate-45 translate-y-[7px]'
+              : 'rotate-0'}"
+          />
+          <span
+            class="h-[2px] bg-accent-100 rounded-full transition-opacity {showMobileMenu
+              ? 'opacity-0'
+              : 'opacity-100'}"
+          />
+          <span
+            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+              ? '-rotate-45 translate-y-[-7px]'
+              : 'rotate-0'}"
+          />
+        </button>
+
+        <div class="hidden md:flex gap-2 lg:gap-8">
+          <button on:click={() => logout()} class="btn btn-ghost">
+            <LogoutIcon />
+            Logout</button
+          >
+        </div>
+      {/if}
+    </div>
   </div>
 </nav>
 

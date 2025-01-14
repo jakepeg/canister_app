@@ -20,22 +20,8 @@
   }
 </script>
 
-<aside class="bg-background-200 w-64 min-h-screen flex flex-col">
+<aside class="bg-background w-64 min-h-screen flex flex-col">
   <div class="p-4">
-    <a href="/" class="shrink-0">
-      <img src="/logo.svg" alt="DocuTrack Logo" class="w-32" />
-    </a>
-  </div>
-
-  <div class="flex-1 flex flex-col p-4">
-    {#if $authStore.state === "authenticated" && $userStore.state === "registered"}
-      <div class="mb-4">
-        <div class="bg-accent-100/10 p-2 rounded-lg text-accent-100 body-1">
-          Hi, {$userStore.username}
-        </div>
-      </div>
-    {/if}
-
     <nav class="flex-1">
       <a
         href="/"

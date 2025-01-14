@@ -6,7 +6,7 @@
   import { userStore } from "$lib/services/user";
   import { onMount } from "svelte";
   import "../app.css";
-  import Disclaimer from "$lib/components/Disclaimer.svelte";
+  // import Disclaimer from "$lib/components/Disclaimer.svelte";
   import { ModeWatcher } from "mode-watcher";
 
   const title = "DocuTrack – Encrypted document sharing and requesting";
@@ -47,16 +47,18 @@
   <meta property="twitter:domain" content={domain} />
 </svelte:head>
 
-<div class="flex min-h-screen">
+<div class="flex flex-col min-h-screen">
   <ModeWatcher />
-  <Sidebar />
-  <main class="flex-1 p-4">
-    <Navbar />
-    <Disclaimer />
-    <div class="max-w-5xl px-4 mx-auto pt-6">
-      <slot />
-    </div>
-  </main>
+  <Navbar />
+  <div class="flex flex-1">
+    <Sidebar />
+    <main class="bg-muted/40 flex-1 p-4">
+      <!-- <Disclaimer /> -->
+      <div class="max-w-5xl px-4 mx-auto pt-6">
+        <slot />
+      </div>
+    </main>
+  </div>
 </div>
 
 {#if $authStore.state === "authenticated" && $userStore.state === "unregistered"}
