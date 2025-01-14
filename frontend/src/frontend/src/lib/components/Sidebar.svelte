@@ -32,25 +32,18 @@
         <IconFile />
         Files
       </a>
-      <a
-        href="/upload"
-        class="btn btn-ghost w-full justify-start {$page.route.id === '/upload'
-          ? 'btn-ghost-active'
-          : ''}"
-      >
-        <UploadIcon />
-        Upload
-      </a>
-      <a
-        href="/requests"
-        class="btn btn-ghost w-full justify-start {$page.route.id ===
-        '/requests'
-          ? 'btn-ghost-active'
-          : ''}"
-      >
-        <RequestsIcon />
-        Requests
-      </a>
+      {#if $authStore.state === "authenticated"}
+        <a
+          href="/requests"
+          class="btn btn-ghost w-full justify-start {$page.route.id ===
+          '/requests'
+            ? 'btn-ghost-active'
+            : ''}"
+        >
+          <RequestsIcon />
+          Requests
+        </a>
+      {/if}
     </nav>
 
     <!-- <div class="mt-auto">

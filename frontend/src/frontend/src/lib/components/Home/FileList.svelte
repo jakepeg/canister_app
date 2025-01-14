@@ -62,10 +62,13 @@
         </Dialog.Content>
       </Dialog.Root>
       {#if $filesStore.files.length > 0}
-        <button
+        <Button variant="outline" on:click={() => (isOpenRequestModal = true)}
+          >Request</Button
+        >
+        <!-- <button
           class="hidden md:inline-block btn btn-accent"
           on:click={() => (isOpenRequestModal = true)}>Request</button
-        >
+        > -->
       {/if}
     </div>
   </div>
