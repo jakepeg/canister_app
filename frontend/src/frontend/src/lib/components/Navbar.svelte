@@ -30,9 +30,10 @@
     <!-- Left side with logo -->
     <div class="flex items-center gap-2">
       <a href="/" class="shrink-0">
-        <img src="/logo.svg" alt="" class="hidden lg:block" />
+        <img src="/logo.svg" alt="" class="hidden lg:block h-10 w-10" />
         <img src="/mobile-logo.svg" alt="" class="lg:hidden" />
       </a>
+      CANISTER
 
       {#if $authStore.state === "authenticated" && $userStore.state === "registered"}
         <div
