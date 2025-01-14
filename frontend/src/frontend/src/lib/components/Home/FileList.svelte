@@ -1,5 +1,6 @@
 <script lang="ts">
   import RequestModal from "../RequestModal.svelte";
+  import Upload from "../Upload/Upload.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
   import { onMount } from "svelte";
   import { filesStore } from "$lib/services/files";
@@ -9,6 +10,9 @@
   import PlaceholderLogo from "../icons/PlaceholderLogo.svelte";
   import ShareModal from "../ShareModal.svelte";
   import type { file_metadata } from "../../../../../declarations/backend/backend.did";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import { authStore } from "$lib/services/auth";
 
   export let auth: AuthStateAuthenticated;
   let isOpenRequestModal = false;
@@ -38,13 +42,32 @@
 {:else if $filesStore.state === "loaded"}
   <div class="flex justify-between items-center mb-6">
     <h1 class="title-1">My Files</h1>
-    {#if $filesStore.files.length > 0}
-      <button
-        class="hidden md:inline-block btn btn-accent"
-        on:click={() => (isOpenRequestModal = true)}
-        >Create new file request</button
-      >
-    {/if}
+    <div>
+      <Dialog.Root>
+        <Dialog.Trigger class={buttonVariants({ variant: "outline" })}
+          >Upload</Dialog.Trigger
+        >
+        <Dialog.Content class="sm:max-w-[425px]">
+          <!-- <Dialog.Header>
+            <Dialog.Title>Edit profile</Dialog.Title>
+            <Dialog.Description>
+              Make changes to your profile here. Click save when you're done.
+            </Dialog.Description>
+          </Dialog.Header> -->
+          <Upload auth={$authStore} />
+
+          <!-- <Dialog.Footer>
+            <Button type="submit">Save changes</Button>
+          </Dialog.Footer> -->
+        </Dialog.Content>
+      </Dialog.Root>
+      {#if $filesStore.files.length > 0}
+        <button
+          class="hidden md:inline-block btn btn-accent"
+          on:click={() => (isOpenRequestModal = true)}>Request</button
+        >
+      {/if}
+    </div>
   </div>
   {#if $filesStore.files.length > 0}
     <div class="hidden md:block bg-background-200 w-full rounded-2xl px-2">

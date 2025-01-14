@@ -38,7 +38,7 @@
         <div
           class="bg-accent-100/10 p-2 rounded-lg rounded-bl-none text-accent-100 body-1"
         >
-          Hi, {$userStore.username}. Thiss is an alpha version. Use at your own
+          Hi, {$userStore.username}. This is an alpha version. Use at your own
           risk!
         </div>
       {/if}
