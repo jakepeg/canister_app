@@ -73,7 +73,7 @@
     </div>
   </div>
   {#if $filesStore.files.length > 0}
-    <div class="hidden md:block bg-background-200 w-full rounded-2xl px-2">
+    <div class="hidden md:block w-full rounded-2xl px-2">
       <table class="table-auto w-full border-spacing-y-2 border-separate">
         <thead class="">
           <tr class="body-2 text-text-200 text-left">
@@ -86,22 +86,20 @@
         <tbody class="">
           {#each $filesStore.files as file}
             <tr
-              class="hover:drop-shadow-xl cursor-pointer text-text-100"
+              class="hover:drop-shadow-xl cursor-pointer"
               on:click={() => goToDetails(file.file_id)}
             >
-              <td
-                class="pl-4 bg-background-100 rounded-tl-xl rounded-bl-xl body-1"
-              >
+              <td class="pl-4 rounded-tl-xl rounded-bl-xl body-1">
                 {#if file.name}
                   {file.name}
                 {:else}
                   <span class="opacity-50">Unnamed file</span>
                 {/if}
               </td>
-              <td class="bg-background-100 body-1">{file.access}</td>
-              <td class="bg-background-100 body-1">{file.uploadedAt}</td>
+              <td class=" body-1">{file.access}</td>
+              <td class="body-1">{file.uploadedAt}</td>
               <td
-                class="pr-4 bg-background-100 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
+                class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
               >
                 <button
                   on:click|preventDefault|stopPropagation={() =>
