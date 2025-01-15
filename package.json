@@ -3,5 +3,13 @@
   "workspaces": [
     "frontend",
     "landing-page"
-  ]
+  ],
+  "scripts": {
+    "prebuild": "npm run generate",
+    "start:dfx": "dfx start --background --clean --host \"127.0.0.1:4943\"",
+    "start": "vite frontend/src --config vite.config.ts",
+    "build": "vite build frontend/src --config vite.config.ts",
+    "prestart": "npm run generate",
+    "generate": "dfx generate backend"
+  }
 }

@@ -152,11 +152,9 @@
       {/each}
     </div>
   {:else}
-    <div
-      class="panel pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6"
-    >
+    <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
       <PlaceholderLogo />
-      <h2 class="title-2 text-text-200">
+      <h2 class="">
         Even when you have no documents, rest assured, your data is secure.
       </h2>
       <div class="pt-4 pb-8">

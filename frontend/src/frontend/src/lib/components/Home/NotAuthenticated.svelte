@@ -6,5 +6,5 @@
 
 <div class=" pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
   <PlaceholderLogo />
-  <h2 class="title-2">Please log in to see your data.</h2>
+  <h2 class="">Please log in to see your data.</h2>
 </div>
