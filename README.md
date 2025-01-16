@@ -41,8 +41,6 @@ pnpm install
 
 # Deploy the canisters.
 dfx deploy
-dfx deps pull
-dfx deps deploy
 ```
 
 In your browser you can now go to <canister_id>.localhost:8000 to access the frontend.
