@@ -6,8 +6,8 @@
   "scripts": {
     "prebuild": "npm run generate",
     "start:dfx": "dfx start --background --clean --host \"127.0.0.1:4943\"",
-    "start": "vite frontend/src --config vite.config.ts",
-    "build": "vite build frontend/src --config vite.config.ts",
+    "start": "vite frontend/src --config frontend/vite.config.ts",
+    "build": "vite build frontend/src",
     "prestart": "npm run generate",
     "generate": "dfx generate backend"
   }

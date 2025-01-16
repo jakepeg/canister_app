@@ -11,13 +11,21 @@
     },
     "frontend": {
       "build": "pnpm --filter frontend run build",
-      "dependencies": ["backend"],
+      "dependencies": ["backend", "internet_identity"],
       "source": ["frontend/build/"],
       "type": "assets"
     },
     "internet_identity": {
-      "type": "pull",
-      "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+      "type": "custom",
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+      "shrink": false,
+      "remote": {
+        "candid": "internet_identity.did",
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      }
     }
   },
   "defaults": {
@@ -25,11 +33,8 @@
       "packtool": ""
     }
   },
+  "output_env_file": ".env",
   "networks": {
-    "local": {
-      "bind": "127.0.0.1:8000",
-      "type": "ephemeral"
-    },
     "staging": {
       "providers": ["https://icp0.io"],
       "type": "persistent"
