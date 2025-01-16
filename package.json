@@ -4,6 +4,7 @@
     "frontend"
   ],
   "scripts": {
+    "dev": "pnpm --filter frontend run dev",
     "prebuild": "npm run generate",
     "start:dfx": "dfx start --background --clean --host \"127.0.0.1:4943\"",
     "start": "vite frontend/src --config frontend/vite.config.ts",
