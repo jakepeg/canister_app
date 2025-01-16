@@ -1,8 +1,7 @@
 {
   "private": true,
   "workspaces": [
-    "frontend",
-    "landing-page"
+    "frontend"
   ],
   "scripts": {
     "prebuild": "npm run generate",

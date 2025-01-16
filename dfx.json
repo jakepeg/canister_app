@@ -15,12 +15,6 @@
       "source": ["frontend/build/"],
       "type": "assets"
     },
-    "marketing": {
-      "build": "pnpm --filter landing-page run build",
-      "dependencies": ["frontend"],
-      "source": ["landing-page/dist/"],
-      "type": "assets"
-    },
     "internet_identity": {
       "type": "pull",
       "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
