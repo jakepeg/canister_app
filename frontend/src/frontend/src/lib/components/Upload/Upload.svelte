@@ -209,7 +209,7 @@
 
     {#if state === "initialized" || state === "uploading" || (state === "error" && !fatalError)}
       <form
-        out:slide={slideOutAnimation}
+        out:slide|global={slideOutAnimation}
         class="flex flex-col gap-4 max-w-lg"
         on:submit|preventDefault={handleUpload}
       >
@@ -234,7 +234,7 @@
       </form>
     {/if}
     {#if state === "uploaded"}
-      <div class="mt-10" in:fade={fadeInAnimation}>
+      <div class="mt-10" in:fade|global={fadeInAnimation}>
         <div class="flex flex-col gap-3">
           <p class="body-1">
             <strong>File name:</strong>

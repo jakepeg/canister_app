@@ -90,10 +90,10 @@
 {#if showMobileMenu}
   <div
     class="md:hidden fixed inset-0 bg-black/50"
-    transition:fade={{ duration: 200 }}
+    transition:fade|global={{ duration: 200 }}
   />
   <div
-    transition:fly={{ duration: 300, x: 1000, opacity: 1 }}
+    transition:fly|global={{ duration: 300, x: 1000, opacity: 1 }}
     class="fixed md:hidden inset-0 bg-background-300 z-10 pt-16"
   >
     <div class="p-4 flex flex-col gap-4 h-full">

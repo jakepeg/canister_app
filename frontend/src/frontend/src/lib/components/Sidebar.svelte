@@ -8,6 +8,7 @@
   import RequestsIcon from "./icons/RequestsIcon.svelte";
   import UploadIcon from "./icons/UploadIcon.svelte";
   import { uploadInProgress } from "$lib/services/upload";
+  import * as Sidebar from "$lib/components/ui/sidebar";
 
   function logout() {
     if ($uploadInProgress) {

@@ -1,10 +1,10 @@
 <script lang="ts">
+	import * as Sheet from "$lib/components/ui/sheet";
+	import { cn } from "$lib/utils.js";
 	import type { WithElementRef } from "bits-ui";
 	import type { HTMLAttributes } from "svelte/elements";
-	import { getSidebarContext } from "./context.svelte.js";
-	import { cn } from "$lib/utils.js";
-	import * as Sheet from "$lib/registry/default/ui/sheet/index.js";
 	import { SIDEBAR_WIDTH_MOBILE } from "./constants.js";
+	import { useSidebar } from "./context.svelte.js";
 
 	let {
 		ref = $bindable(null),
@@ -20,7 +20,7 @@
 		collapsible?: "offcanvas" | "icon" | "none";
 	} = $props();
 
-	const sidebar = getSidebarContext();
+	const sidebar = useSidebar();
 </script>
 
 {#if collapsible === "none"}
@@ -32,13 +32,11 @@
 		bind:this={ref}
 		{...restProps}
 	>
-		{children}
+		{@render children?.()}
 	</div>
 {:else if sidebar.isMobile}
 	<Sheet.Root
-		controlledOpen
-		open={sidebar.openMobile}
-		onOpenChange={sidebar.setOpenMobile}
+		bind:open={() => sidebar.openMobile, (v) => sidebar.setOpenMobile(v)}
 		{...restProps}
 	>
 		<Sheet.Content
@@ -56,9 +54,9 @@
 {:else}
 	<div
 		bind:this={ref}
-		class="group peer hidden md:block"
-		data-state={sidebar.stateAttr}
-		data-collapsible={sidebar.stateAttr === "collapsed" ? collapsible : ""}
+		class="text-sidebar-foreground group peer hidden md:block"
+		data-state={sidebar.state}
+		data-collapsible={sidebar.state === "collapsed" ? collapsible : ""}
 		data-variant={variant}
 		data-side={side}
 	>
