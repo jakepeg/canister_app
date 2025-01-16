@@ -26,6 +26,7 @@
   import ErrorMessage from "../ErrorMessage.svelte";
   import FileSelect from "./FileSelect.svelte";
   import UploadProgress from "./UploadProgress.svelte";
+  import { filesStore } from "$lib/services/files";
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
 
@@ -106,7 +107,7 @@
     if (state === "uploading") {
       if (
         !confirm(
-          "You are currently uploading a file. Are you sure you want to leave this page?",
+          "You are currently uploading a file. Are you sure you want to leave this page?"
         )
       ) {
         navigation.cancel();
@@ -142,9 +143,13 @@
         state = "error";
         error = msg;
       },
-      onCompleted: (fileId) => {
+      onCompleted: async (fileId) => {
         state = "uploaded";
         file_id = fileId;
+        // Reload the files list after upload is completed
+        if (auth.state === "authenticated") {
+          await auth.filesService.reload();
+        }
       },
       onChunkUploaded: (_chunkId, chunkSize) => {
         transferSpeed.addTransferredBytes(chunkSize);
