@@ -8,14 +8,14 @@
 		class: className,
 		children,
 		...restProps
-	}: WithElementRef<HTMLAttributes<HTMLLIElement>, HTMLLIElement> = $props();
+	}: WithElementRef<HTMLAttributes<HTMLUListElement>, HTMLUListElement> = $props();
 </script>
 
-<li
+<ul
 	bind:this={ref}
-	data-sidebar="menu-item"
-	class={cn("group/menu-item relative", className)}
+	data-sidebar="menu"
+	class={cn("flex w-full min-w-0 flex-col gap-1", className)}
 	{...restProps}
 >
 	{@render children?.()}
-</li>
+</ul>

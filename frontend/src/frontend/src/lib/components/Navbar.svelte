@@ -26,7 +26,7 @@
   }
 </script>
 
-<nav class="bg-background w-full rounded-b-3xl relative z-20">
+<nav class="bg-sidebar w-full relative z-20">
   <div class="flex h-14 md:h-16 items-center px-4 justify-between">
     <!-- Left side with logo -->
     <div class="flex items-center gap-2">
@@ -51,7 +51,10 @@
       <ModeToggle />
 
       {#if $authStore.state === "unauthenticated"}
-        <button class="gap-4" on:click={() => authService.login()}>
+        <button
+          class="gap-4 btn btn-accent"
+          on:click={() => authService.login()}
+        >
           <LogoIcon />
           Login
         </button>

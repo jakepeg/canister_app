@@ -2,7 +2,7 @@
 	import { cn } from "$lib/utils.js";
 	import type { WithElementRef } from "bits-ui";
 	import type { HTMLAttributes } from "svelte/elements";
-	import { useSidebar } from "./context.svelte.ts";
+	import { useSidebar } from "./context.svelte.js";
 
 	let {
 		ref = $bindable(null),

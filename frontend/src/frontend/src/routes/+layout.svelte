@@ -59,7 +59,7 @@
     <Sidebar.Provider>
       <AppSidebar />
       <Sidebar.Inset class="flex-1 flex overflow-hidden">
-        <main class="flex-1 overflow-auto bg-muted/40">
+        <main class="flex-1">
           <Sidebar.Trigger class="sticky top-4 left-4" />
           <div class="max-w-5xl mx-auto px-4 py-6">
             {@render children?.()}
