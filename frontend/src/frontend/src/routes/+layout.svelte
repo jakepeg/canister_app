@@ -1,6 +1,7 @@
 <script lang="ts">
   import Navbar from "$lib/components/Navbar.svelte";
-  import Sidebar from "$lib/components/Sidebar.svelte";
+  import AppSidebar from "$lib/components/Sidebar.svelte";
+  import AppSidebarv2 from "$lib/components/AppSidebar.svelte";
   import RegistrationModal from "$lib/components/RegistrationModal.svelte";
   import { authService, authStore } from "$lib/services/auth";
   import { userStore } from "$lib/services/user";
@@ -8,6 +9,7 @@
   import "../app.css";
   // import Disclaimer from "$lib/components/Disclaimer.svelte";
   import { ModeWatcher } from "mode-watcher";
+  import * as Sidebar from "$lib/components/ui/sidebar";
 
   const title = "DocuTrack – Encrypted document sharing and requesting";
   const description =
@@ -24,8 +26,11 @@
     authService.init();
   });
 
-  $: unregistered =
-    $authStore.state === "authenticated" && $userStore.state === "unregistered";
+  const unregistered = $derived(
+    $authStore.state === "authenticated" && $userStore.state === "unregistered",
+  );
+
+  let { children } = $props();
 </script>
 
 <svelte:head>
@@ -47,17 +52,21 @@
   <meta property="twitter:domain" content={domain} />
 </svelte:head>
 
-<div class="flex flex-col min-h-screen">
+<div class="flex flex-col h-screen overflow-hidden">
   <ModeWatcher />
   <Navbar />
-  <div class="flex flex-1">
-    <Sidebar />
-    <main class="bg-muted/40 flex-1 p-4">
-      <!-- <Disclaimer /> -->
-      <div class="max-w-5xl px-4 mx-auto pt-6">
-        <slot />
-      </div>
-    </main>
+  <div class="flex flex-1 overflow-hidden">
+    <Sidebar.Provider>
+      <AppSidebar />
+      <Sidebar.Inset class="flex-1 flex overflow-hidden">
+        <main class="flex-1 overflow-auto bg-muted/40">
+          <Sidebar.Trigger class="sticky top-4 left-4" />
+          <div class="max-w-5xl mx-auto px-4 py-6">
+            {@render children?.()}
+          </div>
+        </main>
+      </Sidebar.Inset>
+    </Sidebar.Provider>
   </div>
 </div>
 

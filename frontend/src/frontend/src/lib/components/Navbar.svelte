@@ -10,6 +10,7 @@
   import UploadIcon from "./icons/UploadIcon.svelte";
   import { uploadInProgress } from "$lib/services/upload";
   import ModeToggle from "$lib/components/mode-toggle.svelte";
+  import { Button } from "$lib/components/ui/button";
 
   let showMobileMenu = false;
 
@@ -50,7 +51,7 @@
       <ModeToggle />
 
       {#if $authStore.state === "unauthenticated"}
-        <button class="btn btn-accent" on:click={() => authService.login()}>
+        <button class="gap-4" on:click={() => authService.login()}>
           <LogoIcon />
           Login
         </button>
