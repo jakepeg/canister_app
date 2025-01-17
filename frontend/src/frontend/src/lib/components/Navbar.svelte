@@ -47,7 +47,7 @@
     </div>
 
     <!-- Right side with buttons -->
-    <div class="flex items-center gap-4 ml-auto">
+    <div class="flex items-center ml-auto">
       <ModeToggle />
 
       {#if $authStore.state === "unauthenticated"}
@@ -83,8 +83,7 @@
         <div class="hidden md:flex gap-2 lg:gap-8">
           <button on:click={() => logout()} class="btn btn-ghost">
             <LogoutIcon />
-            Logout</button
-          >
+          </button>
         </div>
       {/if}
     </div>

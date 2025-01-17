@@ -16,19 +16,24 @@
     authService.logout();
   }
 
-  // Menu items.
-  const items = [
+  // Menu items should now be dynamic based on auth state
+  let items = $derived([
     {
       title: "Files",
       url: "/",
       icon: IconFile,
     },
-    {
-      title: "Requests",
-      url: "/requests",
-      icon: RequestsIcon,
-    },
-  ];
+    // Only include Requests when authenticated
+    ...($authStore.state === "authenticated"
+      ? [
+          {
+            title: "Requests",
+            url: "/requests",
+            icon: RequestsIcon,
+          },
+        ]
+      : []),
+  ]);
 
   import type { ComponentProps } from "svelte";
 

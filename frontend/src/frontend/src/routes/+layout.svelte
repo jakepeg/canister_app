@@ -52,14 +52,14 @@
   <meta property="twitter:domain" content={domain} />
 </svelte:head>
 
-<div class="flex flex-col h-screen overflow-hidden">
+<div class="flex flex-col h-screen overflow-hidden gap-y-2">
   <ModeWatcher />
   <Navbar />
   <div class="flex flex-1 overflow-hidden">
     <Sidebar.Provider>
       <AppSidebar />
       <Sidebar.Inset class="flex-1 flex overflow-hidden">
-        <main class="flex-1">
+        <main class="bg-gray-950 flex-1">
           <Sidebar.Trigger class="sticky top-4 left-4" />
           <div class="max-w-5xl mx-auto px-4 py-6">
             {@render children?.()}
