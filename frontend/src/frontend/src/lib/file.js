@@ -1,7 +1,7 @@
 import { default as crypto } from "./crypto";
 
 /**
- * A file that is backed by the docutrack backend service.
+ * A file that is backed by the Canister backend service.
  */
 class File {
   /**

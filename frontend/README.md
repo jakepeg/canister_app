@@ -1,6 +1,6 @@
-# Docutrack dapp frontend
+# Canister dapp frontend
 
-Frontend project of the DocuTrack dapp, made with [SvelteKit](https://kit.svelte.dev/) and [TailwindCSS](https://tailwindcss.com/).
+Frontend project of the Canister dapp, made with [SvelteKit](https://kit.svelte.dev/) and [TailwindCSS](https://tailwindcss.com/).
 
 ## Pre-requisites
 

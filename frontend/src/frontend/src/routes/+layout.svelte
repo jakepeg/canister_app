@@ -11,7 +11,7 @@
   import { ModeWatcher } from "mode-watcher";
   import * as Sidebar from "$lib/components/ui/sidebar";
 
-  const title = "DocuTrack – Encrypted document sharing and requesting";
+  const title = "Canister – Encrypted document sharing and requesting";
   const description =
     "Effortless document sharing on the Internet Computer. No plugins, no passwords. DocuTrack enables seamless document requests, streamlining interactions for service providers and clients.";
   const image = `https://${
