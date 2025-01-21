@@ -13,7 +13,7 @@
 
   const title = "Canister – Encrypted document sharing and requesting";
   const description =
-    "Effortless document sharing on the Internet Computer. No plugins, no passwords. DocuTrack enables seamless document requests, streamlining interactions for service providers and clients.";
+    "Effortless document sharing on the Internet Computer. No plugins, no passwords. Canister enables seamless document requests, streamlining interactions for service providers and clients.";
   const image = `https://${
     import.meta.env.VITE_FRONTEND_CANISTER_ID
   }.icp0.io/share.jpg`;
