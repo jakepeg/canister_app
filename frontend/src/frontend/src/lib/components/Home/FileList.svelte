@@ -79,7 +79,7 @@
           <tr class="body-2 text-text-200 text-left">
             <th class="body-2 pt-4 pb-2 pl-4">Name</th>
             <th class="body-2 pt-6 pb-2">Access</th>
-            <th class="body-2 pt-6 pb-2">Uploaded at</th>
+            <th class="body-2 pt-6 pb-2">Uploaded</th>
             <th />
           </tr>
         </thead>
@@ -144,7 +144,7 @@
               <span class="body-1 text-text-100">{file.access}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="body-1 text-text-200">Uploaded at:</span>
+              <span class="body-1 text-text-200">Uploaded:</span>
               <span class="body-1 text-text-100">{file.uploadedAtShort}</span>
             </div>
           </div>
@@ -155,7 +155,7 @@
     <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
       <PlaceholderLogo />
       <h2 class="">
-        Even when you have no documents, rest assured, your data is secure.
+        No files found. Upload or request documents to get started.
       </h2>
       <div class="pt-4 pb-8">
         <button

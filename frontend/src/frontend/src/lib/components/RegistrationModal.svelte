@@ -21,9 +21,7 @@
   <Modal {isOpen} title="Register Yourself" mandatory>
     <form class="" on:submit|preventDefault={() => register()}>
       <p class="body-1 text-text-200 mb-4">
-        Your Internet Identity is not connected with a username yet. Choose a
-        username to setup an account on Canister. Your username will be publicly
-        visible
+        Choose a username to setup an account on Canister.
       </p>
       <div class="mb-4">
         <label for="username" class="input-label">Username</label>

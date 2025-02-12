@@ -53,7 +53,7 @@
               <th class="body-2 pt-4 pb-2 pl-4">Name</th>
 
               <th class="body-2 pt-6 pb-2">Access</th>
-              <th class="body-2 pt-6 pb-2">Uploaded at</th>
+              <th class="body-2 pt-6 pb-2">Created</th>
               <th class="body-2 pt-6 pb-2">Link</th>
             </tr>
           </thead>
@@ -100,7 +100,7 @@
                 <span class="body-1 text-text-100">{request.access}</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="body-1 text-text-200">Uploaded at:</span>
+                <span class="body-1 text-text-200">Created:</span>
                 <span class="body-1 text-text-100"
                   >{request.formattedDateShort}</span
                 >

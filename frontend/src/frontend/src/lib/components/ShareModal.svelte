@@ -181,10 +181,6 @@
 <div>
   <Modal title={`Share "${fileData.file_name || "Unnamed file"}"`} bind:isOpen>
     <form class="flex flex-col gap-4" on:submit|preventDefault={saveShare}>
-      <p class="text-body-1 text-text-100">
-        Choose the people that have access to this file.
-      </p>
-
       {#if newSharedWith.length > 0}
         <div class="flex flex-wrap gap-2">
           {#each newSharedWith as user}

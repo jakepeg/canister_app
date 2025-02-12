@@ -68,7 +68,7 @@
           required={true}
           class="input"
           id="requestName"
-          placeholder="Enter your input"
+          placeholder="Request name"
           name="requestName"
           disabled={!!requestLink}
           readonly={!!requestLink}
@@ -102,6 +102,7 @@
           <div class="mt-4">
             <a
               href="mailto:?subject=Share your file&body=Please share a file with me here: {requestLink}"
+              target="_blank"
               class="text-accent-100">Send in email</a
             >
           </div>

@@ -151,3 +151,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+.h2 {
+  color:red;
+}
