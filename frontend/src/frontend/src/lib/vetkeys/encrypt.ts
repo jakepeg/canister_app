@@ -23,7 +23,7 @@ export class VetKeyService {
     );
   }
 
-  async decrypt(fileId: bigint, encryptedData: string): Promise<ArrayBuffer> {
+  async decrypt(fileId: bigint, encryptedData: string): Promise<Uint8Array> {
     const whoAmI = await this.actor.who_am_i();
     const owner =
       "known_user" in whoAmI ? whoAmI.known_user.username : "unknown";
@@ -32,6 +32,6 @@ export class VetKeyService {
       owner,
       encryptedData,
     );
-    return new TextEncoder().encode(decryptedString).buffer;
+    return new TextEncoder().encode(decryptedString);
   }
 }
