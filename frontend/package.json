@@ -61,6 +61,7 @@
     "@dfinity/candid": "^0.15.7",
     "@dfinity/principal": "^0.15.7",
     "@macfja/svelte-persistent-store": "^2.4.0",
+    "@shipstone-labs/ic-vetkd-notes-client": "^0.1.13",
     "mode-watcher": "^0.5.0",
     "p-limit": "^5.0.0"
   }
