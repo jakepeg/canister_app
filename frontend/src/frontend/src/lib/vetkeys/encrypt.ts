@@ -13,7 +13,9 @@ export class VetKeyService {
   }
 
   async encrypt(fileId: bigint, data: ArrayBuffer): Promise<string> {
-    const owner = await this.actor.who_am_i();
+    const whoAmI = await this.actor.who_am_i();
+    const owner =
+      "known_user" in whoAmI ? whoAmI.known_user.username : "unknown";
     return await this.cryptoService.encryptWithNoteKey(
       fileId,
       owner,
@@ -22,7 +24,9 @@ export class VetKeyService {
   }
 
   async decrypt(fileId: bigint, encryptedData: string): Promise<ArrayBuffer> {
-    const owner = await this.actor.who_am_i();
+    const whoAmI = await this.actor.who_am_i();
+    const owner =
+      "known_user" in whoAmI ? whoAmI.known_user.username : "unknown";
     const decryptedString = await this.cryptoService.decryptWithNoteKey(
       fileId,
       owner,
