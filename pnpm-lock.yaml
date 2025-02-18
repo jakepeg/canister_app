@@ -25,6 +25,9 @@ importers:
       '@macfja/svelte-persistent-store':
         specifier: ^2.4.0
         version: 2.4.2(svelte@5.19.0)
+      '@shipstone-labs/ic-vetkd-notes-client':
+        specifier: ^0.1.13
+        version: 0.1.13(@dfinity/candid@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))
       mode-watcher:
         specifier: ^0.5.0
         version: 0.5.0(svelte@5.19.0)
@@ -211,6 +214,12 @@ packages:
     peerDependencies:
       '@dfinity/candid': ^0.15.7
       '@dfinity/principal': ^0.15.7
+
+  '@dfinity/agent@2.3.0':
+    resolution: {integrity: sha512-f/eNydwuOunTKRcZAW1RxrcmKyb1AFqZM/ysJJaqFCX9Y+men9NoBTeuUI23XKUp9YeDb9yinGyAlYqjb6VMPw==}
+    peerDependencies:
+      '@dfinity/candid': ^2.3.0
+      '@dfinity/principal': ^2.3.0
 
   '@dfinity/auth-client@0.15.7':
     resolution: {integrity: sha512-f6cRqXayCf+7+9gNcDnAZZwJrgBYKIzfxjxeRLlpsueQeo+E/BX2yVSANxzTkCNc4U3p+ttHI1RNtasLunYTcA==}
@@ -592,6 +601,14 @@ packages:
     peerDependencies:
       svelte: ^3.0 || ^4.0 || ^5.0
 
+  '@noble/curves@1.8.1':
+    resolution: {integrity: sha512-warwspo+UYUPep0Q+vtdVB4Ugn8GGQj8iyB3gnRWsztmUHTI3S1nhdiWNsPUGL0vud7JlRRk1XEu7Lq1KGTnMQ==}
+    engines: {node: ^14.21.3 || >=16}
+
+  '@noble/hashes@1.7.1':
+    resolution: {integrity: sha512-B8XBPsn4vT/KJAGqDzbwztd+6Yte3P4V7iafm24bxgDe/mlRuK6xmWPuCNrKt2vDafZ8MfJLlchDG/vYafQEjQ==}
+    engines: {node: ^14.21.3 || >=16}
+
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
     engines: {node: '>= 8'}
@@ -721,6 +738,9 @@ packages:
     peerDependenciesMeta:
       rollup:
         optional: true
+
+  '@shipstone-labs/ic-vetkd-notes-client@0.1.13':
+    resolution: {integrity: sha512-+uLDLNUlcRo+tkZJNCOxq9clKW5zCkVNuTK43qO3UajFxTDVy0yZeEifjpAbU9nUB/5LMbvNlu+GDa4iMi04sA==}
 
   '@sveltejs/adapter-static@2.0.3':
     resolution: {integrity: sha512-VUqTfXsxYGugCpMqQv1U0LIdbR3S5nBkMMDmpjGVJyM6Q2jHVMFtdWJCkeHMySc6mZxJ+0eZK3T7IgmUCDrcUQ==}
@@ -972,6 +992,9 @@ packages:
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
+
+  buffer@6.0.3:
+    resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
   callsites@3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
@@ -2256,6 +2279,17 @@ snapshots:
       - '@types/node'
       - typescript
 
+  '@dfinity/agent@2.3.0(@dfinity/candid@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))':
+    dependencies:
+      '@dfinity/candid': 0.15.7(@types/node@18.19.70)(typescript@5.7.3)
+      '@dfinity/principal': 0.15.7(@types/node@18.19.70)(typescript@5.7.3)
+      '@noble/curves': 1.8.1
+      '@noble/hashes': 1.7.1
+      base64-arraybuffer: 0.2.0
+      borc: 2.1.2
+      buffer: 6.0.3
+      simple-cbor: 0.4.1
+
   '@dfinity/auth-client@0.15.7(@dfinity/agent@0.15.7(@dfinity/candid@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/identity@0.15.7(@dfinity/agent@0.15.7(@dfinity/candid@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@peculiar/webcrypto@1.5.0))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))':
     dependencies:
       '@dfinity/agent': 0.15.7(@dfinity/candid@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@types/node@18.19.70)(typescript@5.7.3)
@@ -2530,6 +2564,12 @@ snapshots:
       sjcl-es: 2.0.0
       svelte: 5.19.0
 
+  '@noble/curves@1.8.1':
+    dependencies:
+      '@noble/hashes': 1.7.1
+
+  '@noble/hashes@1.7.1': {}
+
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -2641,6 +2681,14 @@ snapshots:
       picomatch: 4.0.2
     optionalDependencies:
       rollup: 3.29.5
+
+  '@shipstone-labs/ic-vetkd-notes-client@0.1.13(@dfinity/candid@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))':
+    dependencies:
+      '@dfinity/agent': 2.3.0(@dfinity/candid@0.15.7(@types/node@18.19.70)(typescript@5.7.3))(@dfinity/principal@0.15.7(@types/node@18.19.70)(typescript@5.7.3))
+      idb-keyval: 6.2.1
+    transitivePeerDependencies:
+      - '@dfinity/candid'
+      - '@dfinity/principal'
 
   '@sveltejs/adapter-static@2.0.3(@sveltejs/kit@1.30.4(svelte@5.19.0)(vite@4.5.5(@types/node@18.19.70)(sass@1.83.1)))':
     dependencies:
@@ -2922,6 +2970,11 @@ snapshots:
   buffer-crc32@1.0.0: {}
 
   buffer@5.7.1:
+    dependencies:
+      base64-js: 1.5.1
+      ieee754: 1.2.1
+
+  buffer@6.0.3:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1

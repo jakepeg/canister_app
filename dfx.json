@@ -1,6 +1,11 @@
 {
   "dfx": "0.17.0",
   "canisters": {
+    "vetkd_system_api": {
+      "candid": "./vetkeys/chainkey_testing_canister.did",
+      "type": "custom",
+      "wasm": "./vetkeys/chainkey_testing_canister.wasm"
+    },
     "backend": {
       "type": "rust",
       "package": "backend",
