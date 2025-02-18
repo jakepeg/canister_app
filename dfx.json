@@ -3,9 +3,6 @@
   "canisters": {
     "vetkd_system_api": {
       "candid": "./vetkeys/chainkey_testing_canister.did",
-      "declarations": {
-        "output": "./vetkeys/declarations"
-      },
       "type": "custom",
       "wasm": "./vetkeys/chainkey_testing_canister.wasm"
     },
