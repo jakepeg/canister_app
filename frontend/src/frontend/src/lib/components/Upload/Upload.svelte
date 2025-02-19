@@ -27,6 +27,9 @@
   import FileSelect from "./FileSelect.svelte";
   import UploadProgress from "./UploadProgress.svelte";
   import { filesStore } from "$lib/services/files";
+  import { VetKeyService } from "$lib/vetkeys/encrypt";
+
+  let vetKeyService: VetKeyService;
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
 
@@ -62,6 +65,8 @@
   }
 
   onMount(async () => {
+    vetKeyService = new VetKeyService(auth.actor);
+    uploadService = new UploadService(auth.actor, vetKeyService);
     alias = $page.url.searchParams.get("alias") || "";
     if (alias) {
       const aliasInfo = await auth.actor.get_alias_info(alias);
@@ -107,7 +112,7 @@
     if (state === "uploading") {
       if (
         !confirm(
-          "You are currently uploading a file. Are you sure you want to leave this page?"
+          "You are currently uploading a file. Are you sure you want to leave this page?",
         )
       ) {
         navigation.cancel();

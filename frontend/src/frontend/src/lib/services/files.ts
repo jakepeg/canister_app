@@ -149,7 +149,7 @@ export class File {
     vetKeyService: VetKeyService,
   ) {
     const contents = await vetKeyService.decrypt(fileId, encryptedBytes);
-    return new File(name, contents.buffer); // Convert Uint8Array to ArrayBuffer
+    return new File(name, contents.buffer as ArrayBuffer); // Convert Uint8Array to ArrayBuffer
   }
 
   constructor(
