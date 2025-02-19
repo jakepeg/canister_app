@@ -4,7 +4,10 @@
     "vetkd_system_api": {
       "candid": "./vetkeys/chainkey_testing_canister.did",
       "type": "custom",
-      "wasm": "./vetkeys/chainkey_testing_canister.wasm"
+      "wasm": "./vetkeys/chainkey_testing_canister.wasm",
+      "declarations": {
+        "output": "src/declarations/vetkd_system_api"
+      }
     },
     "backend": {
       "type": "rust",

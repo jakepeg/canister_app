@@ -5,6 +5,7 @@ import { flatten } from "$lib/shared/flatten";
 import { unreachable } from "$lib/shared/unreachable";
 import { get, writable } from "svelte/store";
 import type { file_metadata } from "../../../../declarations/backend/backend.did";
+import { VetKeyService } from "../vetkeys/encrypt";
 
 export type UploadedFile = {
   name: string;
@@ -102,7 +103,7 @@ export class FilesService {
       await Promise.all([
         this.actor.get_shared_files(),
         this.actor.get_requests(),
-      ])
+      ]),
     );
 
     const uploadedFiles: UploadedFile[] = [];
@@ -128,7 +129,7 @@ export class FilesService {
           access: accessMessage,
           uploadedAt: formatUploadDate(file.file_status.uploaded.uploaded_at),
           uploadedAtShort: formatUploadDateShort(
-            file.file_status.uploaded.uploaded_at
+            file.file_status.uploaded.uploaded_at,
           ),
           file_id: file.file_id,
           metadata: file,
@@ -137,5 +138,26 @@ export class FilesService {
     }
 
     return uploadedFiles;
+  }
+}
+
+export class File {
+  static async fromEncrypted(
+    name: string,
+    encryptedBytes: string,
+    fileId: bigint,
+    vetKeyService: VetKeyService,
+  ) {
+    const contents = await vetKeyService.decrypt(fileId, encryptedBytes);
+    return new File(name, contents.buffer); // Convert Uint8Array to ArrayBuffer
+  }
+
+  constructor(
+    public name: string,
+    public contents: ArrayBuffer,
+  ) {}
+
+  async encrypt(fileId: bigint, vetKeyService: VetKeyService): Promise<string> {
+    return await vetKeyService.encrypt(fileId, this.contents);
   }
 }
