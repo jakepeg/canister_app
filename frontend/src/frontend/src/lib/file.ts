@@ -1,4 +1,5 @@
 import { default as crypto } from "./crypto";
+// import { VetKeyService } from "./vetkeys/encrypt";
 
 /**
  * A file that is backed by the Canister backend service.
@@ -73,5 +74,18 @@ class File {
     return this.documentKey;
   }
 }
+
+// class File {
+//   static async fromEncrypted(name: string, encryptedBytes: string, fileId: bigint, vetKeyService: VetKeyService) {
+//     const contents = await vetKeyService.decrypt(fileId, encryptedBytes);
+//     return new File(name, contents);
+//   }
+
+//   constructor(public name: string, public contents: ArrayBuffer) {}
+
+//   async encrypt(fileId: bigint, vetKeyService: VetKeyService): Promise<string> {
+//     return await vetKeyService.encrypt(fileId, this.contents);
+//   }
+// }
 
 export default File;
