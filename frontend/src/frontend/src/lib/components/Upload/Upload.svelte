@@ -71,12 +71,15 @@
     if (alias) {
       const aliasInfo = await auth.actor.get_alias_info(alias);
 
+      console.log("aliasInfo: ", aliasInfo);
+
       if (enumIs(aliasInfo, "Ok")) {
         uploadType = {
           type: "request",
           fileInfo: aliasInfo.Ok,
         };
         file_id = aliasInfo.Ok.file_id;
+        console.log("fileId: ", file_id);
       } else if (enumIs(aliasInfo, "Err")) {
         state = "error";
         if (enumIs(aliasInfo.Err, "not_found")) {
