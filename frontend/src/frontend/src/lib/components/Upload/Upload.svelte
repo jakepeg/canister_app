@@ -27,9 +27,9 @@
   import FileSelect from "./FileSelect.svelte";
   import UploadProgress from "./UploadProgress.svelte";
   import { filesStore } from "$lib/services/files";
-  import { VetKeyService } from "$lib/vetkeys/encrypt";
+  // import { VetKeyService } from "$lib/vetkeys/encrypt";
 
-  let vetKeyService: VetKeyService;
+  // let vetKeyService: VetKeyService;
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
 
@@ -65,8 +65,8 @@
   }
 
   onMount(async () => {
-    vetKeyService = new VetKeyService(auth.actor);
-    uploadService = new UploadService(auth.actor, vetKeyService);
+    // vetKeyService = new VetKeyService(auth.actor);
+    // uploadService = new UploadService(auth.actor, vetKeyService);
     alias = $page.url.searchParams.get("alias") || "";
     if (alias) {
       const aliasInfo = await auth.actor.get_alias_info(alias);
