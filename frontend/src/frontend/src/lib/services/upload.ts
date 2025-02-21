@@ -57,13 +57,21 @@ export class UploadService {
         ? uploadType.fileInfo.file_name
         : uploadType.fileName;
 
+    console.log("fileName: ", fileName);
+
     const fileBytes = await file.arrayBuffer();
     let fileToEncrypt = FileTools.fromUnencrypted(fileName, fileBytes);
+    console.log("fileToEncrypt done");
+
     const encryptedFileKey =
       await fileToEncrypt.getEncryptedFileKey(userPublicKey);
 
+    console.log("encryptedFileKey done");
+
     const encFile = await fileToEncrypt.encrypt();
+    console.log("encFile done");
     const content = new Uint8Array(encFile);
+    console.log("content done");
 
     if (content.length > 100 * 1024 * 1024) {
       onError(
@@ -74,14 +82,18 @@ export class UploadService {
 
     // Split file into chunks of 2MB.
     const numChunks = Math.ceil(content.length / CHUNK_SIZE);
+    console.log("numChunks done");
 
     try {
       onStarted(content.length);
+      console.log("onStarted done");
 
       const firstChunk = content.subarray(0, CHUNK_SIZE);
+      console.log("firstChunk done");
       let fileId: bigint = 0n;
       if (uploadType.type === "request") {
         fileId = uploadType.fileInfo.file_id;
+        console.log("fileId for request: ", fileId);
         const res = await this.actor.upload_file({
           file_id: fileId,
           file_content: firstChunk,
@@ -89,6 +101,7 @@ export class UploadService {
           file_type: dataType,
           num_chunks: BigInt(numChunks),
         });
+        console.log("res done for request");
 
         if (enumIs(res, "Err")) {
           onError(
@@ -98,18 +111,20 @@ export class UploadService {
         }
       } else {
         // shipstone actor
-        const actor = createActor();
-        // Create new note and get its ID
-        const fileId = await actor.create_note();
+        // const actor = createActor();
+        // // Create new note and get its ID
+        // const testFileId = await actor.create_note();
 
-        // fileId = await this.actor.upload_file_atomic({
-        //   content: firstChunk,
-        //   owner_key: new Uint8Array(encryptedFileKey),
-        //   name: fileName,
-        //   file_type: dataType,
-        //   num_chunks: BigInt(numChunks),
-        // });
-        console.log("fileId for self: ", fileId);
+        // console.log("fileId for self: ", testFileId);
+
+        fileId = await this.actor.upload_file_atomic({
+          content: firstChunk,
+          owner_key: new Uint8Array(encryptedFileKey),
+          name: fileName,
+          file_type: dataType,
+          num_chunks: BigInt(numChunks),
+        });
+        // console.log("fileId for self: ", fileId);
       }
 
       onChunkUploaded(0, firstChunk.length);
