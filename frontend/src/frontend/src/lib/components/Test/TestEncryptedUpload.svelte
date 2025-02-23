@@ -32,7 +32,12 @@
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
       const fileBuffer = await file.arrayBuffer();
       const encodedMessage = new Uint8Array(fileBuffer);
-      const encryptedFile = vetkd.IBECiphertext.encrypt();
+      const encryptedFile = vetkd.IBECiphertext.encrypt(
+        publickKey, // TODO
+        deriviationId, // TODO
+        fileBuffer, // FIXME
+        seed,
+      );
       // 2. Upload encrypted file
       return;
     } catch (err) {
@@ -46,10 +51,17 @@
       // 1. Decrypt file
       // 2. Understand where to get derived_public_key_bytes (is it the public_key method?)
       // 3. Understand where to get derivation_id (it was suggested to use the caller)
+
+      // Part 1
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
       const secretKey = new vetkd.TransportSecretKey(seed);
       const publicKey = secretKey.public_key();
-      const decryptedFile = secretKey.decrypt();
+      const k_bytes = secretKey.decrypt();
+
+      // Part 2
+      const desearlizedFile = vetkd.IBECiphertext.deserialize(encryptedFile);
+      const decryptedFile = desearlizedFile.decrypt();
+
       return;
     } catch (err) {
       error = "Decryption failed: " + err;
