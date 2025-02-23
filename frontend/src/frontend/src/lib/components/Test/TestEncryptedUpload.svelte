@@ -1,7 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import * as vetkd from "ic-vetkd-utils";
+  import * as vetkd from "ic-vetkd-utils/ic_vetkd_utils";
+  import type {
+    AuthStateAuthenticated,
+    AuthStateUnauthenticated,
+  } from "$lib/services/auth";
 
+  let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
   let file: File | null = null;
   let decryptedContent: Uint8Array | null = null;
   let error: string | null = null;
@@ -19,7 +24,16 @@
 
   async function handleUpload() {
     try {
+      if (!file) {
+        throw new Error("No file selected");
+      }
       // TODO
+      // 1. Encrypt file
+      const seed = window.crypto.getRandomValues(new Uint8Array(32));
+      const fileBuffer = await file.arrayBuffer();
+      const encodedMessage = new Uint8Array(fileBuffer);
+      const encryptedFile = vetkd.IBECiphertext.encrypt();
+      // 2. Upload encrypted file
       return;
     } catch (err) {
       error = "Upload failed: " + err;
@@ -29,6 +43,13 @@
   async function handleDecrypt(noteId: bigint) {
     try {
       // TODO
+      // 1. Decrypt file
+      // 2. Understand where to get derived_public_key_bytes (is it the public_key method?)
+      // 3. Understand where to get derivation_id (it was suggested to use the caller)
+      const seed = window.crypto.getRandomValues(new Uint8Array(32));
+      const secretKey = new vetkd.TransportSecretKey(seed);
+      const publicKey = secretKey.public_key();
+      const decryptedFile = secretKey.decrypt();
       return;
     } catch (err) {
       error = "Decryption failed: " + err;
@@ -37,7 +58,10 @@
 
   function handleFileChange(e: Event) {
     const target = e.target as HTMLInputElement;
-    file = target.files?.[0] || null;
+    const files = target.files;
+    if (files && files.length > 0) {
+      file = files[0];
+    }
   }
 </script>
 
