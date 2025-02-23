@@ -1,10 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { VetKeyService } from "$lib/vetkeys/encrypt";
-  import { createActor } from "@shipstone-labs/ic-vetkd-notes-client";
-  import type {
-    BackendActor,
-    EncryptedNote,
+  import {
+    type BackendActor,
+    type EncryptedNote,
+    type CryptoService,
+    type NoteModel,
+    serialize,
+    createActor,
   } from "@shipstone-labs/ic-vetkd-notes-client";
 
   let file: File | null = null;
@@ -24,18 +27,24 @@
     }
   }
 
-  async function handleUpload() {
+  async function handleUpload(
+    note: NoteModel,
+    actor: BackendActor,
+    crypto: CryptoService,
+  ) {
     if (!file) return;
 
     try {
-      // const noteId = await actor.create_note();
-      const noteId = 1n;
-      const fileData = new Uint8Array(await file.arrayBuffer());
-      const encrypted = await vetKeyService.encrypt(noteId, fileData.buffer);
-      await actor.update_note(noteId, file.name, encrypted);
+      const new_id: bigint = await actor.create_note();
+      note.id = new_id;
+      const { encrypted_text: encryptedNote, data } = await serialize(
+        note,
+        crypto,
+      );
+      await actor.update_note(new_id, data, encryptedNote);
       await refreshNotes();
     } catch (err) {
-      error = "Upload failed: " + err.message;
+      error = "Upload failed: " + err;
     }
   }
 
@@ -49,7 +58,7 @@
         note.encrypted_text,
       );
     } catch (err) {
-      error = "Decryption failed: " + err.message;
+      error = "Decryption failed: " + err;
     }
   }
 </script>
