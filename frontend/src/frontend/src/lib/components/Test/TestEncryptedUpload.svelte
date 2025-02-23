@@ -1,48 +1,25 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { VetKeyService } from "$lib/vetkeys/encrypt";
-  import {
-    type BackendActor,
-    type EncryptedNote,
-    type CryptoService,
-    type NoteModel,
-    serialize,
-    createActor,
-  } from "@shipstone-labs/ic-vetkd-notes-client";
 
   let file: File | null = null;
-  let notes: EncryptedNote[] = [];
   let decryptedContent: Uint8Array | null = null;
   let error: string | null = null;
-  let actor: BackendActor = createActor();
-  let vetKeyService: VetKeyService = new VetKeyService(actor);
 
   onMount(async () => await refreshNotes());
 
   async function refreshNotes() {
     try {
-      notes = await actor.get_notes();
+      // TODO
+      return;
     } catch (err) {
       error = "Failed to load files";
     }
   }
 
-  async function handleUpload(
-    note: NoteModel,
-    actor: BackendActor,
-    crypto: CryptoService,
-  ) {
-    if (!file) return;
-
+  async function handleUpload() {
     try {
-      const new_id: bigint = await actor.create_note();
-      note.id = new_id;
-      const { encrypted_text: encryptedNote, data } = await serialize(
-        note,
-        crypto,
-      );
-      await actor.update_note(new_id, data, encryptedNote);
-      await refreshNotes();
+      // TODO
+      return;
     } catch (err) {
       error = "Upload failed: " + err;
     }
@@ -50,25 +27,22 @@
 
   async function handleDecrypt(noteId: bigint) {
     try {
-      const note = notes.find((n) => n.id === noteId);
-      if (!note) throw Error("File not found");
-
-      decryptedContent = await vetKeyService.decrypt(
-        noteId,
-        note.encrypted_text,
-      );
+      // TODO
+      return;
     } catch (err) {
       error = "Decryption failed: " + err;
     }
+  }
+
+  function handleFileChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    file = target.files?.[0] || null;
   }
 </script>
 
 <div class="container">
   <div class="upload-section">
-    <input
-      type="file"
-      on:change={(e) => (file = e.target.files?.[0] || null)}
-    />
+    <input type="file" on:change={handleFileChange} />
     <button on:click={handleUpload}>Encrypt & Upload</button>
   </div>
 
@@ -79,12 +53,12 @@
   <div class="file-list">
     <h2>Encrypted Files</h2>
     <ul>
-      {#each notes as note (note.id)}
+      <!-- {#each notes as note (note.id)}
         <li>
           {note.encrypted_text.substring(0, 20)}...
           <button on:click={() => handleDecrypt(note.id)}>Decrypt</button>
         </li>
-      {/each}
+      {/each} -->
     </ul>
   </div>
 
