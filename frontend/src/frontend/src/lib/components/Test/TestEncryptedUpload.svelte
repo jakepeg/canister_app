@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import * as vetkd from "ic-vetkd-utils";
 
   let file: File | null = null;
   let decryptedContent: Uint8Array | null = null;
