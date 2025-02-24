@@ -1,12 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import * as vetkd from "ic-vetkd-utils/ic_vetkd_utils";
+  import * as vetkd from "ic-vetkd-utils";
   import type {
     AuthStateAuthenticated,
     AuthStateUnauthenticated,
   } from "$lib/services/auth";
+  import { toBytes } from "viem";
+  // import { auth } from "$lib/services/auth";
 
-  let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
+  export let auth: AuthStateAuthenticated;
   let file: File | null = null;
   let decryptedContent: Uint8Array | null = null;
   let error: string | null = null;
@@ -53,35 +55,52 @@
       // 3. Understand where to get derivation_id (it was suggested to use the caller)
 
       // Part 1
-
       // Gernearte a random seed
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
       // Initialize the trasnport secret key
       const transportSecretKey = new vetkd.TransportSecretKey(seed);
 
+      // Get the user
+      const user_id = await auth.actor.who_am_i();
+
+      // Part 2 - Public key
+      // We are getting the public key from the backend
+      const publicKeyResponse = await backend?.vetkd_public_key();
+      if (!transportSecretKey) {
+        console.error("Error getting public key, empty response");
+        return;
+      }
+      if ("Err" in transportSecretKey) {
+        console.error("Error getting public key", transportSecretKey.Err);
+        return;
+      }
+      const publicKey = publicKeyResponse.Ok as Uint8Array;
+
+      // Part3 - Encrypted key
       // We are getting the encrypted key from the backend by passing the public key
-      const response = await auth.actor?.vetkd_encrypted_key(
+      const privateKeyResponse = await auth.actor?.vetkd_encrypted_key(
         transportSecretKey.public_key(),
       );
-      if (!response) {
+      if (!privateKeyResponse) {
         console.error("Error getting encrypted key, empty response");
         return;
       }
-      if ("Err" in response) {
-        console.error("Error getting encrypted key", response.Err);
+      if ("Err" in privateKeyResponse) {
+        console.error("Error getting encrypted key", privateKeyResponse.Err);
         return;
       }
       // We extract it from the an object {key, string} and type cast it to Uint8Array
-      const encryptedKey = response.Ok as Uint8Array;
-      const k_bytes = transportSecretKey.decrypt(); // TODO
+      const encryptedKey = privateKeyResponse.Ok as Uint8Array;
 
-      const encryptedFile = await auth.actor.download_file(fileId, 0n); // Download a file with the specific fileId
+      // Part 4 - Getting the file
+      const encryptedFile = await auth.actor.download_file(fileId, 0n); // Download a file with the specific fileId and 0n means its one chunk
 
+      // Part 5 - Decrypting the file
       try {
         const key = transportSecretKey.decrypt(
           encryptedKey,
           publicKey!,
-          toBytes(address!),
+          toBytes(user_id!),
         );
         const ibeCiphertext = vetkd.IBECiphertext.deserialize(
           encryptedFile.data as Uint8Array,

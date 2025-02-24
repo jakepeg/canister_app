@@ -4,9 +4,9 @@
 </script>
 
 {#if $authStore.state === "uninitialized"}
-  <TestEncryptedUpload />
+  Auth uninitialized
 {:else if $authStore.state === "authenticated"}
-  <TestEncryptedUpload />
+  <TestEncryptedUpload auth={$authStore} />
 {:else}
   Login in dum dum
 {/if}
