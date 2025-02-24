@@ -6,7 +6,7 @@
     AuthStateUnauthenticated,
   } from "$lib/services/auth";
   import { toBytes } from "viem";
-  // import { auth } from "$lib/services/auth";
+  import { enumIs } from "$lib/shared/enums";
 
   export let auth: AuthStateAuthenticated;
   let file: File | null = null;
@@ -31,14 +31,38 @@
       }
       // TODO
       // 1. Encrypt file
+
+      // Part 1
+      // Generate a random seed
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
+      // Get the user_id (e.g. principal)
+      const user_id = auth.authClient.getIdentity().getPrincipal().toString();
+
+      // Part 2 - Transform the file into a format that can be encrypted
+      // Transform the file into an array buffer
       const fileBuffer = await file.arrayBuffer();
+      // Transform the array buffer into an encoded message (Uint8Array)
       const encodedMessage = new Uint8Array(fileBuffer);
+
+      // Part 3 - Public key
+      // We are getting the public key from the backend
+      const publicKeyResponse = await backend?.vetkd_public_key();
+      if (!publicKeyResponse) {
+        console.error("Error getting public key, empty response");
+        return;
+      }
+      if ("Err" in publicKeyResponse) {
+        console.error("Error getting public key", publicKeyResponse.Err);
+        return;
+      }
+      const publicKey = publicKeyResponse.Ok as Uint8Array;
+
+      // Part 4 - Encrypt the file
       const encryptedFile = vetkd.IBECiphertext.encrypt(
-        publickKey, // TODO
-        deriviationId, // TODO
+        publicKey,
+        toBytes(user_id!), // TODO
         fileBuffer, // FIXME
-        seed,
+        seed, // Check if this makes sense
       );
       // 2. Upload encrypted file
       return;
@@ -60,18 +84,18 @@
       // Initialize the trasnport secret key
       const transportSecretKey = new vetkd.TransportSecretKey(seed);
 
-      // Get the user
-      const user_id = await auth.actor.who_am_i();
+      // Get the user_id (e.g. principal)
+      const user_id = auth.authClient.getIdentity().getPrincipal().toString();
 
       // Part 2 - Public key
       // We are getting the public key from the backend
       const publicKeyResponse = await backend?.vetkd_public_key();
-      if (!transportSecretKey) {
+      if (!publicKeyResponse) {
         console.error("Error getting public key, empty response");
         return;
       }
-      if ("Err" in transportSecretKey) {
-        console.error("Error getting public key", transportSecretKey.Err);
+      if ("Err" in publicKeyResponse) {
+        console.error("Error getting public key", publicKeyResponse.Err);
         return;
       }
       const publicKey = publicKeyResponse.Ok as Uint8Array;
