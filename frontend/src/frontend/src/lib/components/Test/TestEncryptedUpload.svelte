@@ -45,7 +45,7 @@
     }
   }
 
-  async function handleDecrypt(noteId: bigint) {
+  async function handleDecrypt(fileId: bigint) {
     try {
       // TODO
       // 1. Decrypt file
@@ -53,14 +53,44 @@
       // 3. Understand where to get derivation_id (it was suggested to use the caller)
 
       // Part 1
-      const seed = window.crypto.getRandomValues(new Uint8Array(32));
-      const secretKey = new vetkd.TransportSecretKey(seed);
-      const publicKey = secretKey.public_key();
-      const k_bytes = secretKey.decrypt();
 
-      // Part 2
-      const desearlizedFile = vetkd.IBECiphertext.deserialize(encryptedFile);
-      const decryptedFile = desearlizedFile.decrypt();
+      // Gernearte a random seed
+      const seed = window.crypto.getRandomValues(new Uint8Array(32));
+      // Initialize the trasnport secret key
+      const transportSecretKey = new vetkd.TransportSecretKey(seed);
+
+      // We are getting the encrypted key from the backend by passing the public key
+      const response = await auth.actor?.vetkd_encrypted_key(
+        transportSecretKey.public_key(),
+      );
+      if (!response) {
+        console.error("Error getting encrypted key, empty response");
+        return;
+      }
+      if ("Err" in response) {
+        console.error("Error getting encrypted key", response.Err);
+        return;
+      }
+      // We extract it from the an object {key, string} and type cast it to Uint8Array
+      const encryptedKey = response.Ok as Uint8Array;
+      const k_bytes = transportSecretKey.decrypt(); // TODO
+
+      const encryptedFile = await auth.actor.download_file(fileId, 0n); // Download a file with the specific fileId
+
+      try {
+        const key = transportSecretKey.decrypt(
+          encryptedKey,
+          publicKey!,
+          toBytes(address!),
+        );
+        const ibeCiphertext = vetkd.IBECiphertext.deserialize(
+          encryptedFile.data as Uint8Array,
+        );
+        const decryptedData = ibeCiphertext.decrypt(key);
+        return { decryptedData, ...encryptedFile };
+      } catch (e) {
+        console.error("Error decrypting transfer", e);
+      }
 
       return;
     } catch (err) {
