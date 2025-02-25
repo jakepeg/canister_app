@@ -7,7 +7,7 @@ use serde_bytes::ByteBuf;
 
 #[update]
 async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, String> {
-    let address = ic_cdk::api::caller(); // Replace with ICP principal of the user
+    let address = ic_cdk::api::caller(); // Replaced ethadress with ICP principal of the user
 
     let args = VetkdDeriveEncryptedKeyArgs {
         key_id: VetkdDeriveEncryptedKeyArgsKeyId {
@@ -15,7 +15,7 @@ async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, 
             curve: VetkdCurve::Bls12381G2,
         },
         derivation_path: vec![],
-        derivation_id: ByteBuf::from(*address.0),
+        derivation_id: ByteBuf::from(address),
         encryption_public_key: ByteBuf::from(encryption_public_key),
     };
 

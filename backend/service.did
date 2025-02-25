@@ -1,7 +1,7 @@
 type file_id = nat64;
 
 type file_status = variant {
-  pending: record { alias: text; requested_at: nat64; }; 
+  pending: record { alias: text; requested_at: nat64; };
   partially_uploaded;
   uploaded: record { uploaded_at: nat64; document_key: blob; };
 };
@@ -105,6 +105,16 @@ type upload_file_request = record {
   num_chunks: nat64;
 };
 
+type VetkdEncryptedKeyResponse = variant {
+  Ok : blob;
+  Err : text;
+};
+
+type VetkdPublicKeyResponse = variant {
+  Ok : blob;
+  Err : text;
+};
+
 service docutrack : {
   hello_world : () -> (text);
 
@@ -112,7 +122,7 @@ service docutrack : {
 
   username_exists: (username: text) -> (bool) query;
 
-  who_am_i: () -> (who_am_i_response) query; 
+  who_am_i: () -> (who_am_i_response) query;
 
   // Requests a file to be uploaded.
   // An alias is returned that can be used to create an upload link.
@@ -139,7 +149,10 @@ service docutrack : {
   share_file_with_users: (user_id: vec principal, file_id: file_id, file_key_encrypted_for_user: vec blob) -> ();
 
   revoke_share: (user_id: principal, file_id: file_id) -> (share_file_response);
-  
-  get_users: () -> (get_users_response) query;
-}
 
+  get_users: () -> (get_users_response) query;
+
+  vetkd_encrypted_key: (blob) -> (VetkdEncryptedKeyResponse);
+
+  vetkd_public_key: () -> (VetkdPublicKeyResponse);
+}
