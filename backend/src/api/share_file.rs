@@ -1,5 +1,5 @@
 use crate::{FileContent, FileSharingResponse, PublicFileMetadata, State};
-use ic_cdk::export::candid::Principal;
+use candid::Principal;
 
 use super::get_requests::{get_allowed_users, get_file_status};
 
@@ -99,7 +99,7 @@ mod test {
         api::{request_file, set_user_info, upload_file},
         get_time, FileStatus, PublicFileMetadata, PublicUser, User,
     };
-    use ic_cdk::export::Principal;
+    use candid::Principal;
 
     #[test]
     fn share_files_test() {

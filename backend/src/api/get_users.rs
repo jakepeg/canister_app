@@ -1,5 +1,5 @@
 use crate::{GetUsersResponse, PublicUser, State};
-use ic_cdk::export::candid::Principal;
+use candid::Principal;
 
 pub fn get_users(state: &State, caller: Principal) -> GetUsersResponse {
     const ANON_USER: Principal = Principal::anonymous();

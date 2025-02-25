@@ -1,5 +1,5 @@
 use crate::{get_time, File, FileContent, FileMetadata, State};
-use ic_cdk::export::Principal;
+use candid::Principal;
 
 use super::user_info::get_user_key;
 

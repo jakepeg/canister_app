@@ -1,5 +1,6 @@
 use crate::{get_time, File, FileContent, FileMetadata, State};
-use ic_cdk::export::{candid::CandidType, Principal};
+use candid::CandidType;
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
