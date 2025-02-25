@@ -49,16 +49,17 @@
 
       // Part 3 - Public key
       // We are getting the public key from the backend
-      const publicKeyResponse = await auth.actor?.vetkd_public_key();
-      if (!publicKeyResponse) {
-        console.error("Error getting public key, empty response");
-        return;
-      }
-      if ("Err" in publicKeyResponse) {
-        console.error("Error getting public key", publicKeyResponse.Err);
-        return;
-      }
-      const publicKey = publicKeyResponse.Ok as Uint8Array;
+      // const publicKeyResponse = await auth.actor?.vetkd_public_key();
+      // if (!publicKeyResponse) {
+      //   console.error("Error getting public key, empty response");
+      //   return;
+      // }
+      // if ("Err" in publicKeyResponse) {
+      //   console.error("Error getting public key", publicKeyResponse.Err);
+      //   return;
+      // }
+      // const publicKey = publicKeyResponse.Ok as Uint8Array;
+      const publicKey = window.crypto.getRandomValues(new Uint8Array(32));
       console.log("publicKey", publicKey);
 
       // Part 4 - Encrypt the file
@@ -68,6 +69,7 @@
         encodedMessage,
         seed, // Check if this makes sense
       );
+      console.log("encryptedFile", encryptedFile);
       // 2. Upload encrypted file
       return;
     } catch (err) {
@@ -93,7 +95,7 @@
 
       // Part 2 - Public key
       // We are getting the public key from the backend
-      const publicKeyResponse = await auth.actor?.vetkd_public_key();
+      const publicKeyResponse = await auth.actor.vetkd_public_key();
       if (!publicKeyResponse) {
         console.error("Error getting public key, empty response");
         return;
@@ -202,13 +204,13 @@
     padding: 0;
   }
 
-  .file-list li {
+  /* .file-list li {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem;
     border-bottom: 1px solid #eee;
-  }
+  } */
 
   .error {
     color: red;
