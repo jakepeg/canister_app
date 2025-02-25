@@ -6,7 +6,6 @@
     AuthStateUnauthenticated,
   } from "$lib/services/auth";
   import { toBytes } from "viem";
-  import { enumIs } from "$lib/shared/enums";
 
   export let auth: AuthStateAuthenticated;
   let file: File | null = null;
@@ -35,14 +34,18 @@
       // Part 1
       // Generate a random seed
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
+      console.log("seed", seed);
       // Get the user_id (e.g. principal)
       const user_id = auth.authClient.getIdentity().getPrincipal().toString();
+      console.log("user_id", user_id);
 
       // Part 2 - Transform the file into a format that can be encrypted
       // Transform the file into an array buffer
       const fileBuffer = await file.arrayBuffer();
+      console.log("fileBuffer", fileBuffer);
       // Transform the array buffer into an encoded message (Uint8Array)
       const encodedMessage = new Uint8Array(fileBuffer);
+      console.log("encodedMessage", encodedMessage);
 
       // Part 3 - Public key
       // We are getting the public key from the backend
@@ -56,12 +59,13 @@
         return;
       }
       const publicKey = publicKeyResponse.Ok as Uint8Array;
+      console.log("publicKey", publicKey);
 
       // Part 4 - Encrypt the file
       const encryptedFile = vetkd.IBECiphertext.encrypt(
         publicKey,
-        toBytes(user_id!), // TODO
-        fileBuffer, // FIXME
+        toBytes(user_id!),
+        encodedMessage,
         seed, // Check if this makes sense
       );
       // 2. Upload encrypted file

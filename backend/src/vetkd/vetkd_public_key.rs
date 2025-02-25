@@ -1,5 +1,5 @@
 use crate::declarations::vetkd_system_api::{
-    chainkey_testing_canister, VetkdCurve, VetkdPublicKeyArgs, VetkdPublicKeyArgsKeyId,
+    vetkd_system_api, VetkdCurve, VetkdPublicKeyArgs, VetkdPublicKeyArgsKeyId,
 };
 use ic_cdk::update;
 
@@ -14,10 +14,7 @@ async fn vetkd_public_key() -> Result<Vec<u8>, String> {
         canister_id: None,
     };
 
-    let (result,) = chainkey_testing_canister
-        .vetkd_public_key(args)
-        .await
-        .unwrap();
+    let (result,) = vetkd_system_api.vetkd_public_key(args).await.unwrap();
 
     Ok(result.public_key.to_vec())
 }

@@ -7,7 +7,7 @@ use serde_bytes::ByteBuf;
 
 #[update]
 async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, String> {
-    let address = get_caller_address().await?; // Replace with ICP principal of the user
+    let address = ic_cdk::api::caller(); // Replace with ICP principal of the user
 
     let args = VetkdDeriveEncryptedKeyArgs {
         key_id: VetkdDeriveEncryptedKeyArgsKeyId {

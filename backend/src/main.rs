@@ -1,9 +1,9 @@
 use backend::api::UploadFileAtomicRequest;
+// use backend::vetkd::{vetkd_encrypted_key, vetkd_public_key};
 use backend::*;
 use candid::Principal;
 use ic_cdk::api::caller;
 use ic_cdk_macros::{post_upgrade, pre_upgrade, query, update};
-mod vetkd;
 
 #[update]
 fn set_user(username: String, public_key: Vec<u8>) -> SetUserResponse {
