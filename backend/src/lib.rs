@@ -12,6 +12,7 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Bound::{Excluded, Included};
 pub use upgrade::{post_upgrade, pre_upgrade};
+pub mod utils;
 
 thread_local! {
     /// Initialize the state randomness with the current time.

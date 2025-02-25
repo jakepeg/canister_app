@@ -46,7 +46,7 @@
 
       // Part 3 - Public key
       // We are getting the public key from the backend
-      const publicKeyResponse = await backend?.vetkd_public_key();
+      const publicKeyResponse = await auth.actor?.vetkd_public_key();
       if (!publicKeyResponse) {
         console.error("Error getting public key, empty response");
         return;
@@ -89,7 +89,7 @@
 
       // Part 2 - Public key
       // We are getting the public key from the backend
-      const publicKeyResponse = await backend?.vetkd_public_key();
+      const publicKeyResponse = await auth.actor?.vetkd_public_key();
       if (!publicKeyResponse) {
         console.error("Error getting public key, empty response");
         return;
