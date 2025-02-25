@@ -16,6 +16,9 @@ const config: UserConfig = {
   resolve: {
     alias: {
       $lib: path.resolve("./src/frontend/src/lib"),
+      "ic-vetkd-utils": path.resolve(
+        "./node_modules/ic-vetkd-utils/ic_vetkd_utils.js",
+      ),
     },
   },
   build: {
@@ -23,7 +26,6 @@ const config: UserConfig = {
     rollupOptions: {},
   },
   optimizeDeps: {
-    exclude: ["ic-vetkd-utils"],
     esbuildOptions: {
       // Node.js global to browser globalThis
       define: {

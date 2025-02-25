@@ -1,16 +1,13 @@
-use crate::{
-    declarations::vetkd_system_api::{
-        chainkey_testing_canister, VetkdCurve, VetkdDeriveEncryptedKeyArgs,
-        VetkdDeriveEncryptedKeyArgsKeyId,
-    },
-    utils::get_caller_address,
+use crate::declarations::vetkd_system_api::{
+    chainkey_testing_canister, VetkdCurve, VetkdDeriveEncryptedKeyArgs,
+    VetkdDeriveEncryptedKeyArgsKeyId,
 };
 use ic_cdk::update;
 use serde_bytes::ByteBuf;
 
 #[update]
 async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, String> {
-    let address = get_caller_address().await?;
+    let address = get_caller_address().await?; // Replace with ICP principal of the user
 
     let args = VetkdDeriveEncryptedKeyArgs {
         key_id: VetkdDeriveEncryptedKeyArgsKeyId {
