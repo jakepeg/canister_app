@@ -1,6 +1,7 @@
 pub use crate::ceil_division;
 use crate::{FileContent, FileData, FileDownloadResponse, State};
-use ic_cdk::export::candid::Principal;
+// use ic_cdk::export::candid::Principal;
+use candid::Principal;
 
 fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse {
     // unwrap is safe because we already know the file exists
@@ -92,7 +93,7 @@ mod test {
         api::{set_user_info, upload_file},
         User,
     };
-    use ic_cdk::export::Principal;
+    use candid::Principal;
 
     #[test]
     fn test_user_not_allowed() {
