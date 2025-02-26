@@ -49,17 +49,16 @@
 
       // Part 3 - Public key
       // We are getting the public key from the backend
-      // const publicKeyResponse = await auth.actor?.vetkd_public_key();
-      // if (!publicKeyResponse) {
-      //   console.error("Error getting public key, empty response");
-      //   return;
-      // }
-      // if ("Err" in publicKeyResponse) {
-      //   console.error("Error getting public key", publicKeyResponse.Err);
-      //   return;
-      // }
-      // const publicKey = publicKeyResponse.Ok as Uint8Array;
-      const publicKey = window.crypto.getRandomValues(new Uint8Array(32));
+      const publicKeyResponse = await auth.actor?.vetkd_public_key();
+      if (!publicKeyResponse) {
+        console.error("Error getting public key, empty response");
+        return;
+      }
+      if ("Err" in publicKeyResponse) {
+        console.error("Error getting public key", publicKeyResponse.Err);
+        return;
+      }
+      const publicKey = publicKeyResponse.Ok as Uint8Array;
       console.log("publicKey", publicKey);
 
       // Part 4 - Encrypt the file

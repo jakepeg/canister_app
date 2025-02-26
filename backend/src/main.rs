@@ -1,5 +1,5 @@
 use backend::api::UploadFileAtomicRequest;
-use backend::vetkd::{vetkd_encrypted_key, vetkd_public_key};
+// use backend::vetkd::{vetkd_encrypted_key, vetkd_public_key};
 use backend::*;
 use candid::Principal;
 use ic_cdk::api::caller;

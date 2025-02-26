@@ -1,6 +1,5 @@
 use crate::declarations::vetkd_system_api::{
-    chainkey_testing_canister, VetkdCurve, VetkdDeriveEncryptedKeyArgs,
-    VetkdDeriveEncryptedKeyArgsKeyId,
+    vetkd_system_api, VetkdCurve, VetkdDeriveEncryptedKeyArgs, VetkdDeriveEncryptedKeyArgsKeyId,
 };
 use ic_cdk::update;
 use serde_bytes::ByteBuf;
@@ -20,7 +19,7 @@ async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, 
         encryption_public_key: ByteBuf::from(encryption_public_key),
     };
 
-    let (result,) = chainkey_testing_canister
+    let (result,) = vetkd_system_api
         .vetkd_derive_encrypted_key(args)
         .await
         .unwrap();
