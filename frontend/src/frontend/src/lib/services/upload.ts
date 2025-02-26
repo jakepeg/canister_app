@@ -6,10 +6,6 @@ import pLimit from "p-limit";
 import { writable } from "svelte/store";
 import type { get_alias_info_response } from "../../../../declarations/backend/backend.did";
 export const CHUNK_SIZE = 2_000_000;
-import {
-  createActor,
-  CryptoService,
-} from "@shipstone-labs/ic-vetkd-notes-client";
 
 export const uploadInProgress = writable(false);
 
@@ -110,13 +106,6 @@ export class UploadService {
           return;
         }
       } else {
-        // shipstone actor
-        // const actor = createActor();
-        // // Create new note and get its ID
-        // const testFileId = await actor.create_note();
-
-        // console.log("fileId for self: ", testFileId);
-
         fileId = await this.actor.upload_file_atomic({
           content: firstChunk,
           owner_key: new Uint8Array(encryptedFileKey),
