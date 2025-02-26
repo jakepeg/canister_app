@@ -47,7 +47,7 @@
         <Dialog.Trigger class={buttonVariants({ variant: "outline" })}
           >Upload</Dialog.Trigger
         >
-        <Dialog.Content class="sm:max-w-[425px]">
+        <Dialog.Content class="sm:max-w-[425px] md:max-w-[725px] blue-border">
           <!-- <Dialog.Header>
             <Dialog.Title>Edit profile</Dialog.Title>
             <Dialog.Description>

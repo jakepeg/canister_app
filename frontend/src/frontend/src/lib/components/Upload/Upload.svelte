@@ -107,7 +107,7 @@
     if (state === "uploading") {
       if (
         !confirm(
-          "You are currently uploading a file. Are you sure you want to leave this page?"
+          "You are currently uploading a file. Are you sure you want to leave this page?",
         )
       ) {
         navigation.cancel();
@@ -254,10 +254,10 @@
         {#if uploadType?.type === "self"}
           <div class="mt-8 flex gap-6">
             <a href="/details?fileId={file_id}" class="btn btn-accent">
-              View your file
+              View file
             </a>
             <button class="btn btn-ghost" on:click={() => reset()}>
-              Upload another file
+              Upload another
             </button>
           </div>
         {/if}
