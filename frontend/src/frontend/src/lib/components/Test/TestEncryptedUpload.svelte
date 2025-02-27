@@ -5,12 +5,21 @@
   import { toBytes } from "viem";
   import pLimit from "p-limit";
   import { enumIs } from "$lib/shared/enums";
-  import type { get_alias_info_response } from "../../../../../declarations/backend/backend.did";
+  import { flatten } from "$lib/shared/flatten";
+  import { formatUploadDate, formatUploadDateShort } from "$lib/shared/dates";
+  import { filesStore } from "$lib/services/files";
+  import type {
+    file_metadata,
+    get_alias_info_response,
+  } from "../../../../../declarations/backend/backend.did";
 
   export let auth: AuthStateAuthenticated;
   let file: File | null = null;
   let decryptedContent: Uint8Array | null = null;
   let error: string | null = null;
+  let selectedFileId: bigint | null = null;
+  let decryptedFileName: string = "";
+  let isDecrypting = false;
 
   const CHUNK_SIZE = 2_000_000;
   const aborted = false;
@@ -35,12 +44,47 @@
         fileName: string;
       };
 
-  onMount(async () => await refreshNotes());
+  type UploadedFile = {
+    name: string;
+    access: string;
+    uploadedAt: string;
+    uploadedAtShort: string;
+    file_id: bigint;
+    metadata: file_metadata;
+  };
 
-  async function refreshNotes() {
+  type State =
+    | {
+        type: "uninitialized";
+      }
+    | {
+        type: "loading";
+      }
+    | {
+        type: "loaded";
+        name: string;
+        dataType: string;
+        uploadDate: string;
+        downloadUrl: string;
+        isOpenShareModal: boolean;
+        originalMetadata: file_metadata;
+      }
+    | {
+        type: "error";
+        error: string;
+      };
+
+  let state: State = {
+    type: "uninitialized",
+  };
+
+  onMount(async () => {
+    await refreshFiles();
+  });
+
+  async function refreshFiles() {
     try {
-      // TODO
-      return;
+      await auth.filesService.reload();
     } catch (err) {
       error = "Failed to load files";
     }
@@ -197,12 +241,15 @@
     await Promise.all(uploadRequests);
   }
 
-  async function handleDecrypt(fileId: bigint) {
+  async function handleDecrypt(fileId: bigint, fileName: string) {
     try {
       // TODO
       // 1. Decrypt file
       // 2. Understand where to get derived_public_key_bytes (is it the public_key method?)
       // 3. Understand where to get derivation_id (it was suggested to use the caller)
+      isDecrypting = true;
+      selectedFileId = fileId;
+      decryptedFileName = fileName || "Unknown file";
 
       // Part 1
       // Gernearte a random seed
@@ -243,6 +290,10 @@
       const encryptedKey = privateKeyResponse.Ok as Uint8Array;
 
       // Part 4 - Getting the file
+      const files = await loadFiles();
+      filesStore.setLoaded(files, false);
+      console.log("Files: ", files);
+
       const encryptedFile = await auth.actor.download_file(fileId, 0n); // Download a file with the specific fileId and 0n means its one chunk
 
       // Part 5 - Decrypting the file
@@ -252,10 +303,13 @@
           publicKey!,
           toBytes(user_id!),
         );
+        console.log("key: ", key);
         const ibeCiphertext = vetkd.IBECiphertext.deserialize(
           encryptedFile.data as Uint8Array,
         );
+        console.log("ibeCiphertext: ", ibeCiphertext);
         const decryptedData = ibeCiphertext.decrypt(key);
+        console.log("decryptedData", decryptedData);
         return { decryptedData, ...encryptedFile };
       } catch (e) {
         console.error("Error decrypting transfer", e);
@@ -267,12 +321,68 @@
     }
   }
 
+  async function loadFiles(): Promise<UploadedFile[]> {
+    const files = flatten(
+      await Promise.all([
+        auth.actor.get_shared_files(),
+        auth.actor.get_requests(),
+      ]),
+    );
+
+    const uploadedFiles: UploadedFile[] = [];
+
+    for (const file of files) {
+      if (enumIs(file.file_status, "uploaded")) {
+        // Determine the sharing status
+        let nShared = file.shared_with ? file.shared_with.length : 0;
+        let accessMessage = "";
+        switch (nShared) {
+          case 0:
+            accessMessage = "Only You";
+            break;
+          case 1:
+            accessMessage = "You & 1 other";
+            break;
+          default:
+            accessMessage = "You & " + nShared + " others";
+        }
+
+        uploadedFiles.push({
+          name: file.file_name,
+          access: accessMessage,
+          uploadedAt: formatUploadDate(file.file_status.uploaded.uploaded_at),
+          uploadedAtShort: formatUploadDateShort(
+            file.file_status.uploaded.uploaded_at,
+          ),
+          file_id: file.file_id,
+          metadata: file,
+        });
+      }
+    }
+
+    return uploadedFiles;
+  }
+
   function handleFileChange(e: Event) {
     const target = e.target as HTMLInputElement;
     const files = target.files;
     if (files && files.length > 0) {
       file = files[0];
     }
+  }
+
+  function downloadDecryptedFile() {
+    if (!decryptedContent) return;
+
+    const blob = new Blob([decryptedContent]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = decryptedFileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 </script>
 
@@ -286,22 +396,92 @@
     <div class="error">{error}</div>
   {/if}
 
-  <div class="file-list">
-    <h2>Encrypted Files</h2>
-    <ul>
-      <!-- {#each notes as note (note.id)}
-        <li>
-          {note.encrypted_text.substring(0, 20)}...
-          <button on:click={() => handleDecrypt(note.id)}>Decrypt</button>
-        </li>
-      {/each} -->
-    </ul>
+  <div class="file-list mb-8">
+    <h2 class="title-2 mb-4">Your Encrypted Files</h2>
+
+    {#if $filesStore.state === "idle" || $filesStore.state === "loading"}
+      <p class="text-center py-4">Loading files...</p>
+    {:else if $filesStore.state === "error"}
+      <p class="text-center py-4 text-red-500">
+        Error loading files: {$filesStore.error}
+      </p>
+    {:else if $filesStore.state === "loaded"}
+      {#if $filesStore.files.length > 0}
+        <div class="overflow-x-auto">
+          <table class="w-full table-auto border-separate border-spacing-y-2">
+            <thead>
+              <tr class="text-left text-gray-500">
+                <th class="px-4 py-2">Name</th>
+                <th class="px-4 py-2">Access</th>
+                <th class="px-4 py-2">Uploaded at</th>
+                <th class="px-4 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each $filesStore.files as file}
+                <tr class="rounded-xl ition-colors">
+                  <td class="px-4 py-3 rounded-l-xl">
+                    {#if file.name}
+                      {file.name}
+                    {:else}
+                      <span class="opacity-50">Unnamed file</span>
+                    {/if}
+                  </td>
+                  <td class="px-4 py-3">{file.access}</td>
+                  <td class="px-4 py-3">{file.uploadedAt}</td>
+                  <td class="px-4 py-3 rounded-r-xl space-x-2">
+                    <button
+                      on:click={() => handleDecrypt(file.file_id, file.name)}
+                      class="px-3 py-1 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors"
+                      disabled={isDecrypting && selectedFileId === file.file_id}
+                    >
+                      {#if isDecrypting && selectedFileId === file.file_id}
+                        Decrypting...
+                      {:else}
+                        Decrypt
+                      {/if}
+                    </button>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      {:else}
+        <p class="text-center py-4 bg-white rounded-xl">
+          You don't have any encrypted files yet.
+        </p>
+      {/if}
+    {/if}
   </div>
 
   {#if decryptedContent}
-    <div class="preview">
-      <h3>Decrypted Content</h3>
-      <pre>{new TextDecoder().decode(decryptedContent)}</pre>
+    <div class="preview bg-white rounded-xl p-4 shadow">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="title-3">Decrypted Content: {decryptedFileName}</h3>
+        <button
+          on:click={downloadDecryptedFile}
+          class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
+        >
+          Download File
+        </button>
+      </div>
+
+      <div class="preview-content max-h-[400px] overflow-auto">
+        {#if decryptedContent.length > 100000}
+          <p class="mb-2 text-gray-500">
+            File is too large to preview. Please download it.
+          </p>
+          <p class="text-sm">Size: {decryptedContent.length} bytes</p>
+        {:else}
+          <pre
+            class="whitespace-pre-wrap word-wrap break-all bg-gray-50 p-4 rounded">{new TextDecoder()
+              .decode(decryptedContent)
+              .substring(0, 10000)}{decryptedContent.length > 10000
+              ? "...(truncated)"
+              : ""}</pre>
+        {/if}
+      </div>
     </div>
   {/if}
 </div>
