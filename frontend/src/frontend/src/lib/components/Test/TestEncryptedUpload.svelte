@@ -8,6 +8,7 @@
   import { flatten } from "$lib/shared/flatten";
   import { formatUploadDate, formatUploadDateShort } from "$lib/shared/dates";
   import { filesStore } from "$lib/services/files";
+  import { unreachable } from "$lib/shared/unreachable";
   import type {
     file_metadata,
     get_alias_info_response,
@@ -20,6 +21,11 @@
   let selectedFileId: bigint | null = null;
   let decryptedFileName: string = "";
   let isDecrypting = false;
+  let decryptProgress = {
+    step: "initializing",
+    totalChunks: 0,
+    currentChunk: 0,
+  };
 
   const CHUNK_SIZE = 2_000_000;
   const aborted = false;
@@ -102,9 +108,13 @@
       // Generate a random seed
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
       console.log("seed", seed);
+
       // Get the user_id (e.g. principal)
-      const user_id = auth.authClient.getIdentity().getPrincipal().toString();
-      console.log("user_id", user_id);
+      const user_id = auth.authClient.getIdentity().getPrincipal();
+      console.log("user_id: ", user_id);
+      const user_id_bytes = user_id.toUint8Array();
+      console.log("user_id: ", user_id.toString());
+      console.log("user_id_bytes: ", user_id_bytes);
 
       // Part 2 - Transform the file into a format that can be encrypted
       // Transform the file into an array buffer
@@ -131,7 +141,7 @@
       // Part 4 - Encrypt the file
       const encryptedFile = vetkd.IBECiphertext.encrypt(
         publicKey,
-        toBytes(user_id!),
+        user_id_bytes,
         encodedMessage,
         seed, // Check if this makes sense
       );
@@ -294,25 +304,137 @@
       filesStore.setLoaded(files, false);
       console.log("Files: ", files);
 
-      const encryptedFile = await auth.actor.download_file(fileId, 0n); // Download a file with the specific fileId and 0n means its one chunk
+      // Start downloading
+      decryptProgress = {
+        ...decryptProgress,
+        step: "downloading",
+      };
 
-      // Part 5 - Decrypting the file
-      try {
-        const key = transportSecretKey.decrypt(
-          encryptedKey,
-          publicKey!,
-          toBytes(user_id!),
-        );
-        console.log("key: ", key);
-        const ibeCiphertext = vetkd.IBECiphertext.deserialize(
-          encryptedFile.data as Uint8Array,
-        );
-        console.log("ibeCiphertext: ", ibeCiphertext);
-        const decryptedData = ibeCiphertext.decrypt(key);
-        console.log("decryptedData", decryptedData);
-        return { decryptedData, ...encryptedFile };
-      } catch (e) {
-        console.error("Error decrypting transfer", e);
+      // Download the first chunk
+      let downloadedFile = await auth.actor.download_file(fileId, 0n);
+      console.log("downloadedFile: ", downloadedFile);
+
+      if (enumIs(downloadedFile, "found_file")) {
+        const totalChunks = Number(downloadedFile.found_file.num_chunks);
+        decryptProgress = {
+          ...decryptProgress,
+          totalChunks,
+          currentChunk: 1,
+        };
+
+        // Download additional chunks if needed
+        for (let i = 1; i < downloadedFile.found_file.num_chunks; i++) {
+          const downloadedChunk = await auth.actor.download_file(
+            fileId,
+            BigInt(i),
+          );
+
+          if (enumIs(downloadedChunk, "found_file")) {
+            decryptProgress = {
+              ...decryptProgress,
+              currentChunk: i + 1,
+            };
+
+            const chunk = downloadedChunk.found_file.contents;
+
+            // Merge chunks
+            const mergedArray = new Uint8Array(
+              downloadedFile.found_file.contents.length + chunk.length,
+            );
+            mergedArray.set(downloadedFile.found_file.contents, 0);
+            mergedArray.set(chunk, downloadedFile.found_file.contents.length);
+
+            downloadedFile.found_file.contents = mergedArray;
+          } else if (enumIs(downloadedChunk, "not_found_file")) {
+            throw new Error("Chunk not found");
+          } else if (enumIs(downloadedChunk, "permission_error")) {
+            throw new Error(
+              "Permission error: You don't have access to this file",
+            );
+          }
+        }
+
+        // Start decryption
+        decryptProgress = {
+          ...decryptProgress,
+          step: "decrypting",
+        };
+
+        try {
+          // Generate a random seed
+          const seed = window.crypto.getRandomValues(new Uint8Array(32));
+          // Initialize the transport secret key
+          const transportSecretKey = new vetkd.TransportSecretKey(seed);
+          console.log("transportSecretKey: ", transportSecretKey);
+
+          // Get the user_id (principal)
+          const user_id = auth.authClient.getIdentity().getPrincipal();
+          console.log("user_id: ", user_id);
+          const user_id_bytes = user_id.toUint8Array();
+          console.log("user_id: ", user_id.toString());
+          console.log("user_id_bytes: ", user_id_bytes);
+
+          // Get public key from the backend
+          const publicKeyResponse = await auth.actor.vetkd_public_key();
+          if (!publicKeyResponse) {
+            throw new Error("Error getting public key: empty response");
+          }
+          if ("Err" in publicKeyResponse) {
+            throw new Error(
+              `Error getting public key: ${publicKeyResponse.Err}`,
+            );
+          }
+          const publicKey = publicKeyResponse.Ok as Uint8Array;
+          console.log("publicKey: ", publicKey);
+
+          // Get encrypted key from the backend
+          const privateKeyResponse = await auth.actor?.vetkd_encrypted_key(
+            transportSecretKey.public_key(),
+          );
+          if (!privateKeyResponse) {
+            throw new Error("Error getting encrypted key: empty response");
+          }
+          if ("Err" in privateKeyResponse) {
+            throw new Error(
+              `Error getting encrypted key: ${privateKeyResponse.Err}`,
+            );
+          }
+          const encryptedKey = privateKeyResponse.Ok as Uint8Array;
+          console.log("encryptedKey: ", encryptedKey);
+
+          // Decrypt the file
+          const key = transportSecretKey.decrypt(
+            encryptedKey,
+            publicKey,
+            user_id_bytes, // Tis could be the issue
+          );
+          console.log("key: ", key);
+
+          const ibeCiphertext = vetkd.IBECiphertext.deserialize(
+            downloadedFile.found_file.contents as Uint8Array,
+          );
+          console.log("ibeCiphertext: ", ibeCiphertext);
+
+          const decryptedData = ibeCiphertext.decrypt(key);
+          console.log("decryptedData: ", decryptedData);
+          decryptedContent = decryptedData;
+          console.log("decryptedContent: ", decryptedContent);
+
+          console.log("File decrypted successfully");
+        } catch (e) {
+          console.error("Decryption error:", e);
+          throw new Error(
+            "Failed to decrypt file. You may be able to access this file with a different browser, as the decryption key is stored in the browser.",
+          );
+        }
+      } else if (enumIs(downloadedFile, "not_found_file")) {
+        throw new Error("File not found");
+      } else if (enumIs(downloadedFile, "permission_error")) {
+        throw new Error("Permission error: You don't have access to this file");
+      } else if (enumIs(downloadedFile, "not_uploaded_file")) {
+        throw new Error("File not uploaded");
+      } else {
+        unreachable(downloadedFile);
       }
 
       return;
@@ -359,6 +481,7 @@
         });
       }
     }
+    console.log("uploadedFiles: ", uploadedFiles);
 
     return uploadedFiles;
   }
