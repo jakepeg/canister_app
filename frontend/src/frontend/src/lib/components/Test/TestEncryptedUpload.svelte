@@ -130,7 +130,7 @@
           fileId = await auth.actor.upload_file_atomic({
             content: firstChunk,
             owner_key: publicKey, // Make sure this is correct
-            name: fileName,
+            name: file.name,
             file_type: dataType,
             num_chunks: BigInt(numChunks),
           });
