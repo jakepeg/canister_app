@@ -1,7 +1,7 @@
 use crate::declarations::vetkd_system_api::{
     vetkd_system_api, VetkdCurve, VetkdDeriveEncryptedKeyArgs, VetkdDeriveEncryptedKeyArgsKeyId,
 };
-use ic_cdk::println;
+// use ic_cdk::println;
 use ic_cdk::update;
 use serde_bytes::ByteBuf;
 

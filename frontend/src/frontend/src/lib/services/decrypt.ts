@@ -143,7 +143,7 @@ export class DecryptService {
           uploadDate: formatUploadDate(
             maybeFile.file_status.uploaded.uploaded_at,
           ),
-          contents: decryptedData.buffer,
+          contents: decryptedData.buffer as ArrayBuffer,
           originalMetadata: maybeFile,
         };
       } catch {
