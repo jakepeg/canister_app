@@ -1,7 +1,8 @@
 use backend::api::UploadFileAtomicRequest;
+// use backend::vetkd::{vetkd_encrypted_key, vetkd_public_key};
 use backend::*;
+use candid::Principal;
 use ic_cdk::api::caller;
-use ic_cdk::export::candid::Principal;
 use ic_cdk_macros::{post_upgrade, pre_upgrade, query, update};
 
 #[update]

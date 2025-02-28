@@ -5,6 +5,11 @@ import { enumIs } from "$lib/shared/enums";
 import { flatten } from "$lib/shared/flatten";
 import { unreachable } from "$lib/shared/unreachable";
 import { writable } from "svelte/store";
+import { VetkdCryptoService } from "../vetkeys/vetkdCrypto";
+import type {
+  AuthStateAuthenticated,
+  AuthStateUnauthenticated,
+} from "$lib/services/auth";
 
 type ProgressStore = {
   step: "initializing" | "downloading" | "decrypting";
@@ -21,7 +26,11 @@ const PROGRESS_INITIAL: ProgressStore = {
 export class DecryptService {
   aborted = false;
   progress = writable<ProgressStore>(PROGRESS_INITIAL);
-  constructor(private actor: ActorType) {}
+  private vetkdCryptoService: VetkdCryptoService;
+
+  constructor(private auth: AuthStateAuthenticated | AuthStateUnauthenticated) {
+    this.vetkdCryptoService = new VetkdCryptoService(auth.actor);
+  }
 
   reset() {
     this.aborted = false;
@@ -42,9 +51,9 @@ export class DecryptService {
 
     let files = flatten(
       await Promise.all([
-        this.actor.get_requests(),
-        this.actor.get_shared_files(),
-      ])
+        this.auth.actor.get_requests(),
+        this.auth.actor.get_shared_files(),
+      ]),
     );
 
     if (this.aborted) return "aborted";
@@ -68,7 +77,10 @@ export class DecryptService {
       step: "downloading",
     }));
 
-    let downloadedFile = await this.actor.download_file(BigInt(fileId), 0n);
+    let downloadedFile = await this.auth.actor.download_file(
+      BigInt(fileId),
+      0n,
+    );
 
     if (this.aborted) return "aborted";
 
@@ -80,9 +92,9 @@ export class DecryptService {
         currentChunk: 1,
       }));
       for (let i = 1; i < downloadedFile.found_file.num_chunks; i++) {
-        const downloadedChunk = await this.actor.download_file(
+        const downloadedChunk = await this.auth.actor.download_file(
           BigInt(fileId),
-          BigInt(i)
+          BigInt(i),
         );
         if (this.aborted) return "aborted";
 
@@ -94,7 +106,7 @@ export class DecryptService {
           const chunk = downloadedChunk.found_file.contents;
 
           const mergedArray = new Uint8Array(
-            downloadedFile.found_file.contents.length + chunk.length
+            downloadedFile.found_file.contents.length + chunk.length,
           );
           mergedArray.set(downloadedFile.found_file.contents, 0);
           mergedArray.set(chunk, downloadedFile.found_file.contents.length);
@@ -113,28 +125,34 @@ export class DecryptService {
 
       let decryptedFile: File;
       try {
-        decryptedFile = await File.fromEncrypted(
-          maybeFile.file_name,
-          (downloadedFile.found_file.contents as Uint8Array).buffer,
-          (downloadedFile.found_file.owner_key as Uint8Array).buffer
+        // Get user principal for decryption
+        const userPrincipal = this.auth.authClient
+          .getIdentity?.()
+          .getPrincipal();
+        const userPrincipalBytes = userPrincipal.toUint8Array();
+
+        // Decrypt the file using vetkd
+        const decryptedData = await this.vetkdCryptoService.decrypt(
+          downloadedFile.found_file.contents as Uint8Array,
+          userPrincipalBytes,
         );
+
+        return {
+          name: maybeFile.file_name,
+          dataType: downloadedFile.found_file.file_type,
+          uploadDate: formatUploadDate(
+            maybeFile.file_status.uploaded.uploaded_at,
+          ),
+          contents: decryptedData.buffer as ArrayBuffer,
+          originalMetadata: maybeFile,
+        };
       } catch {
         throw new Error(
           "Failed to decrypt file: " +
             ((maybeFile.file_name || "unnamed file") +
-              ". You may be able to access this file with a different browser, as the decryption key is stored in the browser.")
+              ". You may be able to access this file with a different browser, as the decryption key is stored in the browser."),
         );
       }
-
-      return {
-        name: decryptedFile.name,
-        dataType: downloadedFile.found_file.file_type,
-        uploadDate: formatUploadDate(
-          maybeFile.file_status.uploaded.uploaded_at
-        ),
-        contents: decryptedFile.contents,
-        originalMetadata: maybeFile,
-      };
     } else if (enumIs(downloadedFile, "not_found_file")) {
       throw new Error("File not found");
     } else if (enumIs(downloadedFile, "permission_error")) {

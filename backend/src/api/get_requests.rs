@@ -1,5 +1,5 @@
 use crate::{FileContent, FileStatus, PublicFileMetadata, PublicUser, State};
-use ic_cdk::export::candid::Principal;
+use candid::Principal;
 
 pub fn get_requests(state: &State, caller: Principal) -> Vec<PublicFileMetadata> {
     match state.file_owners.get(&caller) {
@@ -63,7 +63,7 @@ mod test {
         api::{request_file, set_user_info},
         get_time, User,
     };
-    use ic_cdk::export::Principal;
+    use candid::Principal;
 
     #[test]
     fn get_files_test() {

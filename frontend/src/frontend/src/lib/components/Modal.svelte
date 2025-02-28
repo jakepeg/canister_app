@@ -35,8 +35,8 @@
 {#if isOpen}
   <div
     class="fixed inset-0 bg-black/50 z-20"
-    in:fade={{ duration: 100 }}
-    out:fade={{ duration: 100 }}
+    in:fade|global={{ duration: 100 }}
+    out:fade|global={{ duration: 100 }}
     on:click={() => !mandatory && cancel()}
     aria-label="Close Modal"
     on:keypress={() => {}}
@@ -44,7 +44,7 @@
 
   <div
     class="fixed z-30 bottom-0 left-0 right-0 md:right-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2"
-    transition:fly={$small
+    transition:fly|global={$small
       ? { duration: 200, y: 1000 }
       : { y: 0, duration: 200 }}
   >

@@ -26,6 +26,10 @@
   import ErrorMessage from "../ErrorMessage.svelte";
   import FileSelect from "./FileSelect.svelte";
   import UploadProgress from "./UploadProgress.svelte";
+  import { filesStore } from "$lib/services/files";
+  // import { VetKeyService } from "$lib/vetkeys/encrypt";
+
+  // let vetKeyService: VetKeyService;
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
 
@@ -61,16 +65,22 @@
   }
 
   onMount(async () => {
+    // vetKeyService = new VetKeyService(auth.actor);
+    // uploadService = new UploadService(auth.actor, vetKeyService);
     alias = $page.url.searchParams.get("alias") || "";
     if (alias) {
       const aliasInfo = await auth.actor.get_alias_info(alias);
+
+      console.log("aliasInfo: ", aliasInfo);
 
       if (enumIs(aliasInfo, "Ok")) {
         uploadType = {
           type: "request",
           fileInfo: aliasInfo.Ok,
         };
+        console.log("uploadType: ", uploadType.type);
         file_id = aliasInfo.Ok.file_id;
+        console.log("fileId: ", file_id);
       } else if (enumIs(aliasInfo, "Err")) {
         state = "error";
         if (enumIs(aliasInfo.Err, "not_found")) {
@@ -87,6 +97,7 @@
         type: "self",
         fileName: "",
       };
+      console.log("uploadType: ", uploadType.type);
     } else {
       goto("/");
     }
@@ -124,7 +135,7 @@
   }
 
   async function handleUpload() {
-    uploadService = new UploadService(auth.actor);
+    uploadService = new UploadService(auth);
 
     if (uploadType?.type === "self") {
       uploadType.fileName = fileName;
@@ -142,9 +153,13 @@
         state = "error";
         error = msg;
       },
-      onCompleted: (fileId) => {
+      onCompleted: async (fileId) => {
         state = "uploaded";
         file_id = fileId;
+        // Reload the files list after upload is completed
+        if (auth.state === "authenticated") {
+          await auth.filesService.reload();
+        }
       },
       onChunkUploaded: (_chunkId, chunkSize) => {
         transferSpeed.addTransferredBytes(chunkSize);
@@ -204,7 +219,7 @@
 
     {#if state === "initialized" || state === "uploading" || (state === "error" && !fatalError)}
       <form
-        out:slide={slideOutAnimation}
+        out:slide|global={slideOutAnimation}
         class="flex flex-col gap-4 max-w-lg"
         on:submit|preventDefault={handleUpload}
       >
@@ -229,7 +244,7 @@
       </form>
     {/if}
     {#if state === "uploaded"}
-      <div class="mt-10" in:fade={fadeInAnimation}>
+      <div class="mt-10" in:fade|global={fadeInAnimation}>
         <div class="flex flex-col gap-3">
           <p class="body-1">
             <strong>File name:</strong>

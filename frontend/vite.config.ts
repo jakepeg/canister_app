@@ -7,9 +7,20 @@ import {
   network,
   readCanisterIds,
 } from "./scripts/readCanisterIds";
+import path from "path";
+import wasm from "vite-plugin-wasm";
+import topLevelAwait from "vite-plugin-top-level-await";
 
 const config: UserConfig = {
-  plugins: [sveltekit()],
+  plugins: [sveltekit(), wasm(), topLevelAwait()],
+  resolve: {
+    alias: {
+      $lib: path.resolve("./src/frontend/src/lib"),
+      "ic-vetkd-utils": path.resolve(
+        "./node_modules/ic-vetkd-utils/ic_vetkd_utils.js",
+      ),
+    },
+  },
   build: {
     target: "es2020",
     rollupOptions: {},

@@ -16,7 +16,7 @@
 
   export let auth: AuthStateAuthenticated;
 
-  const decryptService: DecryptService = new DecryptService(auth.actor);
+  const decryptService: DecryptService = new DecryptService(auth);
   const objectUrls = new ObjectUrlManager();
 
   function getFileId() {

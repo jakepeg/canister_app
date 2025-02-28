@@ -121,13 +121,9 @@
         {/each}
       </div>
     {:else}
-      <div
-        class="panel pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6"
-      >
+      <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
         <PlaceholderLogo />
-        <h2 class="title-2 text-text-200">
-          You don't have any upload requests.
-        </h2>
+        <h2 class="">You don't have any upload requests.</h2>
         <div class="pt-4 pb-8">
           <button
             class="btn btn-accent md:w-96"

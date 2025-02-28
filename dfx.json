@@ -1,6 +1,14 @@
 {
   "dfx": "0.17.0",
   "canisters": {
+    "vetkd_system_api": {
+      "candid": "./vetkeys/chainkey_testing_canister.did",
+      "type": "custom",
+      "wasm": "./vetkeys/chainkey_testing_canister.wasm",
+      "declarations": {
+        "output": "src/declarations/vetkd_system_api"
+      }
+    },
     "backend": {
       "type": "rust",
       "package": "backend",
@@ -11,27 +19,21 @@
     },
     "frontend": {
       "build": "pnpm --filter frontend run build",
-      "dependencies": [
-        "backend"
-      ],
-      "source": [
-        "frontend/build/"
-      ],
-      "type": "assets"
-    },
-    "marketing": {
-      "build": "pnpm --filter landing-page run build",
-      "dependencies": [
-        "frontend"
-      ],
-      "source": [
-        "landing-page/dist/"
-      ],
+      "dependencies": ["backend", "internet_identity", "vetkd_system_api"],
+      "source": ["frontend/build/"],
       "type": "assets"
     },
     "internet_identity": {
-      "type": "pull",
-      "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+      "type": "custom",
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+      "shrink": false,
+      "remote": {
+        "candid": "internet_identity.did",
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      }
     }
   },
   "defaults": {
@@ -39,10 +41,11 @@
       "packtool": ""
     }
   },
+  "output_env_file": ".env",
   "networks": {
-    "local": {
-      "bind": "127.0.0.1:8000",
-      "type": "ephemeral"
+    "staging": {
+      "providers": ["https://icp0.io"],
+      "type": "persistent"
     }
   },
   "version": 1

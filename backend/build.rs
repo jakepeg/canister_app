@@ -1,7 +1,9 @@
+use dotenv::dotenv;
+use ic_cdk_bindgen::{Builder, Config};
 use std::env;
 use std::fs;
 use std::io::{self, BufRead, BufReader, BufWriter, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 fn generate(src_path: impl AsRef<Path>, dst_path: impl AsRef<Path>) -> io::Result<()> {
     let src = BufReader::new(fs::File::open(src_path.as_ref())?);
@@ -33,6 +35,33 @@ fn main() -> Result<(), String> {
             err
         )
     })?;
+
+    // VETKD system API integration
+    dotenv().ok();
+
+    let manifest_dir =
+        PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Cannot find manifest dir"));
+
+    let vetkd_system_api_did_path =
+        manifest_dir.join("../src/declarations/vetkd_system_api/vetkd_system_api.did");
+    let vetkd_system_api_did_str = vetkd_system_api_did_path.to_str().expect("Path invalid");
+
+    unsafe {
+        env::set_var(
+            "CANISTER_CANDID_PATH_VETKD_SYSTEM_API",
+            vetkd_system_api_did_str,
+        );
+    }
+
+    // vetkd_system_api configuration
+    let mut vetkd_system_api = Config::new("vetkd_system_api");
+    vetkd_system_api
+        .binding
+        .set_type_attributes("#[derive(Debug, CandidType, Deserialize)]".into());
+
+    let mut builder = Builder::new();
+    builder.add(vetkd_system_api);
+    builder.build(Some(manifest_dir.join("src/declarations")));
 
     Ok(())
 }

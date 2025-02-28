@@ -1,5 +1,6 @@
 <script lang="ts">
   import RequestModal from "../RequestModal.svelte";
+  import Upload from "../Upload/Upload.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
   import { onMount } from "svelte";
   import { filesStore } from "$lib/services/files";
@@ -9,6 +10,9 @@
   import PlaceholderLogo from "../icons/PlaceholderLogo.svelte";
   import ShareModal from "../ShareModal.svelte";
   import type { file_metadata } from "../../../../../declarations/backend/backend.did";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import { authStore } from "$lib/services/auth";
 
   export let auth: AuthStateAuthenticated;
   let isOpenRequestModal = false;
@@ -38,16 +42,38 @@
 {:else if $filesStore.state === "loaded"}
   <div class="flex justify-between items-center mb-6">
     <h1 class="title-1">My Files</h1>
-    {#if $filesStore.files.length > 0}
-      <button
-        class="hidden md:inline-block btn btn-accent"
-        on:click={() => (isOpenRequestModal = true)}
-        >Create new file request</button
-      >
-    {/if}
+    <div>
+      <Dialog.Root>
+        <Dialog.Trigger class={buttonVariants({ variant: "outline" })}
+          >Upload</Dialog.Trigger
+        >
+        <Dialog.Content class="sm:max-w-[425px]">
+          <!-- <Dialog.Header>
+            <Dialog.Title>Edit profile</Dialog.Title>
+            <Dialog.Description>
+              Make changes to your profile here. Click save when you're done.
+            </Dialog.Description>
+          </Dialog.Header> -->
+          <Upload auth={$authStore} />
+
+          <!-- <Dialog.Footer>
+            <Button type="submit">Save changes</Button>
+          </Dialog.Footer> -->
+        </Dialog.Content>
+      </Dialog.Root>
+      {#if $filesStore.files.length > 0}
+        <Button variant="outline" on:click={() => (isOpenRequestModal = true)}
+          >Request</Button
+        >
+        <!-- <button
+          class="hidden md:inline-block btn btn-accent"
+          on:click={() => (isOpenRequestModal = true)}>Request</button
+        > -->
+      {/if}
+    </div>
   </div>
   {#if $filesStore.files.length > 0}
-    <div class="hidden md:block bg-background-200 w-full rounded-2xl px-2">
+    <div class="hidden md:block w-full rounded-2xl px-2">
       <table class="table-auto w-full border-spacing-y-2 border-separate">
         <thead class="">
           <tr class="body-2 text-text-200 text-left">
@@ -60,22 +86,20 @@
         <tbody class="">
           {#each $filesStore.files as file}
             <tr
-              class="hover:drop-shadow-xl cursor-pointer text-text-100"
+              class="hover:drop-shadow-xl cursor-pointer"
               on:click={() => goToDetails(file.file_id)}
             >
-              <td
-                class="pl-4 bg-background-100 rounded-tl-xl rounded-bl-xl body-1"
-              >
+              <td class="pl-4 rounded-tl-xl rounded-bl-xl body-1">
                 {#if file.name}
                   {file.name}
                 {:else}
                   <span class="opacity-50">Unnamed file</span>
                 {/if}
               </td>
-              <td class="bg-background-100 body-1">{file.access}</td>
-              <td class="bg-background-100 body-1">{file.uploadedAt}</td>
+              <td class=" body-1">{file.access}</td>
+              <td class="body-1">{file.uploadedAt}</td>
               <td
-                class="pr-4 bg-background-100 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
+                class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
               >
                 <button
                   on:click|preventDefault|stopPropagation={() =>
@@ -128,11 +152,9 @@
       {/each}
     </div>
   {:else}
-    <div
-      class="panel pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6"
-    >
+    <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
       <PlaceholderLogo />
-      <h2 class="title-2 text-text-200">
+      <h2 class="">
         Even when you have no documents, rest assured, your data is secure.
       </h2>
       <div class="pt-4 pb-8">
