@@ -339,7 +339,7 @@
           const key = transportSecretKey.decrypt(
             encryptedKey,
             publicKey,
-            user_id_bytes, // Tis could be the issue
+            user_id_bytes,
           );
           console.log("key: ", key);
 
