@@ -6,6 +6,7 @@ import pLimit from "p-limit";
 import { writable } from "svelte/store";
 import type { get_alias_info_response } from "../../../../declarations/backend/backend.did";
 export const CHUNK_SIZE = 2_000_000;
+import { VetkdCryptoService } from "../vetkeys/vetkdCrypto";
 
 export const uploadInProgress = writable(false);
 
@@ -21,8 +22,11 @@ export type UploadType =
 
 export class UploadService {
   aborted = false;
+  private vetkdCryptoService: VetkdCryptoService;
 
-  constructor(private actor: ActorType) {}
+  constructor(private actor: ActorType) {
+    this.vetkdCryptoService = new VetkdCryptoService(actor);
+  }
 
   async uploadFile({
     uploadType,

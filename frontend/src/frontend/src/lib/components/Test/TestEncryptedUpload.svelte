@@ -59,31 +59,6 @@
     metadata: file_metadata;
   };
 
-  type State =
-    | {
-        type: "uninitialized";
-      }
-    | {
-        type: "loading";
-      }
-    | {
-        type: "loaded";
-        name: string;
-        dataType: string;
-        uploadDate: string;
-        downloadUrl: string;
-        isOpenShareModal: boolean;
-        originalMetadata: file_metadata;
-      }
-    | {
-        type: "error";
-        error: string;
-      };
-
-  let state: State = {
-    type: "uninitialized",
-  };
-
   onMount(async () => {
     await refreshFiles();
   });
@@ -253,51 +228,9 @@
 
   async function handleDecrypt(fileId: bigint, fileName: string) {
     try {
-      // TODO
-      // 1. Decrypt file
-      // 2. Understand where to get derived_public_key_bytes (is it the public_key method?)
-      // 3. Understand where to get derivation_id (it was suggested to use the caller)
       isDecrypting = true;
       selectedFileId = fileId;
       decryptedFileName = fileName || "Unknown file";
-
-      // Part 1
-      // Gernearte a random seed
-      const seed = window.crypto.getRandomValues(new Uint8Array(32));
-      // Initialize the trasnport secret key
-      const transportSecretKey = new vetkd.TransportSecretKey(seed);
-
-      // Get the user_id (e.g. principal)
-      const user_id = auth.authClient.getIdentity().getPrincipal().toString();
-
-      // Part 2 - Public key
-      // We are getting the public key from the backend
-      const publicKeyResponse = await auth.actor.vetkd_public_key();
-      if (!publicKeyResponse) {
-        console.error("Error getting public key, empty response");
-        return;
-      }
-      if ("Err" in publicKeyResponse) {
-        console.error("Error getting public key", publicKeyResponse.Err);
-        return;
-      }
-      const publicKey = publicKeyResponse.Ok as Uint8Array;
-
-      // Part3 - Encrypted key
-      // We are getting the encrypted key from the backend by passing the public key
-      const privateKeyResponse = await auth.actor?.vetkd_encrypted_key(
-        transportSecretKey.public_key(),
-      );
-      if (!privateKeyResponse) {
-        console.error("Error getting encrypted key, empty response");
-        return;
-      }
-      if ("Err" in privateKeyResponse) {
-        console.error("Error getting encrypted key", privateKeyResponse.Err);
-        return;
-      }
-      // We extract it from the an object {key, string} and type cast it to Uint8Array
-      const encryptedKey = privateKeyResponse.Ok as Uint8Array;
 
       // Part 4 - Getting the file
       const files = await loadFiles();
@@ -622,10 +555,10 @@
     gap: 1rem;
   }
 
-  .file-list ul {
+  /* .file-list ul {
     list-style: none;
     padding: 0;
-  }
+  } */
 
   /* .file-list li {
     display: flex;
