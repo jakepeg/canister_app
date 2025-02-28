@@ -1,6 +1,10 @@
 import crypto from "$lib/crypto";
 import FileTools from "$lib/file";
 import type { ActorType } from "$lib/shared/actor";
+import type {
+  AuthStateAuthenticated,
+  AuthStateUnauthenticated,
+} from "$lib/services/auth";
 import { enumIs } from "$lib/shared/enums";
 import pLimit from "p-limit";
 import { writable } from "svelte/store";
@@ -24,8 +28,8 @@ export class UploadService {
   aborted = false;
   private vetkdCryptoService: VetkdCryptoService;
 
-  constructor(private actor: ActorType) {
-    this.vetkdCryptoService = new VetkdCryptoService(actor);
+  constructor(private auth: AuthStateAuthenticated | AuthStateUnauthenticated) {
+    this.vetkdCryptoService = new VetkdCryptoService(auth.actor);
   }
 
   async uploadFile({
@@ -47,10 +51,19 @@ export class UploadService {
     onError?: (message: string) => void;
     onAborted?: () => void;
   }) {
-    const userPublicKey =
+    // Get user principal for encryption
+    const userId =
       uploadType.type === "request"
-        ? (uploadType.fileInfo.user.public_key as Uint8Array).buffer
-        : new Uint8Array(await crypto.getLocalUserPublicKey());
+        ? uploadType.fileInfo.user.ic_principal
+        : this.auth.authClient.getIdentity?.().getPrincipal();
+
+    const userPrincipalBytes = userId.toUint8Array();
+
+    // Redundant, moving to vetkd
+    // const userPublicKey =
+    //   uploadType.type === "request"
+    //     ? (uploadType.fileInfo.user.public_key as Uint8Array).buffer
+    //     : new Uint8Array(await crypto.getLocalUserPublicKey());
 
     const fileName =
       uploadType.type === "request"
@@ -59,21 +72,30 @@ export class UploadService {
 
     console.log("fileName: ", fileName);
 
+    // Read file as ArrayBuffer
     const fileBytes = await file.arrayBuffer();
-    let fileToEncrypt = FileTools.fromUnencrypted(fileName, fileBytes);
-    console.log("fileToEncrypt done");
 
-    const encryptedFileKey =
-      await fileToEncrypt.getEncryptedFileKey(userPublicKey);
+    // Redundant, moving to vetkd
+    // let fileToEncrypt = FileTools.fromUnencrypted(fileName, fileBytes);
+    // console.log("fileToEncrypt done");
 
-    console.log("encryptedFileKey done");
+    // const encryptedFileKey =
+    //   await fileToEncrypt.getEncryptedFileKey(userPublicKey);
 
-    const encFile = await fileToEncrypt.encrypt();
-    console.log("encFile done");
-    const content = new Uint8Array(encFile);
-    console.log("content done");
+    // console.log("encryptedFileKey done");
 
-    if (content.length > 100 * 1024 * 1024) {
+    // const encFile = await fileToEncrypt.encrypt();
+    // console.log("encFile done");
+    // const content = new Uint8Array(encFile);
+    // console.log("content done");
+
+    onStarted(0); // Show start progress while encrypting
+    const encryptedData = await this.vetkdCryptoService.encrypt(
+      fileBytes,
+      userPrincipalBytes,
+    );
+
+    if (encryptedData.length > 100 * 1024 * 1024) {
       onError(
         "File size is limited to 100MiB in this PoC\n(larger files could be supported in a production version).",
       );
@@ -81,23 +103,30 @@ export class UploadService {
     }
 
     // Split file into chunks of 2MB.
-    const numChunks = Math.ceil(content.length / CHUNK_SIZE);
-    console.log("numChunks done");
+    const numChunks = Math.ceil(encryptedData.length / CHUNK_SIZE);
 
     try {
-      onStarted(content.length);
+      onStarted(encryptedData.length);
       console.log("onStarted done");
 
-      const firstChunk = content.subarray(0, CHUNK_SIZE);
+      const firstChunk = encryptedData.subarray(0, CHUNK_SIZE);
       console.log("firstChunk done");
       let fileId: bigint = 0n;
+
+      // Get the vetkd public key to use as the owner key
+      const publicKeyResponse = await this.auth.actor.vetkd_public_key();
+      if (!publicKeyResponse || "Err" in publicKeyResponse) {
+        throw new Error("Error getting public key");
+      }
+      const publicKey = publicKeyResponse.Ok as Uint8Array;
+
       if (uploadType.type === "request") {
         fileId = uploadType.fileInfo.file_id;
         console.log("fileId for request: ", fileId);
-        const res = await this.actor.upload_file({
+        const res = await this.auth.actor.upload_file({
           file_id: fileId,
           file_content: firstChunk,
-          owner_key: new Uint8Array(encryptedFileKey),
+          owner_key: publicKey,
           file_type: dataType,
           num_chunks: BigInt(numChunks),
         });
@@ -110,9 +139,9 @@ export class UploadService {
           return;
         }
       } else {
-        fileId = await this.actor.upload_file_atomic({
+        fileId = await this.auth.actor.upload_file_atomic({
           content: firstChunk,
-          owner_key: new Uint8Array(encryptedFileKey),
+          owner_key: publicKey,
           name: fileName,
           file_type: dataType,
           num_chunks: BigInt(numChunks),
@@ -127,7 +156,7 @@ export class UploadService {
         return;
       }
 
-      await this.uploadChunks(content, fileId, onChunkUploaded);
+      await this.uploadChunks(encryptedData, fileId, onChunkUploaded);
 
       if (this.aborted) {
         onAborted();
@@ -161,7 +190,7 @@ export class UploadService {
           return;
         }
         const chunk = content.subarray(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-        await this.actor.upload_file_continue({
+        await this.auth.actor.upload_file_continue({
           file_id: fileId,
           contents: chunk,
           chunk_id: BigInt(i),
