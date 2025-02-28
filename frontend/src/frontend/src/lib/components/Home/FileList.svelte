@@ -62,7 +62,7 @@
         </Dialog.Content>
       </Dialog.Root>
       {#if $filesStore.files.length > 0}
-        <Button variant="outline" on:click={() => (isOpenRequestModal = true)}
+        <Button variant="outline" onclick={() => (isOpenRequestModal = true)}
           >Request</Button
         >
         <!-- <button
