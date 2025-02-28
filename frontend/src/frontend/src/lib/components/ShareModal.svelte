@@ -12,6 +12,7 @@
   import type { AuthStateAuthenticated } from "$lib/services/auth";
   import ErrorMessage from "./ErrorMessage.svelte";
   import ComboBox from "./ComboBox.svelte";
+  import { VetkdCryptoService } from "$lib/vetkeys/vetkdCrypto";
 
   export let auth: AuthStateAuthenticated;
 
@@ -75,6 +76,11 @@
 
     loading = true;
     error = "";
+
+    // Create vetkd crypto service
+    // CLAUDE SAID TO PUT THIS HERE, NOT SURE WHY, NEED TO CHECK
+    const vetkdCrypto = new VetkdCryptoService(auth.actor);
+
     // If no expiration date is used, set to -1
     let timestamp = -1;
     if (expirationDate) {
@@ -82,28 +88,33 @@
       timestamp = Date.parse(expirationDate) * 1e6;
     }
 
-    let documentKey: ArrayBuffer;
-    try {
-      documentKey = await crypto.decryptForUser(
-        (fileData.file_status.uploaded.document_key as Uint8Array).buffer,
-      );
-    } catch {
-      error =
-        "Error: unable to access file. You may be able to access this file with a different browser, as the decryption key is stored in the browser.";
-      loading = false;
-      return;
-    }
+    // Redundant, as we are using vetkd BUT NOT SURE IF CURRENT WAY WORKS
+    // SINCE WE ARE NOT PASSING THE DECRYPTION KEY WHEN SHARING
+    // let documentKey: ArrayBuffer;
+    // try {
+    //   documentKey = await crypto.decryptForUser(
+    //     (fileData.file_status.uploaded.document_key as Uint8Array).buffer,
+    //   );
+    // } catch {
+    //   error =
+    //     "Error: unable to access file. You may be able to access this file with a different browser, as the decryption key is stored in the browser.";
+    //   loading = false;
+    //   return;
+    // }
     for (let i = 0; i < newSharedWith.length; i++) {
       try {
-        const encryptedFileKey = await crypto.encryptForUser(
-          documentKey,
-          (newSharedWith[i].public_key as Uint8Array).buffer,
-        );
+        // Get the recipient's principal as bytes
+        // CLAUDE SAID TO PUT THIS HERE, NOT SURE WHY, NEED TO CHECK
+        const recipientPrincipal = newSharedWith[i].ic_principal;
+        const recipientPrincipalBytes = recipientPrincipal.toUint8Array();
+
+        // The file is already encrypted using vetkd, so we need to share it
+        // No need to re-encrypt, just need to tell backend to grant access
         // TODO: add expiration date to backend call
         await auth.actor.share_file(
           newSharedWith[i].ic_principal,
           fileData.file_id,
-          new Uint8Array(encryptedFileKey),
+          new Uint8Array(),
         );
       } catch {
         error = `Error: could not share file with ${newSharedWith[i].username}`;

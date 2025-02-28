@@ -102,7 +102,7 @@ export class FilesService {
       await Promise.all([
         this.actor.get_shared_files(),
         this.actor.get_requests(),
-      ])
+      ]),
     );
 
     const uploadedFiles: UploadedFile[] = [];
@@ -128,7 +128,7 @@ export class FilesService {
           access: accessMessage,
           uploadedAt: formatUploadDate(file.file_status.uploaded.uploaded_at),
           uploadedAtShort: formatUploadDateShort(
-            file.file_status.uploaded.uploaded_at
+            file.file_status.uploaded.uploaded_at,
           ),
           file_id: file.file_id,
           metadata: file,

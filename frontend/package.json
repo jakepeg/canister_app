@@ -56,12 +56,18 @@
   },
   "type": "module",
   "dependencies": {
-    "@dfinity/agent": "^0.15.7",
-    "@dfinity/auth-client": "^0.15.7",
-    "@dfinity/candid": "^0.15.7",
-    "@dfinity/principal": "^0.15.7",
+    "@dfinity/agent": "^2.2.0",
+    "@dfinity/auth-client": "^2.2.0",
+    "@dfinity/candid": "^2.2.0",
+    "@dfinity/identity": "^2.2.0",
+    "@dfinity/principal": "^2.2.0",
     "@macfja/svelte-persistent-store": "^2.4.0",
+    "@shipstone-labs/ic-vetkd-notes-client": "^0.1.13",
+    "ic-vetkd-utils": "file:./ic-vetkd-utils-0.1.0.tgz",
     "mode-watcher": "^0.5.0",
-    "p-limit": "^5.0.0"
+    "p-limit": "^5.0.0",
+    "viem": "^2.23.5",
+    "vite-plugin-top-level-await": "^1.5.0",
+    "vite-plugin-wasm": "^3.4.1"
   }
 }

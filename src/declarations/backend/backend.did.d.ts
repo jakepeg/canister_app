@@ -2,6 +2,10 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type VetkdEncryptedKeyResponse = { 'Ok' : Uint8Array | number[] } |
+  { 'Err' : string };
+export type VetkdPublicKeyResponse = { 'Ok' : Uint8Array | number[] } |
+  { 'Err' : string };
 export type download_file_response = { 'found_file' : found_file } |
   { 'permission_error' : null } |
   { 'not_uploaded_file' : null } |
@@ -96,6 +100,11 @@ export interface _SERVICE {
     undefined
   >,
   'username_exists' : ActorMethod<[string], boolean>,
+  'vetkd_encrypted_key' : ActorMethod<
+    [Uint8Array | number[]],
+    VetkdEncryptedKeyResponse
+  >,
+  'vetkd_public_key' : ActorMethod<[], VetkdPublicKeyResponse>,
   'who_am_i' : ActorMethod<[], who_am_i_response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

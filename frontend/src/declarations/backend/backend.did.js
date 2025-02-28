@@ -13,9 +13,9 @@ export const idlFactory = ({ IDL }) => {
     'not_found_file' : IDL.Null,
   });
   const user = IDL.Record({
+    'username' : IDL.Text,
     'public_key' : IDL.Vec(IDL.Nat8),
     'ic_principal' : IDL.Principal,
-    'username' : IDL.Text,
   });
   const get_alias_info_response = IDL.Variant({
     'Ok' : IDL.Record({
@@ -47,6 +47,10 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'permission_error' : IDL.Null,
   });
+  const set_user_response = IDL.Variant({
+    'ok' : IDL.Null,
+    'username_exists' : IDL.Null,
+  });
   const upload_file_request = IDL.Record({
     'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
@@ -74,16 +78,18 @@ export const idlFactory = ({ IDL }) => {
     'chunk_id' : IDL.Nat64,
     'file_id' : file_id,
   });
+  const VetkdEncryptedKeyResponse = IDL.Variant({
+    'Ok' : IDL.Vec(IDL.Nat8),
+    'Err' : IDL.Text,
+  });
+  const VetkdPublicKeyResponse = IDL.Variant({
+    'Ok' : IDL.Vec(IDL.Nat8),
+    'Err' : IDL.Text,
+  });
   const who_am_i_response = IDL.Variant({
-    'known_user' : IDL.Record({
-      'username' : IDL.Text,
-    }),
+    'known_user' : IDL.Record({ 'username' : IDL.Text }),
     'unknown_user' : IDL.Null,
   });
-  const set_user_response = IDL.Variant({
-      'ok' : IDL.Null,
-      'username_exists' : IDL.Null,
-  }); 
   return IDL.Service({
     'download_file' : IDL.Func(
         [file_id, IDL.Nat64],
@@ -105,7 +111,11 @@ export const idlFactory = ({ IDL }) => {
         [share_file_response],
         [],
       ),
-    'set_user' : IDL.Func([IDL.Text, IDL.Vec(IDL.Nat8)], [set_user_response], []),
+    'set_user' : IDL.Func(
+        [IDL.Text, IDL.Vec(IDL.Nat8)],
+        [set_user_response],
+        [],
+      ),
     'share_file' : IDL.Func(
         [IDL.Principal, file_id, IDL.Vec(IDL.Nat8)],
         [share_file_response],
@@ -124,6 +134,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'upload_file_continue' : IDL.Func([upload_file_continue_request], [], []),
     'username_exists' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'vetkd_encrypted_key' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [VetkdEncryptedKeyResponse],
+        [],
+      ),
+    'vetkd_public_key' : IDL.Func([], [VetkdPublicKeyResponse], []),
     'who_am_i' : IDL.Func([], [who_am_i_response], ['query']),
   });
 };

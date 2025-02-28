@@ -27,6 +27,9 @@
   import FileSelect from "./FileSelect.svelte";
   import UploadProgress from "./UploadProgress.svelte";
   import { filesStore } from "$lib/services/files";
+  // import { VetKeyService } from "$lib/vetkeys/encrypt";
+
+  // let vetKeyService: VetKeyService;
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
 
@@ -62,16 +65,22 @@
   }
 
   onMount(async () => {
+    // vetKeyService = new VetKeyService(auth.actor);
+    // uploadService = new UploadService(auth.actor, vetKeyService);
     alias = $page.url.searchParams.get("alias") || "";
     if (alias) {
       const aliasInfo = await auth.actor.get_alias_info(alias);
+
+      console.log("aliasInfo: ", aliasInfo);
 
       if (enumIs(aliasInfo, "Ok")) {
         uploadType = {
           type: "request",
           fileInfo: aliasInfo.Ok,
         };
+        console.log("uploadType: ", uploadType.type);
         file_id = aliasInfo.Ok.file_id;
+        console.log("fileId: ", file_id);
       } else if (enumIs(aliasInfo, "Err")) {
         state = "error";
         if (enumIs(aliasInfo.Err, "not_found")) {
@@ -88,6 +97,7 @@
         type: "self",
         fileName: "",
       };
+      console.log("uploadType: ", uploadType.type);
     } else {
       goto("/");
     }
@@ -125,7 +135,7 @@
   }
 
   async function handleUpload() {
-    uploadService = new UploadService(auth.actor);
+    uploadService = new UploadService(auth);
 
     if (uploadType?.type === "self") {
       uploadType.fileName = fileName;

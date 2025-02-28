@@ -78,6 +78,14 @@ export const idlFactory = ({ IDL }) => {
     'chunk_id' : IDL.Nat64,
     'file_id' : file_id,
   });
+  const VetkdEncryptedKeyResponse = IDL.Variant({
+    'Ok' : IDL.Vec(IDL.Nat8),
+    'Err' : IDL.Text,
+  });
+  const VetkdPublicKeyResponse = IDL.Variant({
+    'Ok' : IDL.Vec(IDL.Nat8),
+    'Err' : IDL.Text,
+  });
   const who_am_i_response = IDL.Variant({
     'known_user' : IDL.Record({ 'username' : IDL.Text }),
     'unknown_user' : IDL.Null,
@@ -126,6 +134,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'upload_file_continue' : IDL.Func([upload_file_continue_request], [], []),
     'username_exists' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
+    'vetkd_encrypted_key' : IDL.Func(
+        [IDL.Vec(IDL.Nat8)],
+        [VetkdEncryptedKeyResponse],
+        [],
+      ),
+    'vetkd_public_key' : IDL.Func([], [VetkdPublicKeyResponse], []),
     'who_am_i' : IDL.Func([], [who_am_i_response], ['query']),
   });
 };

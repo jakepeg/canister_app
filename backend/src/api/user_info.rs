@@ -1,5 +1,5 @@
 use crate::{State, User};
-use ic_cdk::export::candid::Principal;
+use candid::Principal;
 
 pub fn set_user_info(state: &mut State, caller: Principal, user: User) {
     state.users.insert(caller, user);

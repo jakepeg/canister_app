@@ -65,7 +65,7 @@ mod test {
         api::{request_file, set_user_info, user_info::get_user_key},
         File, FileMetadata, User,
     };
-    use ic_cdk::export::Principal;
+    use candid::Principal;
     use maplit::btreemap;
 
     #[test]

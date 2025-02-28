@@ -3,7 +3,8 @@ pub mod api;
 mod memory;
 mod upgrade;
 use crate::aliases::{AliasGenerator, Randomness};
-use ic_cdk::export::{candid::CandidType, Principal};
+use candid::CandidType;
+use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
 use memory::Memory;
 use serde::{Deserialize, Serialize};
@@ -11,6 +12,8 @@ use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Bound::{Excluded, Included};
 pub use upgrade::{post_upgrade, pre_upgrade};
+mod declarations;
+pub mod vetkd;
 
 thread_local! {
     /// Initialize the state randomness with the current time.

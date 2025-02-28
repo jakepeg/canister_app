@@ -1,6 +1,11 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
+export type VetkdEncryptedKeyResponse = { 'Ok' : Uint8Array | number[] } |
+  { 'Err' : string };
+export type VetkdPublicKeyResponse = { 'Ok' : Uint8Array | number[] } |
+  { 'Err' : string };
 export type download_file_response = { 'found_file' : found_file } |
   { 'permission_error' : null } |
   { 'not_uploaded_file' : null } |
@@ -36,6 +41,8 @@ export type get_alias_info_response = {
   { 'Err' : { 'not_found' : null } };
 export type get_users_response = { 'permission_error' : null } |
   { 'users' : Array<user> };
+export type set_user_response = { 'ok' : null } |
+  { 'username_exists' : null };
 export type share_file_response = { 'ok' : null } |
   { 'permission_error' : null };
 export interface upload_file_atomic_request {
@@ -62,18 +69,12 @@ export interface upload_file_request {
 export type upload_file_response = { 'Ok' : null } |
   { 'Err' : upload_file_error };
 export interface user {
+  'username' : string,
   'public_key' : Uint8Array | number[],
   'ic_principal' : Principal,
-  'username' : string,
 }
-export type who_am_i_response = {
-    'known_user' : { 'username' : string,}
-  } |
+export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
-export type set_user_response = {
-    'ok' : null;
-  } |
-  { 'username_exists' : null };
 export interface _SERVICE {
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
@@ -98,6 +99,13 @@ export interface _SERVICE {
     [upload_file_continue_request],
     undefined
   >,
-  'username_exists' : ActorMethod<[string],boolean>,
+  'username_exists' : ActorMethod<[string], boolean>,
+  'vetkd_encrypted_key' : ActorMethod<
+    [Uint8Array | number[]],
+    VetkdEncryptedKeyResponse
+  >,
+  'vetkd_public_key' : ActorMethod<[], VetkdPublicKeyResponse>,
   'who_am_i' : ActorMethod<[], who_am_i_response>,
 }
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
