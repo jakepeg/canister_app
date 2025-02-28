@@ -47,7 +47,7 @@
 <Sidebar.Root bind:ref {collapsible} {...restProps}>
   <Sidebar.Content class=" py-20">
     <Sidebar.Group>
-      <Sidebar.GroupLabel>Application</Sidebar.GroupLabel>
+      <!-- <Sidebar.GroupLabel>Application</Sidebar.GroupLabel> -->
       <Sidebar.GroupContent>
         <Sidebar.Menu>
           {#each items as item (item.title)}
