@@ -54,7 +54,9 @@
               Make changes to your profile here. Click save when you're done.
             </Dialog.Description>
           </Dialog.Header> -->
-          <Upload auth={$authStore} />
+          {#if $authStore.state === "authenticated" || $authStore.state === "unauthenticated"}
+            <Upload auth={$authStore} />
+          {/if}
 
           <!-- <Dialog.Footer>
             <Button type="submit">Save changes</Button>
