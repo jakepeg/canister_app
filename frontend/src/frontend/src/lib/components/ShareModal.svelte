@@ -105,64 +105,25 @@
       try {
         const recipientPrincipalBytes = recipientPrincipal.toUint8Array();
 
-        // First, we need to download the file content
-        let downloadedFile = await auth.actor.download_file(
-          fileData.file_id,
-          0n,
-        );
-
-        if (!enumIs(downloadedFile, "found_file")) {
-          throw new Error("File not found or access denied");
+        // Get the VetKD public key (master key)
+        const publicKeyResponse = await auth.actor.vetkd_public_key();
+        if (!publicKeyResponse || "Err" in publicKeyResponse) {
+          throw new Error("Error getting public key");
         }
+        const masterPublicKey = publicKeyResponse.Ok;
 
-        // Download all chunks if needed
-        const totalChunks = Number(downloadedFile.found_file.num_chunks);
-        let fileContents = downloadedFile.found_file.contents as Uint8Array;
-
-        for (let i = 1; i < totalChunks; i++) {
-          const downloadedChunk = await auth.actor.download_file(
-            fileData.file_id,
-            BigInt(i),
-          );
-
-          if (enumIs(downloadedChunk, "found_file")) {
-            const chunk = downloadedChunk.found_file.contents;
-
-            // Merge chunks
-            const mergedArray = new Uint8Array(
-              fileContents.length + chunk.length,
-            );
-            mergedArray.set(fileContents, 0);
-            mergedArray.set(chunk, fileContents.length);
-
-            fileContents = mergedArray;
-          } else {
-            throw new Error("Error downloading file chunks");
-          }
-        }
-
-        // Decrypt the file using the owner's principal
-        const decryptedData = await vetkdCryptoService.decrypt(
-          fileContents,
-          ownerPrincipalBytes,
-        );
-
-        // Re-encrypt the file for the recipient
-        const encryptedForRecipient = await vetkdCryptoService.encrypt(
-          decryptedData.buffer as ArrayBuffer,
-          recipientPrincipalBytes,
-        );
-
-        // Store the encrypted data for this recipient
+        // Share the file with the backend system
+        // Note: we provide the master public key as the encrypted key
+        // This allows the backend to know which key was used for encryption
         const shareResult = await auth.actor.share_file(
           recipientPrincipal,
           fileData.file_id,
-          encryptedForRecipient,
+          masterPublicKey,
         );
 
-        // if (enumIs(shareResult, "Err")) {
-        //   throw new Error(`Error sharing file: ${shareResult.Err}`);
-        // }
+        if (enumIs(shareResult, "permission_error")) {
+          throw new Error("Permission denied to share file");
+        }
       } catch {
         error = `Error: could not share file with ${newSharedWith[i].username}`;
         loading = false;
