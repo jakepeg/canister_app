@@ -29,6 +29,12 @@
   let oldSharedWith: user[] = [];
   let newSharedWith: user[] = [];
   let error: string = "";
+  let vetkdCryptoService: VetkdCryptoService;
+
+  onMount(() => {
+    // Initialize vetkd service when component mounts
+    vetkdCryptoService = new VetkdCryptoService(auth.actor);
+  });
 
   function reset() {
     expirationDate = null;
@@ -77,10 +83,6 @@
     loading = true;
     error = "";
 
-    // Create vetkd crypto service
-    // CLAUDE SAID TO PUT THIS HERE, NOT SURE WHY, NEED TO CHECK
-    const vetkdCrypto = new VetkdCryptoService(auth.actor);
-
     // If no expiration date is used, set to -1
     let timestamp = -1;
     if (expirationDate) {
@@ -88,34 +90,79 @@
       timestamp = Date.parse(expirationDate) * 1e6;
     }
 
-    // Redundant, as we are using vetkd BUT NOT SURE IF CURRENT WAY WORKS
-    // SINCE WE ARE NOT PASSING THE DECRYPTION KEY WHEN SHARING
-    // let documentKey: ArrayBuffer;
-    // try {
-    //   documentKey = await crypto.decryptForUser(
-    //     (fileData.file_status.uploaded.document_key as Uint8Array).buffer,
-    //   );
-    // } catch {
-    //   error =
-    //     "Error: unable to access file. You may be able to access this file with a different browser, as the decryption key is stored in the browser.";
-    //   loading = false;
-    //   return;
-    // }
+    // Get the owner's principal (current user)
+    const ownerPrincipal = auth.authClient.getIdentity().getPrincipal();
+    const ownerPrincipalBytes = ownerPrincipal.toUint8Array();
+
     for (let i = 0; i < newSharedWith.length; i++) {
+      const recipientPrincipal = newSharedWith[i].ic_principal;
+
+      // Skip if already shared with this user
+      const alreadyShared = oldSharedWith.some(
+        (user) => user.ic_principal.compareTo(recipientPrincipal) === "eq",
+      );
+      if (alreadyShared) continue;
       try {
-        // Get the recipient's principal as bytes
-        // CLAUDE SAID TO PUT THIS HERE, NOT SURE WHY, NEED TO CHECK
-        const recipientPrincipal = newSharedWith[i].ic_principal;
         const recipientPrincipalBytes = recipientPrincipal.toUint8Array();
 
-        // The file is already encrypted using vetkd, so we need to share it
-        // No need to re-encrypt, just need to tell backend to grant access
-        // TODO: add expiration date to backend call
-        await auth.actor.share_file(
-          newSharedWith[i].ic_principal,
+        // First, we need to download the file content
+        let downloadedFile = await auth.actor.download_file(
           fileData.file_id,
-          new Uint8Array(),
+          0n,
         );
+
+        if (!enumIs(downloadedFile, "found_file")) {
+          throw new Error("File not found or access denied");
+        }
+
+        // Download all chunks if needed
+        const totalChunks = Number(downloadedFile.found_file.num_chunks);
+        let fileContents = downloadedFile.found_file.contents as Uint8Array;
+
+        for (let i = 1; i < totalChunks; i++) {
+          const downloadedChunk = await auth.actor.download_file(
+            fileData.file_id,
+            BigInt(i),
+          );
+
+          if (enumIs(downloadedChunk, "found_file")) {
+            const chunk = downloadedChunk.found_file.contents;
+
+            // Merge chunks
+            const mergedArray = new Uint8Array(
+              fileContents.length + chunk.length,
+            );
+            mergedArray.set(fileContents, 0);
+            mergedArray.set(chunk, fileContents.length);
+
+            fileContents = mergedArray;
+          } else {
+            throw new Error("Error downloading file chunks");
+          }
+        }
+
+        // Decrypt the file using the owner's principal
+        const decryptedData = await vetkdCryptoService.decrypt(
+          fileContents,
+          ownerPrincipalBytes,
+        );
+
+        // Re-encrypt the file for the recipient
+        const encryptedForRecipient = await vetkdCryptoService.encrypt(
+          decryptedData.buffer as ArrayBuffer,
+          recipientPrincipalBytes,
+        );
+
+        // Store the encrypted data for this recipient
+        const shareResult = await auth.actor.share_file(
+          recipientPrincipal,
+          fileData.file_id,
+          encryptedForRecipient,
+        );
+
+        // if (enumIs(shareResult, "Err")) {
+        //   throw new Error(`Error sharing file: ${shareResult.Err}`);
+        // }
       } catch {
         error = `Error: could not share file with ${newSharedWith[i].username}`;
         loading = false;
