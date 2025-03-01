@@ -10,6 +10,9 @@ node_modules
 # dfx
 .dfx/*
 
+# env
+.env
+
 # IDE
 .idea/*
 **/.vscode/*
