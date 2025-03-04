@@ -77,68 +77,75 @@
 
 <div>
   <Modal bind:isOpen title="Create Request" on:cancelled={close}>
-    <form class="w-full md:w-96" on:submit|preventDefault={updateRequestUrl}>
-      <div>
-        <label for="template" class="input-label">Load Template</label>
-        <select
-          id="template"
-          bind:value={selectedTemplate}
-          on:change={() => loadTemplate(selectedTemplate)}
-          class="input"
+    <div class="flex flex-col max-h-[55vh]">
+      <div class="overflow-y-auto flex-1 p-2">
+        <form
+          class="w-full md:w-96"
+          on:submit|preventDefault={updateRequestUrl}
         >
-          <option value="">Select a template</option>
-          {#each savedTemplates as template}
-            <option value={template}>{template}</option>
-          {/each}
-        </select>
-      </div>
-      <div class="mt-3">
-        <label for="requestName" class="input-label">Request Name</label>
-        <input
-          type="text"
-          required
-          class="input"
-          id="requestName"
-          placeholder="Request name"
-          bind:value={requestName}
-          disabled={!!requestLink}
-          readonly={!!requestLink}
-        />
-      </div>
-      <div class="mt-3">
-        <label class="input-label">Documents</label>
-        {#each documents as doc, index}
-          <div class="flex gap-2 items-center mt-2">
+          <div>
+            <label for="template" class="input-label">Load Template</label>
+            <select
+              id="template"
+              bind:value={selectedTemplate}
+              on:change={() => loadTemplate(selectedTemplate)}
+              class="input"
+            >
+              <option value="">Select a template</option>
+              {#each savedTemplates as template}
+                <option value={template}>{template}</option>
+              {/each}
+            </select>
+          </div>
+          <div class="mt-3">
+            <label for="requestName" class="input-label">Request Name</label>
             <input
               type="text"
-              class="input flex-1"
-              placeholder="Document name"
-              bind:value={documents[index]}
+              required
+              class="input"
+              id="requestName"
+              placeholder="Request name"
+              bind:value={requestName}
+              disabled={!!requestLink}
+              readonly={!!requestLink}
             />
-            {#if documents.length > 1}
-              <button
-                type="button"
-                class="btn btn-danger"
-                on:click={() => removeDocument(index)}>✖</button
-              >
-            {/if}
           </div>
-        {/each}
-        <button
-          type="button"
-          class="btn btn-secondary mt-2"
-          on:click={addDocument}>+ Add Document</button
-        >
+          <div class="mt-3">
+            <label class="input-label">Documents</label>
+            {#each documents as doc, index}
+              <div class="flex gap-2 items-center mt-2">
+                <input
+                  type="text"
+                  class="input flex-1"
+                  placeholder="Document name"
+                  bind:value={documents[index]}
+                />
+                {#if documents.length > 1}
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    on:click={() => removeDocument(index)}>✖</button
+                  >
+                {/if}
+              </div>
+            {/each}
+            <button
+              type="button"
+              class="btn btn-secondary mt-2"
+              on:click={addDocument}>+ Add Document</button
+            >
+          </div>
+          <div class="mt-3 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="saveTemplate"
+              bind:checked={saveAsTemplate}
+            />
+            <label for="saveTemplate">Save as Template</label>
+          </div>
+        </form>
       </div>
-      <div class="mt-3 flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="saveTemplate"
-          bind:checked={saveAsTemplate}
-        />
-        <label for="saveTemplate">Save as Template</label>
-      </div>
-      <div class="mt-10">
+      <div class="p-4 border-t bg-white">
         {#if loading}
           <button type="submit" class="btn btn-accent btn-full" disabled
             >Generating link...</button
@@ -148,11 +155,13 @@
             >Request sent, close this window</button
           >
         {:else}
-          <button type="submit" class="btn btn-accent btn-full"
-            >Generate link</button
+          <button
+            type="submit"
+            class="btn btn-accent btn-full"
+            on:click={updateRequestUrl}>Generate link</button
           >
         {/if}
       </div>
-    </form>
+    </div>
   </Modal>
 </div>
