@@ -32,7 +32,8 @@ pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut Stat
                     num_chunks,
                     file_type,
                     owner_key,
-                    shared_keys,
+                    // Remove shared_keys as it's no longer needed
+                    // shared_keys,
                 } => {
                     // Add the chunk to the partially uploaded file.
                     assert!(chunk_id < num_chunks, "invalid chunk id");
@@ -51,7 +52,8 @@ pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut Stat
                         FileContent::Uploaded {
                             file_type,
                             owner_key,
-                            shared_keys,
+                            // Remove shared_keys as it's no longer needed
+                            // shared_keys,
                             num_chunks,
                         }
                     } else {
@@ -59,7 +61,8 @@ pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut Stat
                             num_chunks,
                             file_type,
                             owner_key,
-                            shared_keys,
+                            // Remove shared_keys as it's no longer needed
+                            // shared_keys
                         }
                     }
                 }
@@ -83,7 +86,8 @@ mod test {
     use crate::{api::set_user_info, get_time, File, FileMetadata, User};
     use candid::Principal;
     use maplit::btreemap;
-    use std::collections::BTreeMap;
+    // Not used as we aren't storing encrypted_keys while sharing anymore
+    // use std::collections::BTreeMap;
 
     #[test]
     fn chunked_upload() {
@@ -127,7 +131,8 @@ mod test {
                         num_chunks: 3,
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new()
+                        // Remove shared_keys as it's no longer needed
+                        // shared_keys: BTreeMap::new()
                     }
                 }
             }
@@ -161,7 +166,8 @@ mod test {
                         num_chunks: 3,
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new()
+                        // Remove shared_keys as it's no longer needed
+                        // shared_keys: BTreeMap::new()
                     }
                 }
             }
@@ -195,7 +201,8 @@ mod test {
                     content: FileContent::Uploaded {
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new(),
+                        // Remove shared_keys as it's no longer needed
+                        // shared_keys: BTreeMap::new(),
                         num_chunks: 3
                     }
                 }
