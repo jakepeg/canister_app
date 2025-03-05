@@ -64,7 +64,8 @@ pub enum FileStatus {
     #[serde(rename = "uploaded")]
     Uploaded {
         uploaded_at: u64,
-        document_key: Vec<u8>,
+        // No document_key needed here as we moved to vertkeys
+        // document_key: Vec<u8>,
     },
 }
 

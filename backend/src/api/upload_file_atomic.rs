@@ -28,7 +28,7 @@ pub fn upload_file_atomic(
         FileContent::Uploaded {
             num_chunks: request.num_chunks,
             file_type: request.file_type,
-            owner_key: request.owner_key,
+            // owner_key: request.owner_key,
             // Remove shared_keys as it's no longer needed
             // shared_keys: BTreeMap::new(),
         }
@@ -37,7 +37,7 @@ pub fn upload_file_atomic(
         FileContent::PartiallyUploaded {
             num_chunks: request.num_chunks,
             file_type: request.file_type,
-            owner_key: request.owner_key,
+            // owner_key: request.owner_key,
             // Remove shared_keys as it's no longer needed
             // shared_keys: BTreeMap::new(),
         }
@@ -123,7 +123,7 @@ mod test {
                     },
                     content: FileContent::Uploaded {
                         file_type: "image/jpeg".to_string(),
-                        owner_key: vec![1,2,3],
+                        // owner_key: vec![1,2,3],
                         // Remove shared_keys as it's no longer needed
                         // shared_keys: BTreeMap::new(),
                         num_chunks: 1,

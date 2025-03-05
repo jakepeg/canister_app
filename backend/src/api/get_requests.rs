@@ -47,11 +47,10 @@ pub fn get_file_status(state: &State, file_id: u64) -> FileStatus {
             requested_at: file.metadata.requested_at,
         },
         FileContent::PartiallyUploaded { .. } => FileStatus::PartiallyUploaded,
-        FileContent::Uploaded {
-            owner_key: own_key, ..
-        } => FileStatus::Uploaded {
+        FileContent::Uploaded { .. } => FileStatus::Uploaded {
             uploaded_at: file.metadata.uploaded_at.unwrap(),
-            document_key: own_key.clone(),
+            // No document_key needed here
+            // document_key: own_key.clone(),
         },
     }
 }

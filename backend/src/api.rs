@@ -31,7 +31,7 @@ pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut Stat
                 FileContent::PartiallyUploaded {
                     num_chunks,
                     file_type,
-                    owner_key,
+                    // owner_key,
                     // Remove shared_keys as it's no longer needed
                     // shared_keys,
                 } => {
@@ -51,7 +51,7 @@ pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut Stat
                         // The file is complete. Assemble the file.
                         FileContent::Uploaded {
                             file_type,
-                            owner_key,
+                            // owner_key,
                             // Remove shared_keys as it's no longer needed
                             // shared_keys,
                             num_chunks,
@@ -60,7 +60,7 @@ pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut Stat
                         FileContent::PartiallyUploaded {
                             num_chunks,
                             file_type,
-                            owner_key,
+                            // owner_key,
                             // Remove shared_keys as it's no longer needed
                             // shared_keys
                         }
@@ -130,7 +130,7 @@ mod test {
                     content: FileContent::PartiallyUploaded {
                         num_chunks: 3,
                         file_type: "image/jpeg".to_string(),
-                        owner_key: vec![1,2,3],
+                        // owner_key: vec![1,2,3],
                         // Remove shared_keys as it's no longer needed
                         // shared_keys: BTreeMap::new()
                     }
@@ -165,7 +165,7 @@ mod test {
                     content: FileContent::PartiallyUploaded {
                         num_chunks: 3,
                         file_type: "image/jpeg".to_string(),
-                        owner_key: vec![1,2,3],
+                        // owner_key: vec![1,2,3],
                         // Remove shared_keys as it's no longer needed
                         // shared_keys: BTreeMap::new()
                     }
@@ -200,7 +200,7 @@ mod test {
                     },
                     content: FileContent::Uploaded {
                         file_type: "image/jpeg".to_string(),
-                        owner_key: vec![1,2,3],
+                        // owner_key: vec![1,2,3],
                         // Remove shared_keys as it's no longer needed
                         // shared_keys: BTreeMap::new(),
                         num_chunks: 3

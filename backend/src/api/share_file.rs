@@ -181,7 +181,8 @@ mod test {
                     file_name: "request".to_string(),
                     file_status: FileStatus::Uploaded {
                         uploaded_at: get_time(),
-                        document_key: vec![1, 2, 3],
+                        // Not needed as the user can derive their vetkey so we don't need to store it
+                        // document_key: vec![1, 2, 3],
                     },
                     shared_with: vec![PublicUser {
                         username: "John".to_string(),
@@ -194,7 +195,8 @@ mod test {
                     file_name: "request3".to_string(),
                     file_status: FileStatus::Uploaded {
                         uploaded_at: get_time(),
-                        document_key: vec![1, 2, 3],
+                        // Not needed as the user can derive their vetkey so we don't need to store it
+                        // document_key: vec![1, 2, 3],
                     },
                     shared_with: vec![PublicUser {
                         username: "John".to_string(),
@@ -319,7 +321,8 @@ mod test {
                 file_name: "request3".to_string(),
                 file_status: FileStatus::Uploaded {
                     uploaded_at: get_time(),
-                    document_key: vec![1, 2, 3],
+                    // Not needed as the user can derive their vetkey so we don't need to store it
+                    // document_key: vec![1, 2, 3],
                 },
                 shared_with: vec![PublicUser {
                     username: "John".to_string(),
