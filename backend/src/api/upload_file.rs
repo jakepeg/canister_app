@@ -6,7 +6,7 @@ pub fn upload_file(
     file_id: u64,
     contents: Vec<u8>,
     file_type: String,
-    owner_key: Vec<u8>,
+    _owner_key: Vec<u8>,
     num_chunks: u64,
     state: &mut State,
 ) -> Result<(), UploadFileError> {
@@ -25,7 +25,8 @@ pub fn upload_file(
             if num_chunks == 1 {
                 file.content = FileContent::Uploaded {
                     file_type,
-                    owner_key,
+                    // No need for owner_key or shared_keys
+                    // _owner_key,
                     // Remove shared_keys as it's no longer needed
                     // shared_keys,
                     num_chunks,
@@ -33,7 +34,8 @@ pub fn upload_file(
             } else {
                 file.content = FileContent::PartiallyUploaded {
                     file_type,
-                    owner_key,
+                    // No need for owner_key or shared_keys
+                    // owner_key,
                     // Remove shared_keys as it's no longer needed
                     // shared_keys,
                     num_chunks,
@@ -116,7 +118,8 @@ mod test {
                     },
                     content: FileContent::Uploaded {
                         file_type: "jpeg".to_string(),
-                        owner_key: vec![1,2,3],
+                        // No need for owner_key or shared_keys
+                        // owner_key: vec![1,2,3],
                         // Remove shared_keys as it's no longer needed
                         // shared_keys: BTreeMap::new(),
                         num_chunks: 1,
