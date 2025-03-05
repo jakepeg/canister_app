@@ -1,5 +1,6 @@
 use crate::{get_time, FileContent, State, UploadFileError};
-use std::collections::BTreeMap;
+// Not used as we aren't storing encrypted_keys while sharing anymore
+// use std::collections::BTreeMap;
 
 pub fn upload_file(
     file_id: u64,
@@ -15,7 +16,8 @@ pub fn upload_file(
         None => return Err(UploadFileError::NotRequested),
     };
 
-    let shared_keys = BTreeMap::new();
+    // Remove shared_keys as it's no longer needed
+    // let shared_keys = BTreeMap::new();
     // Retrieve the alias associated with the file.
     let alias = match file.content {
         FileContent::Pending { ref alias } => {
@@ -24,14 +26,16 @@ pub fn upload_file(
                 file.content = FileContent::Uploaded {
                     file_type,
                     owner_key,
-                    shared_keys,
+                    // Remove shared_keys as it's no longer needed
+                    // shared_keys,
                     num_chunks,
                 };
             } else {
                 file.content = FileContent::PartiallyUploaded {
                     file_type,
                     owner_key,
-                    shared_keys,
+                    // Remove shared_keys as it's no longer needed
+                    // shared_keys,
                     num_chunks,
                 };
             }
@@ -113,7 +117,8 @@ mod test {
                     content: FileContent::Uploaded {
                         file_type: "jpeg".to_string(),
                         owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new(),
+                        // Remove shared_keys as it's no longer needed
+                        // shared_keys: BTreeMap::new(),
                         num_chunks: 1,
                     }
                 }
