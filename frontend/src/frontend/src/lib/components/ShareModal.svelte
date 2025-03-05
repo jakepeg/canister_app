@@ -112,9 +112,6 @@
         }
         const masterPublicKey = publicKeyResponse.Ok;
 
-        // Share the file with the backend system
-        // Note: we provide the master public key as the encrypted key
-        // This allows the backend to know which key was used for encryption
         const shareResult = await auth.actor.share_file(
           recipientPrincipal,
           fileData.file_id,

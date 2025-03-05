@@ -8,7 +8,8 @@ pub fn share_file(
     caller: Principal,
     sharing_with: Principal,
     file_id: u64,
-    file_key_encrypted_for_user: Vec<u8>,
+    // Remove the file_key_encrypted_for_user parameter as it's not needed
+    // file_key_encrypted_for_user: Vec<u8>,
 ) -> FileSharingResponse {
     if !can_share(state, caller, file_id) {
         FileSharingResponse::PermissionError
@@ -18,7 +19,8 @@ pub fn share_file(
             FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
                 FileSharingResponse::PendingError
             }
-            FileContent::Uploaded { shared_keys, .. } => {
+            FileContent::Uploaded { .. } => {
+                // Simply add the file to the shared files list
                 let file_shares = state
                     .file_shares
                     .entry(sharing_with)
@@ -26,7 +28,8 @@ pub fn share_file(
 
                 if !file_shares.contains(&file_id) {
                     file_shares.push(file_id);
-                    shared_keys.insert(sharing_with, file_key_encrypted_for_user);
+                    // No need to store an encrypted key
+                    // shared_keys.insert(sharing_with, file_key_encrypted_for_user);
                 }
 
                 FileSharingResponse::Ok
@@ -60,8 +63,9 @@ pub fn revoke_share(
                     FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
                         FileSharingResponse::PendingError
                     }
-                    FileContent::Uploaded { shared_keys, .. } => {
-                        shared_keys.remove(&sharing_with);
+                    FileContent::Uploaded { .. } => {
+                        // No need to remove an encrypted key since we weren't storing it in the first place
+                        // shared_keys.remove(&sharing_with);
 
                         FileSharingResponse::Ok
                     }
@@ -146,7 +150,8 @@ mod test {
             Principal::anonymous(),
             Principal::from_slice(&[0, 1, 2]),
             0,
-            vec![1, 1, 1],
+            // No need to store an encrypted key
+            // vec![1, 1, 1],
         );
         // Upload a file with file ID 2
         let _alias2 = upload_file(
@@ -163,7 +168,8 @@ mod test {
             Principal::anonymous(),
             Principal::from_slice(&[0, 1, 2]),
             2,
-            vec![2, 2, 2],
+            // No need to store an encrypted key
+            // vec![2, 2, 2],
         );
 
         // check if both files are shared correctly
@@ -223,7 +229,8 @@ mod test {
                 Principal::anonymous(),
                 Principal::from_slice(&[0, 1, 2]),
                 2,
-                vec![1, 2, 3],
+                // No need to store an encrypted key
+                // vec![1, 2, 3],
             ),
             FileSharingResponse::PermissionError
         );
@@ -274,7 +281,8 @@ mod test {
             Principal::anonymous(),
             Principal::from_slice(&[0, 1, 2]),
             0,
-            vec![1, 2, 3],
+            // No need to store an encrypted key
+            // vec![1, 2, 3],
         );
         // Upload a file with file ID of 2.
         let _alias2 = upload_file(
@@ -291,7 +299,8 @@ mod test {
             Principal::anonymous(),
             Principal::from_slice(&[0, 1, 2]),
             2,
-            vec![1, 2, 3],
+            // No need to store an encrypted key
+            // vec![1, 2, 3],
         );
 
         // revoke share for file index 0
@@ -371,7 +380,8 @@ mod test {
             Principal::anonymous(),
             Principal::from_slice(&[0, 1, 2]),
             0,
-            vec![1, 2, 3],
+            // No need to store an encrypted key
+            // vec![1, 2, 3],
         );
 
         // revoke share with user who was not shared with should not work

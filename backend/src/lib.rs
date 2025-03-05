@@ -104,14 +104,16 @@ pub enum FileContent {
     Uploaded {
         num_chunks: u64,
         file_type: String,
-        owner_key: Vec<u8>,
-        shared_keys: BTreeMap<Principal, Vec<u8>>,
+        owner_key: Vec<u8>, // VetKD public key
+                            // No need for shared_keys map as we are moving to vetkeys
+                            // shared_keys: BTreeMap<Principal, Vec<u8>>,
     },
     PartiallyUploaded {
         num_chunks: u64,
         file_type: String,
-        owner_key: Vec<u8>,
-        shared_keys: BTreeMap<Principal, Vec<u8>>,
+        owner_key: Vec<u8>, // VetKD public key
+                            // No need for shared_keys map as we are moving to vetkeys
+                            // shared_keys: BTreeMap<Principal, Vec<u8>>,
     },
 }
 
