@@ -2,7 +2,8 @@ use crate::{get_time, File, FileContent, FileMetadata, State};
 use candid::CandidType;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+// Not used as we aren't storing encrypted_keys while sharing anymore
+// use std::collections::BTreeMap;
 
 use super::user_info::get_user_key;
 
@@ -28,7 +29,8 @@ pub fn upload_file_atomic(
             num_chunks: request.num_chunks,
             file_type: request.file_type,
             owner_key: request.owner_key,
-            shared_keys: BTreeMap::new(),
+            // Remove shared_keys as it's no longer needed
+            // shared_keys: BTreeMap::new(),
         }
     } else {
         // File will be uploaded in multiple chunks.
@@ -36,7 +38,8 @@ pub fn upload_file_atomic(
             num_chunks: request.num_chunks,
             file_type: request.file_type,
             owner_key: request.owner_key,
-            shared_keys: BTreeMap::new(),
+            // Remove shared_keys as it's no longer needed
+            // shared_keys: BTreeMap::new(),
         }
     };
 
@@ -121,7 +124,8 @@ mod test {
                     content: FileContent::Uploaded {
                         file_type: "image/jpeg".to_string(),
                         owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new(),
+                        // Remove shared_keys as it's no longer needed
+                        // shared_keys: BTreeMap::new(),
                         num_chunks: 1,
                     }
                 }
