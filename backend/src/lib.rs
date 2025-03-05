@@ -121,7 +121,8 @@ pub enum FileContent {
 pub struct FileData {
     contents: Vec<u8>,
     file_type: String,
-    owner_key: Vec<u8>,
+    // Remove owner_key field as it's not needed with VetKD
+    // owner_key: Vec<u8>,
     num_chunks: u64,
 }
 
