@@ -32,7 +32,7 @@ fn get_shared_file_data(
     s: &State,
     file_id: u64,
     chunk_id: u64,
-    // user: Principal,
+    user: Principal,
 ) -> FileDownloadResponse {
     // unwrap is safe because we already know the file exists
     let this_file = s.file_data.get(&file_id).unwrap();
