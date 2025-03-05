@@ -102,7 +102,7 @@ fn share_file_with_users(
     file_key_encrypted_for_user: Vec<Vec<u8>>,
 ) {
     with_state_mut(|s| {
-        for (id, key) in user_id.iter().zip(file_key_encrypted_for_user.iter()) {
+        for (id, _key) in user_id.iter().zip(file_key_encrypted_for_user.iter()) {
             backend::api::share_file(s, caller(), *id, file_id);
         }
     });

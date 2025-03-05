@@ -2,7 +2,6 @@ export const idlFactory = ({ IDL }) => {
   const file_id = IDL.Nat64;
   const found_file = IDL.Record({
     'contents' : IDL.Vec(IDL.Nat8),
-    'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
     'num_chunks' : IDL.Nat64,
   });
@@ -52,7 +51,6 @@ export const idlFactory = ({ IDL }) => {
     'username_exists' : IDL.Null,
   });
   const upload_file_request = IDL.Record({
-    'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
     'num_chunks' : IDL.Nat64,
     'file_content' : IDL.Vec(IDL.Nat8),
@@ -68,7 +66,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const upload_file_atomic_request = IDL.Record({
     'content' : IDL.Vec(IDL.Nat8),
-    'owner_key' : IDL.Vec(IDL.Nat8),
     'name' : IDL.Text,
     'file_type' : IDL.Text,
     'num_chunks' : IDL.Nat64,

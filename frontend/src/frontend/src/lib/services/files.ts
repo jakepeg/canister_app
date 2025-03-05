@@ -70,7 +70,9 @@ export class FilesService {
   async init() {
     filesStore.setLoading();
     try {
+      console.log("Loading files");
       const files = await this.loadFiles();
+      console.log("Loaded files: ", files);
 
       filesStore.setLoaded(files, false);
     } catch (e: unknown) {
@@ -104,6 +106,8 @@ export class FilesService {
         this.actor.get_requests(),
       ]),
     );
+
+    console.log("Files: ", files);
 
     const uploadedFiles: UploadedFile[] = [];
 

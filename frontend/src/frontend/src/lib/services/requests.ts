@@ -67,7 +67,9 @@ export class RequestsService {
   async init() {
     requestsStore.setLoading();
     try {
+      console.log("Loading requests");
       const requests = await this.loadRequests();
+      console.log("Requests: ", requests);
 
       requestsStore.setLoaded(requests, false);
     } catch (e: unknown) {
@@ -119,10 +121,10 @@ export class RequestsService {
           name: file.file_name,
           access: accessMessage,
           formattedDate: formatUploadDate(
-            file.file_status.pending.requested_at
+            file.file_status.pending.requested_at,
           ),
           formattedDateShort: formatUploadDateShort(
-            file.file_status.pending.requested_at
+            file.file_status.pending.requested_at,
           ),
           alias: file.file_status.pending.alias,
         });

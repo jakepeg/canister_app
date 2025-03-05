@@ -28,51 +28,13 @@ fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse
     }
 }
 
-// fn get_shared_file_data(
-//     s: &State,
-//     file_id: u64,
-//     chunk_id: u64,
-//     user: Principal,
-// ) -> FileDownloadResponse {
-//     // unwrap is safe because we already know the file exists
-//     let this_file = s.file_data.get(&file_id).unwrap();
-//     match &this_file.content {
-//         FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
-//             FileDownloadResponse::NotUploadedFile
-//         }
-//         FileContent::Uploaded {
-//             file_type,
-//             // owner_key: _,
-//             // shared_keys,
-//             num_chunks,
-//         } => FileDownloadResponse::FoundFile(FileData {
-//             contents: s.file_contents.get(&(file_id, chunk_id)).unwrap(),
-//             file_type: file_type.clone(),
-//             // owner_key: shared_keys.get(&user).unwrap().clone(),
-//             num_chunks: *num_chunks,
-//         }),
-//     }
-// }
-pub fn download_file(
+fn get_shared_file_data(
     s: &State,
     file_id: u64,
     chunk_id: u64,
-    caller: Principal,
+    _user: Principal,
 ) -> FileDownloadResponse {
-    // Check if user owns or has access to file
-    let has_access = match s.file_owners.get(&caller) {
-        Some(files) => files.contains(&file_id),
-        None => false,
-    } || match s.file_shares.get(&caller) {
-        Some(files) => files.contains(&file_id),
-        None => false,
-    };
-
-    if !has_access {
-        return FileDownloadResponse::PermissionError;
-    }
-
-    // If user has access, return the file
+    // unwrap is safe because we already know the file exists
     let this_file = s.file_data.get(&file_id).unwrap();
     match &this_file.content {
         FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
@@ -80,14 +42,43 @@ pub fn download_file(
         }
         FileContent::Uploaded {
             file_type,
+            // owner_key: _,
+            // shared_keys,
             num_chunks,
         } => FileDownloadResponse::FoundFile(FileData {
             contents: s.file_contents.get(&(file_id, chunk_id)).unwrap(),
             file_type: file_type.clone(),
-            // Each user will use their own principal to derive the key with VetKD
-            // No need to return an owner_key or encrypted key
+            // owner_key: shared_keys.get(&user).unwrap().clone(),
             num_chunks: *num_chunks,
         }),
+    }
+}
+pub fn download_file(
+    s: &State,
+    file_id: u64,
+    chunk_id: u64,
+    caller: Principal,
+) -> FileDownloadResponse {
+    match s.file_owners.get(&caller) {
+        // This is the case where the files is owned by this user.
+        Some(files) => match files.contains(&file_id) {
+            true => get_file_data(s, file_id, chunk_id),
+            false => {
+                if is_file_shared_with_me(s, file_id, caller) {
+                    get_shared_file_data(s, file_id, chunk_id, caller)
+                } else {
+                    FileDownloadResponse::PermissionError
+                }
+            }
+        },
+        // But it could also be the case that the file is shared with this user.
+        None => {
+            if is_file_shared_with_me(s, file_id, caller) {
+                get_shared_file_data(s, file_id, chunk_id, caller)
+            } else {
+                FileDownloadResponse::PermissionError
+            }
+        }
     }
 }
 

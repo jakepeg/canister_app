@@ -31,7 +31,6 @@ export type file_status = { 'partially_uploaded' : null } |
   };
 export interface found_file {
   'contents' : Uint8Array | number[],
-  'owner_key' : Uint8Array | number[],
   'file_type' : string,
   'num_chunks' : bigint,
 }
@@ -47,7 +46,6 @@ export type share_file_response = { 'ok' : null } |
   { 'permission_error' : null };
 export interface upload_file_atomic_request {
   'content' : Uint8Array | number[],
-  'owner_key' : Uint8Array | number[],
   'name' : string,
   'file_type' : string,
   'num_chunks' : bigint,
@@ -60,7 +58,6 @@ export interface upload_file_continue_request {
 export type upload_file_error = { 'not_requested' : null } |
   { 'already_uploaded' : null };
 export interface upload_file_request {
-  'owner_key' : Uint8Array | number[],
   'file_type' : string,
   'num_chunks' : bigint,
   'file_content' : Uint8Array | number[],

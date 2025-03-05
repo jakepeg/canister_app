@@ -11,7 +11,7 @@ use super::user_info::get_user_key;
 pub struct UploadFileAtomicRequest {
     pub name: String,
     pub content: Vec<u8>,
-    pub owner_key: Vec<u8>,
+    // pub owner_key: Vec<u8>,
     pub file_type: String,
     pub num_chunks: u64,
 }
@@ -103,7 +103,7 @@ mod test {
                 num_chunks: 1,
                 name: "file_name".to_string(),
                 content: vec![1, 2, 3],
-                owner_key: vec![1, 2, 3],
+                // owner_key: vec![1, 2, 3],
                 file_type: "image/jpeg".to_string(),
             },
             &mut state,

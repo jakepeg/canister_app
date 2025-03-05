@@ -109,7 +109,7 @@ mod test {
                 num_chunks: 3,
                 name: "file_name".to_string(),
                 content: vec![1, 2, 3],
-                owner_key: vec![1, 2, 3],
+                // owner_key: vec![1, 2, 3],
                 file_type: "image/jpeg".to_string(),
             },
             &mut state,
