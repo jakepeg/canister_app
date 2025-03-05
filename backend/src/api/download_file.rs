@@ -12,13 +12,17 @@ fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse
         }
         FileContent::Uploaded {
             file_type,
-            owner_key,
-            shared_keys: _,
+            // Remove owner_key as it's no longer needed
+            // Instead, we'll just store the file type and metadata
+            // No need for shared_keys map either
+            // owner_key,
+            // shared_keys: _,
             num_chunks,
         } => FileDownloadResponse::FoundFile(FileData {
             contents: s.file_contents.get(&(file_id, chunk_id)).unwrap(),
             file_type: file_type.clone(),
-            owner_key: owner_key.clone(),
+            // No need to store an encrypted key
+            // owner_key: owner_key.clone(),
             num_chunks: *num_chunks,
         }),
     }
@@ -28,7 +32,7 @@ fn get_shared_file_data(
     s: &State,
     file_id: u64,
     chunk_id: u64,
-    user: Principal,
+    // user: Principal,
 ) -> FileDownloadResponse {
     // unwrap is safe because we already know the file exists
     let this_file = s.file_data.get(&file_id).unwrap();
@@ -38,13 +42,13 @@ fn get_shared_file_data(
         }
         FileContent::Uploaded {
             file_type,
-            owner_key: _,
-            shared_keys,
+            // owner_key: _,
+            // shared_keys,
             num_chunks,
         } => FileDownloadResponse::FoundFile(FileData {
             contents: s.file_contents.get(&(file_id, chunk_id)).unwrap(),
             file_type: file_type.clone(),
-            owner_key: shared_keys.get(&user).unwrap().clone(),
+            // owner_key: shared_keys.get(&user).unwrap().clone(),
             num_chunks: *num_chunks,
         }),
     }
@@ -203,7 +207,8 @@ mod test {
             FileDownloadResponse::FoundFile(FileData {
                 contents: vec![1, 2, 3],
                 file_type: "jpeg".to_string(),
-                owner_key: vec![1, 2, 3],
+                // Each user will use their own principal to derive the key with VetKD
+                // owner_key: vec![1, 2, 3],
                 num_chunks: 1
             })
         );
@@ -250,7 +255,8 @@ mod test {
             Principal::anonymous(),
             Principal::from_slice(&[0, 1, 2]),
             0,
-            vec![10, 11, 12],
+            // Each user will use their own principal to derive the key with VetKD
+            // vec![10, 11, 12],
         );
 
         assert_eq!(
@@ -258,7 +264,8 @@ mod test {
             FileDownloadResponse::FoundFile(FileData {
                 contents: vec![1, 2, 3],
                 file_type: "jpeg".to_string(),
-                owner_key: vec![10, 11, 12],
+                // Each user will use their own principal to derive the key with VetKD
+                // owner_key: vec![10, 11, 12],
                 num_chunks: 1
             })
         )
