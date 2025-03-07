@@ -23,12 +23,7 @@ export interface file_metadata {
 }
 export type file_status = { 'partially_uploaded' : null } |
   { 'pending' : { 'alias' : string, 'requested_at' : bigint } } |
-  {
-    'uploaded' : {
-      'document_key' : Uint8Array | number[],
-      'uploaded_at' : bigint,
-    }
-  };
+  { 'uploaded' : { 'uploaded_at' : bigint } };
 export interface found_file {
   'contents' : Uint8Array | number[],
   'file_type' : string,
@@ -82,14 +77,8 @@ export interface _SERVICE {
   'request_file' : ActorMethod<[string], string>,
   'revoke_share' : ActorMethod<[Principal, file_id], share_file_response>,
   'set_user' : ActorMethod<[string, Uint8Array | number[]], set_user_response>,
-  'share_file' : ActorMethod<
-    [Principal, file_id, Uint8Array | number[]],
-    share_file_response
-  >,
-  'share_file_with_users' : ActorMethod<
-    [Array<Principal>, file_id, Array<Uint8Array | number[]>],
-    undefined
-  >,
+  'share_file' : ActorMethod<[Principal, file_id], share_file_response>,
+  'share_file_with_users' : ActorMethod<[Array<Principal>, file_id], undefined>,
   'upload_file' : ActorMethod<[upload_file_request], upload_file_response>,
   'upload_file_atomic' : ActorMethod<[upload_file_atomic_request], file_id>,
   'upload_file_continue' : ActorMethod<

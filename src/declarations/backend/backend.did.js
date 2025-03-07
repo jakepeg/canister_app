@@ -27,10 +27,7 @@ export const idlFactory = ({ IDL }) => {
   const file_status = IDL.Variant({
     'partially_uploaded' : IDL.Null,
     'pending' : IDL.Record({ 'alias' : IDL.Text, 'requested_at' : IDL.Nat64 }),
-    'uploaded' : IDL.Record({
-      'document_key' : IDL.Vec(IDL.Nat8),
-      'uploaded_at' : IDL.Nat64,
-    }),
+    'uploaded' : IDL.Record({ 'uploaded_at' : IDL.Nat64 }),
   });
   const file_metadata = IDL.Record({
     'file_status' : file_status,
@@ -114,12 +111,12 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'share_file' : IDL.Func(
-        [IDL.Principal, file_id, IDL.Vec(IDL.Nat8)],
+        [IDL.Principal, file_id],
         [share_file_response],
         [],
       ),
     'share_file_with_users' : IDL.Func(
-        [IDL.Vec(IDL.Principal), file_id, IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [IDL.Vec(IDL.Principal), file_id],
         [],
         [],
       ),

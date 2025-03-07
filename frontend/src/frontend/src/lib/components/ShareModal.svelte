@@ -115,7 +115,6 @@
         const shareResult = await auth.actor.share_file(
           recipientPrincipal,
           fileData.file_id,
-          masterPublicKey,
         );
 
         if (enumIs(shareResult, "permission_error")) {
