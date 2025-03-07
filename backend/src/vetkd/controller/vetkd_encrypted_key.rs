@@ -6,7 +6,10 @@ use ic_cdk::update;
 use serde_bytes::ByteBuf;
 
 #[update]
-async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, String> {
+async fn vetkd_encrypted_key(
+    encryption_public_key: Vec<u8>,
+    derivation_id: Vec<u8>,
+) -> Result<Vec<u8>, String> {
     let address = ic_cdk::api::caller(); // Replaced ethadress with ICP principal of the user
 
     // println!("Caller address: {:?}", address.to_string());
@@ -16,6 +19,8 @@ async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, 
     // println!("Principal raw bytes: {:?}", address_bytes);
 
     // println!("Encryption public key  {:?}", encryption_public_key);
+
+    // let file_id = vec![ByteBuf::from(file_id.to_be_bytes().to_vec())]; // Use file_id in path
 
     let args = VetkdDeriveEncryptedKeyArgs {
         key_id: VetkdDeriveEncryptedKeyArgsKeyId {

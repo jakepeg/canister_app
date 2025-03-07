@@ -2,7 +2,7 @@
 use crate::{FileContent, FileData, FileDownloadResponse, State};
 // use ic_cdk::export::candid::Principal;
 use candid::Principal;
-use ic_cdk::println;
+// use ic_cdk::println;
 
 fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse {
     // unwrap is safe because we already know the file exists
