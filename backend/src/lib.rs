@@ -262,7 +262,8 @@ pub struct UploadFileRequest {
     pub file_id: u64,
     pub file_content: Vec<u8>,
     pub file_type: String,
-    pub owner_key: Vec<u8>,
+    // Not needed for VetKD
+    // pub owner_key: Vec<u8>,
     pub num_chunks: u64,
 }
 

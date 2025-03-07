@@ -6,7 +6,7 @@ pub fn upload_file(
     file_id: u64,
     contents: Vec<u8>,
     file_type: String,
-    _owner_key: Vec<u8>,
+    // _owner_key: Vec<u8>,
     num_chunks: u64,
     state: &mut State,
 ) -> Result<(), UploadFileError> {
@@ -99,7 +99,8 @@ mod test {
             file_id,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );

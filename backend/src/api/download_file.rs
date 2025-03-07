@@ -2,6 +2,7 @@
 use crate::{FileContent, FileData, FileDownloadResponse, State};
 // use ic_cdk::export::candid::Principal;
 use candid::Principal;
+use ic_cdk::println;
 
 fn get_file_data(s: &State, file_id: u64, chunk_id: u64) -> FileDownloadResponse {
     // unwrap is safe because we already know the file exists
@@ -197,7 +198,8 @@ mod test {
             file_id,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );
@@ -244,7 +246,8 @@ mod test {
             0,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );

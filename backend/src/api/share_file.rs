@@ -140,7 +140,8 @@ mod test {
             0,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );
@@ -158,7 +159,8 @@ mod test {
             2,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );
@@ -273,7 +275,8 @@ mod test {
             0,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );
@@ -291,7 +294,8 @@ mod test {
             2,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );
