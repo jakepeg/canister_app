@@ -6,6 +6,9 @@ const UPGRADES: MemoryId = MemoryId::new(0);
 
 const FILE_CONTENTS: MemoryId = MemoryId::new(1);
 
+// Add a new memory ID for recipient file contents
+const RECIPIENT_FILE_CONTENTS: MemoryId = MemoryId::new(2);
+
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
@@ -21,4 +24,9 @@ pub fn get_upgrades_memory() -> Memory {
 
 pub fn get_file_contents_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow().get(FILE_CONTENTS))
+}
+
+// Add a function to get this memory
+pub fn get_recipient_file_contents_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow().get(RECIPIENT_FILE_CONTENTS))
 }

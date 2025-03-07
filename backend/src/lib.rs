@@ -178,6 +178,10 @@ pub struct State {
     /// Mapping between a user's principal and the list of files that are shared with them.
     pub file_shares: BTreeMap<Principal, Vec<u64>>,
 
+    // NEW FIELD: Store recipient-specific file content
+    #[serde(skip, default = "init_recipient_file_contents")]
+    pub recipient_file_contents: StableBTreeMap<(FileId, Principal, ChunkId), Vec<u8>, Memory>,
+
     /// The contents of the file (stored in stable memory).
     #[serde(skip, default = "init_file_contents")]
     pub file_contents: StableBTreeMap<(FileId, ChunkId), Vec<u8>, Memory>,
@@ -291,6 +295,11 @@ fn get_randomness_seed() -> Vec<u8> {
     // we need to extend this to an array of size 32 by adding to it an array of size 24 full of 0s.
     let zeroes_arr: [u8; 24] = [0; 24];
     [&time_seed[..], &zeroes_arr[..]].concat()
+}
+
+// Add a new memory initialization function
+fn init_recipient_file_contents() -> StableBTreeMap<(FileId, Principal, ChunkId), Vec<u8>, Memory> {
+    StableBTreeMap::init(crate::memory::get_recipient_file_contents_memory())
 }
 
 fn init_alias_generator() -> AliasGenerator {

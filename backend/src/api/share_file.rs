@@ -10,6 +10,7 @@ pub fn share_file(
     file_id: u64,
     // Remove the file_key_encrypted_for_user parameter as it's not needed
     // file_key_encrypted_for_user: Vec<u8>,
+    recipient_encrypted_chunks: Vec<u8>, // New encrypted content for recipient
 ) -> FileSharingResponse {
     if !can_share(state, caller, file_id) {
         FileSharingResponse::PermissionError
@@ -19,7 +20,23 @@ pub fn share_file(
             FileContent::Pending { .. } | FileContent::PartiallyUploaded { .. } => {
                 FileSharingResponse::PendingError
             }
-            FileContent::Uploaded { .. } => {
+            FileContent::Uploaded { num_chunks, .. } => {
+                // Validate that all chunks are provided
+                let received_chunks = recipient_encrypted_chunks.len() as u64;
+                if received_chunks != *num_chunks {
+                    return FileSharingResponse::ChunkCountMismatch {
+                        expected: *num_chunks,
+                        received: received_chunks,
+                    };
+                }
+
+                // Store the recipient-specific chunks
+                for (chunk_id, chunk_data) in recipient_encrypted_chunks {
+                    state
+                        .recipient_file_contents
+                        .insert((file_id, sharing_with, chunk_id), chunk_data);
+                }
+
                 // Simply add the file to the shared files list
                 let file_shares = state
                     .file_shares
