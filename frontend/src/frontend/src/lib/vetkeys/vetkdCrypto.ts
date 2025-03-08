@@ -76,6 +76,35 @@ export class VetkdCryptoService {
       console.log("fileId: ", fileId);
       console.log("[fileId]: ", [fileId]);
 
+      // For shared files, always get the owner's principal
+      let principalToUse = userPrincipalBytes;
+
+      if (isSharedFile) {
+        console.log("Getting owner principal for shared file");
+        try {
+          // Get the file owner's principal directly from our endpoint
+          const ownerPrincipalResponse =
+            await this.actor.get_file_owner_principal(fileId);
+
+          if (!ownerPrincipalResponse || "Err" in ownerPrincipalResponse) {
+            throw new Error("Error getting file owner principal");
+          }
+
+          principalToUse = new Uint8Array(ownerPrincipalResponse.Ok);
+          console.log(
+            "Using owner's principal for shared file:",
+            principalToUse,
+          );
+        } catch (e) {
+          console.error(
+            "Failed to get owner principal, falling back to user principal",
+            e,
+          );
+        }
+      } else {
+        console.log("Using current user's principal (file owner)");
+      }
+
       // Get encrypted key from the backend
       const privateKeyResponse = await this.actor.vetkd_encrypted_key(
         transportSecretKey.public_key(),
@@ -93,44 +122,6 @@ export class VetkdCryptoService {
       }
       const encryptedKey = privateKeyResponse.Ok as Uint8Array;
       console.log("encryptedKey: ", encryptedKey);
-
-      // For shared files, we need to get the owner's principal for decryption
-      let principalToUse = userPrincipalBytes;
-
-      if (fileId) {
-        try {
-          // Get the file owner's principal
-          const ownerPrincipalResponse =
-            await this.actor.get_file_owner_principal(fileId);
-          if (!ownerPrincipalResponse || "Err" in ownerPrincipalResponse) {
-            throw new Error(
-              "Error getting encrypted key: " +
-                ("Err" in ownerPrincipalResponse
-                  ? ownerPrincipalResponse.Err
-                  : "empty response"),
-            );
-          }
-
-          const ownerPrincipal = ownerPrincipalResponse.Ok;
-
-          // If this is a shared file (owner != current user), use owner's principal
-          if (
-            ownerPrincipalResponse &&
-            !equalUint8Arrays(
-              userPrincipalBytes,
-              new Uint8Array(ownerPrincipal),
-            )
-          ) {
-            principalToUse = new Uint8Array(ownerPrincipal);
-          }
-        } catch (e) {
-          console.warn(
-            "Could not get file owner, continuing with current user principal",
-            e,
-          );
-        }
-      }
-      console.log("principalToUse: ", principalToUse);
 
       // Decrypt the key with the transport secret
       const key = transportSecretKey.decrypt(
