@@ -2,25 +2,38 @@ use crate::declarations::vetkd_system_api::{
     vetkd_system_api, VetkdCurve, VetkdDeriveEncryptedKeyArgs, VetkdDeriveEncryptedKeyArgsKeyId,
 };
 // use ic_cdk::println;
+use crate::with_state;
 use ic_cdk::update;
 use serde_bytes::ByteBuf;
 
 #[update]
 async fn vetkd_encrypted_key(
+    file_id: u64,
     encryption_public_key: Vec<u8>,
-    derivation_id: Vec<u8>,
 ) -> Result<Vec<u8>, String> {
-    let address = ic_cdk::api::caller(); // Replaced ethadress with ICP principal of the user
+    let caller = ic_cdk::api::caller(); // Replaced ethadress with ICP principal of the user
 
-    // println!("Caller address: {:?}", address.to_string());
+    // Get file metadata from existing state
+    let (owner_principal, _) = with_state(|s| {
+        let file = s.file_data.get(&file_id).ok_or("File not found")?;
 
-    let address_bytes = address.as_slice().to_vec(); // Convert Principal to Vec<u8>
+        // Verify caller has access to this file
+        if !s
+            .file_owners
+            .get(&caller)
+            .map(|files| files.contains(&file_id))
+            .unwrap_or(false)
+        {
+            return Err("Permission denied".into());
+        }
 
-    // println!("Principal raw bytes: {:?}", address_bytes);
+        Ok((
+            file.metadata.requester_principal,
+            file.metadata.user_public_key.clone(),
+        ))
+    })?;
 
-    // println!("Encryption public key  {:?}", encryption_public_key);
-
-    // let file_id = vec![ByteBuf::from(file_id.to_be_bytes().to_vec())]; // Use file_id in path
+    let address_bytes = caller.as_slice().to_vec(); // Converts Principal to Vec<u8>
 
     let args = VetkdDeriveEncryptedKeyArgs {
         key_id: VetkdDeriveEncryptedKeyArgsKeyId {
@@ -28,7 +41,8 @@ async fn vetkd_encrypted_key(
             curve: VetkdCurve::Bls12381G2,
         },
         derivation_path: vec![],
-        derivation_id: ByteBuf::from(address_bytes),
+        // Use requester_principal as derivation ID
+        derivation_id: ByteBuf::from(owner_principal.as_slice().to_vec()),
         encryption_public_key: ByteBuf::from(encryption_public_key),
     };
 
