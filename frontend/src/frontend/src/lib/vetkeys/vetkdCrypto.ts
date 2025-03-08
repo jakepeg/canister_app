@@ -48,6 +48,12 @@ export class VetkdCryptoService {
     fileId: bigint,
   ): Promise<Uint8Array> {
     try {
+      // First, check if this is a shared file by checking if file is in shared_files
+      const sharedFiles = await this.actor.get_shared_files();
+      const isSharedFile = sharedFiles.some((file) => file.file_id === fileId);
+
+      console.log("Is this a shared file?", isSharedFile);
+
       // Generate a random seed for the transport secret key
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
 
