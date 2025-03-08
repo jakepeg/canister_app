@@ -96,16 +96,26 @@ export class VetkdCryptoService {
           // Get the file owner's principal
           const ownerPrincipalResponse =
             await this.actor.get_file_owner_principal(fileId);
+          if (!ownerPrincipalResponse || "Err" in ownerPrincipalResponse) {
+            throw new Error(
+              "Error getting encrypted key: " +
+                ("Err" in ownerPrincipalResponse
+                  ? ownerPrincipalResponse.Err
+                  : "empty response"),
+            );
+          }
+
+          const ownerPrincipal = ownerPrincipalResponse.Ok;
 
           // If this is a shared file (owner != current user), use owner's principal
           if (
             ownerPrincipalResponse &&
-            !this.equalUint8Arrays(
+            !equalUint8Arrays(
               userPrincipalBytes,
-              new Uint8Array(ownerPrincipalResponse),
+              new Uint8Array(ownerPrincipal),
             )
           ) {
-            principalToUse = new Uint8Array(ownerPrincipalResponse);
+            principalToUse = new Uint8Array(ownerPrincipal);
           }
         } catch (e) {
           console.warn(
@@ -130,6 +140,15 @@ export class VetkdCryptoService {
     } catch (error) {
       console.error("Decryption error:", error);
       throw error;
+    }
+
+    // Helper method to compare Uint8Arrays
+    function equalUint8Arrays(a: Uint8Array, b: Uint8Array): boolean {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) return false;
+      }
+      return true;
     }
   }
 }
