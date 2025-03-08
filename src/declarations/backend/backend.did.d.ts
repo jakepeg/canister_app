@@ -70,6 +70,11 @@ export type who_am_i_response = { 'known_user' : { 'username' : string } } |
 export interface _SERVICE {
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
+  'get_file_owner_principal' : ActorMethod<
+    [bigint],
+    { 'Ok' : Uint8Array | number[] } |
+      { 'Err' : string }
+  >,
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
   'get_users' : ActorMethod<[], get_users_response>,
@@ -87,7 +92,7 @@ export interface _SERVICE {
   >,
   'username_exists' : ActorMethod<[string], boolean>,
   'vetkd_encrypted_key' : ActorMethod<
-    [Uint8Array | number[]],
+    [Uint8Array | number[], [] | [bigint]],
     VetkdEncryptedKeyResponse
   >,
   'vetkd_public_key' : ActorMethod<[], VetkdPublicKeyResponse>,

@@ -1,39 +1,36 @@
 use crate::declarations::vetkd_system_api::{
     vetkd_system_api, VetkdCurve, VetkdDeriveEncryptedKeyArgs, VetkdDeriveEncryptedKeyArgsKeyId,
 };
-// use ic_cdk::println;
 use crate::with_state;
+// use ic_cdk::println;
 use ic_cdk::update;
 use serde_bytes::ByteBuf;
 
 #[update]
 async fn vetkd_encrypted_key(
-    file_id: u64,
     encryption_public_key: Vec<u8>,
+    file_id: Option<u64>,
 ) -> Result<Vec<u8>, String> {
-    let caller = ic_cdk::api::caller(); // Replaced ethadress with ICP principal of the user
-
-    // Get file metadata from existing state
-    let (owner_principal, _) = with_state(|s| {
-        let file = s.file_data.get(&file_id).ok_or("File not found")?;
-
-        // Verify caller has access to this file
-        if !s
-            .file_owners
-            .get(&caller)
-            .map(|files| files.contains(&file_id))
-            .unwrap_or(false)
-        {
-            return Err("Permission denied".into());
-        }
-
-        Ok((
-            file.metadata.requester_principal,
-            file.metadata.user_public_key.clone(),
-        ))
-    })?;
-
-    let address_bytes = caller.as_slice().to_vec(); // Converts Principal to Vec<u8>
+    // println!("vetkd_encrypted_key called with file_id: {:?}", file_id);
+    // If a file_id is provided, use the file owner's principal as derivation_id
+    let derivation_id = if let Some(id) = file_id {
+        // println!("Looking up owner principal for file_id: {}", id);
+        // Look up the file's owner principal from metadata
+        let principal = with_state(|state| {
+            state
+                .file_data
+                .get(&id)
+                .map(|file| file.metadata.requester_principal.as_slice().to_vec())
+                .ok_or_else(|| "File not found".to_string())
+        })?;
+        // println!("Found owner principal for file_id {}: {:?}", id, principal);
+        principal
+    } else {
+        // Default to using the caller's principal
+        let caller = ic_cdk::api::caller().as_slice().to_vec();
+        // println!("Using caller principal as derivation_id: {:?}", caller);
+        caller
+    };
 
     let args = VetkdDeriveEncryptedKeyArgs {
         key_id: VetkdDeriveEncryptedKeyArgsKeyId {
@@ -42,7 +39,7 @@ async fn vetkd_encrypted_key(
         },
         derivation_path: vec![],
         // Use requester_principal as derivation ID
-        derivation_id: ByteBuf::from(owner_principal.as_slice().to_vec()),
+        derivation_id: ByteBuf::from(derivation_id),
         encryption_public_key: ByteBuf::from(encryption_public_key),
     };
 

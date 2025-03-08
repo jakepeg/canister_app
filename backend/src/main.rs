@@ -47,6 +47,16 @@ fn get_shared_files() -> Vec<PublicFileMetadata> {
 }
 
 #[query]
+fn get_file_owner_principal(file_id: u64) -> Result<Vec<u8>, String> {
+    with_state(|s| {
+        s.file_data
+            .get(&file_id)
+            .map(|file| file.metadata.requester_principal.as_slice().to_vec())
+            .ok_or_else(|| "File not found".to_string())
+    })
+}
+
+#[query]
 fn get_alias_info(alias: String) -> Result<AliasInfo, GetAliasInfoError> {
     with_state(|s| backend::api::get_alias_info(s, alias))
 }

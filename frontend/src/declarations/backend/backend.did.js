@@ -95,6 +95,11 @@ export const idlFactory = ({ IDL }) => {
         [get_alias_info_response],
         ['query'],
       ),
+    'get_file_owner_principal' : IDL.Func(
+        [IDL.Nat64],
+        [IDL.Variant({ 'Ok' : IDL.Vec(IDL.Nat8), 'Err' : IDL.Text })],
+        ['query'],
+      ),
     'get_requests' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_shared_files' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_users' : IDL.Func([], [get_users_response], ['query']),
@@ -129,7 +134,7 @@ export const idlFactory = ({ IDL }) => {
     'upload_file_continue' : IDL.Func([upload_file_continue_request], [], []),
     'username_exists' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
     'vetkd_encrypted_key' : IDL.Func(
-        [IDL.Vec(IDL.Nat8)],
+        [IDL.Vec(IDL.Nat8), IDL.Opt(IDL.Nat64)],
         [VetkdEncryptedKeyResponse],
         [],
       ),

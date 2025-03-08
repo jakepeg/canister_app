@@ -45,6 +45,7 @@ export class VetkdCryptoService {
   async decrypt(
     encryptedData: Uint8Array,
     userPrincipalBytes: Uint8Array,
+    fileId: bigint,
   ): Promise<Uint8Array> {
     try {
       // Generate a random seed for the transport secret key
@@ -64,11 +65,18 @@ export class VetkdCryptoService {
         );
       }
       const publicKey = publicKeyResponse.Ok as Uint8Array;
+      console.log("publicKey: ", publicKey);
+
+      console.log("fileId: ", fileId);
+      console.log("[fileId]: ", [fileId]);
 
       // Get encrypted key from the backend
       const privateKeyResponse = await this.actor.vetkd_encrypted_key(
         transportSecretKey.public_key(),
+        [fileId],
       );
+      console.log("privateKeyResponse: ", privateKeyResponse);
+
       if (!privateKeyResponse || "Err" in privateKeyResponse) {
         throw new Error(
           "Error getting encrypted key: " +
@@ -78,13 +86,43 @@ export class VetkdCryptoService {
         );
       }
       const encryptedKey = privateKeyResponse.Ok as Uint8Array;
+      console.log("encryptedKey: ", encryptedKey);
+
+      // For shared files, we need to get the owner's principal for decryption
+      let principalToUse = userPrincipalBytes;
+
+      if (fileId) {
+        try {
+          // Get the file owner's principal
+          const ownerPrincipalResponse =
+            await this.actor.get_file_owner_principal(fileId);
+
+          // If this is a shared file (owner != current user), use owner's principal
+          if (
+            ownerPrincipalResponse &&
+            !this.equalUint8Arrays(
+              userPrincipalBytes,
+              new Uint8Array(ownerPrincipalResponse),
+            )
+          ) {
+            principalToUse = new Uint8Array(ownerPrincipalResponse);
+          }
+        } catch (e) {
+          console.warn(
+            "Could not get file owner, continuing with current user principal",
+            e,
+          );
+        }
+      }
+      console.log("principalToUse: ", principalToUse);
 
       // Decrypt the key with the transport secret
       const key = transportSecretKey.decrypt(
         encryptedKey,
         publicKey,
-        userPrincipalBytes,
+        principalToUse, // Use owner's principal if provided
       );
+      console.log("key: ", key);
 
       // Deserialize and decrypt the data
       const ibeCiphertext = vetkd.IBECiphertext.deserialize(encryptedData);
