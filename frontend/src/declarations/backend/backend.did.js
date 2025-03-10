@@ -2,7 +2,6 @@ export const idlFactory = ({ IDL }) => {
   const file_id = IDL.Nat64;
   const found_file = IDL.Record({
     'contents' : IDL.Vec(IDL.Nat8),
-    'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
     'num_chunks' : IDL.Nat64,
   });
@@ -28,10 +27,7 @@ export const idlFactory = ({ IDL }) => {
   const file_status = IDL.Variant({
     'partially_uploaded' : IDL.Null,
     'pending' : IDL.Record({ 'alias' : IDL.Text, 'requested_at' : IDL.Nat64 }),
-    'uploaded' : IDL.Record({
-      'document_key' : IDL.Vec(IDL.Nat8),
-      'uploaded_at' : IDL.Nat64,
-    }),
+    'uploaded' : IDL.Record({ 'uploaded_at' : IDL.Nat64 }),
   });
   const file_metadata = IDL.Record({
     'file_status' : file_status,
@@ -52,7 +48,6 @@ export const idlFactory = ({ IDL }) => {
     'username_exists' : IDL.Null,
   });
   const upload_file_request = IDL.Record({
-    'owner_key' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
     'num_chunks' : IDL.Nat64,
     'file_content' : IDL.Vec(IDL.Nat8),
@@ -68,7 +63,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const upload_file_atomic_request = IDL.Record({
     'content' : IDL.Vec(IDL.Nat8),
-    'owner_key' : IDL.Vec(IDL.Nat8),
     'name' : IDL.Text,
     'file_type' : IDL.Text,
     'num_chunks' : IDL.Nat64,
@@ -101,6 +95,11 @@ export const idlFactory = ({ IDL }) => {
         [get_alias_info_response],
         ['query'],
       ),
+    'get_file_owner_principal' : IDL.Func(
+        [IDL.Nat64],
+        [IDL.Variant({ 'Ok' : IDL.Vec(IDL.Nat8), 'Err' : IDL.Text })],
+        ['query'],
+      ),
     'get_requests' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_shared_files' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_users' : IDL.Func([], [get_users_response], ['query']),
@@ -117,12 +116,12 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'share_file' : IDL.Func(
-        [IDL.Principal, file_id, IDL.Vec(IDL.Nat8)],
+        [IDL.Principal, file_id],
         [share_file_response],
         [],
       ),
     'share_file_with_users' : IDL.Func(
-        [IDL.Vec(IDL.Principal), file_id, IDL.Vec(IDL.Vec(IDL.Nat8))],
+        [IDL.Vec(IDL.Principal), file_id],
         [],
         [],
       ),
@@ -135,7 +134,7 @@ export const idlFactory = ({ IDL }) => {
     'upload_file_continue' : IDL.Func([upload_file_continue_request], [], []),
     'username_exists' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
     'vetkd_encrypted_key' : IDL.Func(
-        [IDL.Vec(IDL.Nat8)],
+        [IDL.Vec(IDL.Nat8), IDL.Opt(IDL.Nat64)],
         [VetkdEncryptedKeyResponse],
         [],
       ),

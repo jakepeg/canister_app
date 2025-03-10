@@ -131,10 +131,13 @@ export class DecryptService {
           .getPrincipal();
         const userPrincipalBytes = userPrincipal.toUint8Array();
 
+        console.log("fileId", fileId);
+
         // Decrypt the file using vetkd
         const decryptedData = await this.vetkdCryptoService.decrypt(
           downloadedFile.found_file.contents as Uint8Array,
           userPrincipalBytes,
+          fileId,
         );
 
         return {

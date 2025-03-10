@@ -47,6 +47,16 @@ fn get_shared_files() -> Vec<PublicFileMetadata> {
 }
 
 #[query]
+fn get_file_owner_principal(file_id: u64) -> Result<Vec<u8>, String> {
+    with_state(|s| {
+        s.file_data
+            .get(&file_id)
+            .map(|file| file.metadata.requester_principal.as_slice().to_vec())
+            .ok_or_else(|| "File not found".to_string())
+    })
+}
+
+#[query]
 fn get_alias_info(alias: String) -> Result<AliasInfo, GetAliasInfoError> {
     with_state(|s| backend::api::get_alias_info(s, alias))
 }
@@ -58,7 +68,7 @@ fn upload_file(request: UploadFileRequest) -> Result<(), UploadFileError> {
             request.file_id,
             request.file_content,
             request.file_type,
-            request.owner_key,
+            // request.owner_key,
             request.num_chunks,
             s,
         )
@@ -89,11 +99,10 @@ fn download_file(file_id: u64, chunk_id: u64) -> FileDownloadResponse {
 fn share_file(
     user_id: Principal,
     file_id: u64,
-    file_key_encrypted_for_user: Vec<u8>,
+    // file_key not needed as we have vetkeys now
+    // file_key_encrypted_for_user: Vec<u8>,
 ) -> FileSharingResponse {
-    with_state_mut(|s| {
-        backend::api::share_file(s, caller(), user_id, file_id, file_key_encrypted_for_user)
-    })
+    with_state_mut(|s| backend::api::share_file(s, caller(), user_id, file_id))
 }
 
 #[update]
@@ -103,8 +112,8 @@ fn share_file_with_users(
     file_key_encrypted_for_user: Vec<Vec<u8>>,
 ) {
     with_state_mut(|s| {
-        for (id, key) in user_id.iter().zip(file_key_encrypted_for_user.iter()) {
-            backend::api::share_file(s, caller(), *id, file_id, key.clone());
+        for (id, _key) in user_id.iter().zip(file_key_encrypted_for_user.iter()) {
+            backend::api::share_file(s, caller(), *id, file_id);
         }
     });
 }

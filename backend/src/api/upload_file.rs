@@ -1,11 +1,12 @@
 use crate::{get_time, FileContent, State, UploadFileError};
-use std::collections::BTreeMap;
+// Not used as we aren't storing encrypted_keys while sharing anymore
+// use std::collections::BTreeMap;
 
 pub fn upload_file(
     file_id: u64,
     contents: Vec<u8>,
     file_type: String,
-    owner_key: Vec<u8>,
+    // _owner_key: Vec<u8>,
     num_chunks: u64,
     state: &mut State,
 ) -> Result<(), UploadFileError> {
@@ -15,7 +16,8 @@ pub fn upload_file(
         None => return Err(UploadFileError::NotRequested),
     };
 
-    let shared_keys = BTreeMap::new();
+    // Remove shared_keys as it's no longer needed
+    // let shared_keys = BTreeMap::new();
     // Retrieve the alias associated with the file.
     let alias = match file.content {
         FileContent::Pending { ref alias } => {
@@ -23,15 +25,19 @@ pub fn upload_file(
             if num_chunks == 1 {
                 file.content = FileContent::Uploaded {
                     file_type,
-                    owner_key,
-                    shared_keys,
+                    // No need for owner_key or shared_keys
+                    // _owner_key,
+                    // Remove shared_keys as it's no longer needed
+                    // shared_keys,
                     num_chunks,
                 };
             } else {
                 file.content = FileContent::PartiallyUploaded {
                     file_type,
-                    owner_key,
-                    shared_keys,
+                    // No need for owner_key or shared_keys
+                    // owner_key,
+                    // Remove shared_keys as it's no longer needed
+                    // shared_keys,
                     num_chunks,
                 };
             }
@@ -93,7 +99,8 @@ mod test {
             file_id,
             vec![1, 2, 3],
             "jpeg".to_string(),
-            vec![1, 2, 3],
+            // Removed owner_key parameter as it's not needed for vetkd
+            // vec![1, 2, 3],
             1,
             &mut state,
         );
@@ -112,8 +119,10 @@ mod test {
                     },
                     content: FileContent::Uploaded {
                         file_type: "jpeg".to_string(),
-                        owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new(),
+                        // No need for owner_key or shared_keys
+                        // owner_key: vec![1,2,3],
+                        // Remove shared_keys as it's no longer needed
+                        // shared_keys: BTreeMap::new(),
                         num_chunks: 1,
                     }
                 }

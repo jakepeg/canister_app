@@ -2,7 +2,8 @@ use crate::{get_time, File, FileContent, FileMetadata, State};
 use candid::CandidType;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+// Not used as we aren't storing encrypted_keys while sharing anymore
+// use std::collections::BTreeMap;
 
 use super::user_info::get_user_key;
 
@@ -10,7 +11,7 @@ use super::user_info::get_user_key;
 pub struct UploadFileAtomicRequest {
     pub name: String,
     pub content: Vec<u8>,
-    pub owner_key: Vec<u8>,
+    // pub owner_key: Vec<u8>,
     pub file_type: String,
     pub num_chunks: u64,
 }
@@ -27,16 +28,18 @@ pub fn upload_file_atomic(
         FileContent::Uploaded {
             num_chunks: request.num_chunks,
             file_type: request.file_type,
-            owner_key: request.owner_key,
-            shared_keys: BTreeMap::new(),
+            // owner_key: request.owner_key,
+            // Remove shared_keys as it's no longer needed
+            // shared_keys: BTreeMap::new(),
         }
     } else {
         // File will be uploaded in multiple chunks.
         FileContent::PartiallyUploaded {
             num_chunks: request.num_chunks,
             file_type: request.file_type,
-            owner_key: request.owner_key,
-            shared_keys: BTreeMap::new(),
+            // owner_key: request.owner_key,
+            // Remove shared_keys as it's no longer needed
+            // shared_keys: BTreeMap::new(),
         }
     };
 
@@ -100,7 +103,7 @@ mod test {
                 num_chunks: 1,
                 name: "file_name".to_string(),
                 content: vec![1, 2, 3],
-                owner_key: vec![1, 2, 3],
+                // owner_key: vec![1, 2, 3],
                 file_type: "image/jpeg".to_string(),
             },
             &mut state,
@@ -120,8 +123,9 @@ mod test {
                     },
                     content: FileContent::Uploaded {
                         file_type: "image/jpeg".to_string(),
-                        owner_key: vec![1,2,3],
-                        shared_keys: BTreeMap::new(),
+                        // owner_key: vec![1,2,3],
+                        // Remove shared_keys as it's no longer needed
+                        // shared_keys: BTreeMap::new(),
                         num_chunks: 1,
                     }
                 }

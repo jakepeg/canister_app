@@ -3,7 +3,7 @@ type file_id = nat64;
 type file_status = variant {
   pending: record { alias: text; requested_at: nat64; };
   partially_uploaded;
-  uploaded: record { uploaded_at: nat64; document_key: blob; };
+  uploaded: record { uploaded_at: nat64; };
 };
 
 type file_metadata = record {
@@ -49,7 +49,6 @@ type get_alias_info_response = variant {
 type found_file = record {
   contents: blob;
   file_type: text;
-  owner_key: blob;
   num_chunks: nat64;
 };
 
@@ -77,7 +76,6 @@ type upload_file_atomic_request = record {
   name: text;
   content: blob;
   file_type: text;
-  owner_key: blob;
   num_chunks: nat64;
 };
 
@@ -101,7 +99,6 @@ type upload_file_request = record {
   file_id: file_id;
   file_content: blob;
   file_type: text;
-  owner_key: blob;
   num_chunks: nat64;
 };
 
@@ -140,19 +137,21 @@ service docutrack : {
 
   get_shared_files: () -> (vec file_metadata) query;
 
+  get_file_owner_principal: (file_id: nat64) -> (variant { Ok: blob; Err: text }) query;
+
   upload_file_atomic: (upload_file_atomic_request) -> (file_id);
 
   upload_file_continue: (upload_file_continue_request) -> ();
 
-  share_file: (user_id: principal, file_id: file_id, file_key_encrypted_for_user: blob) -> (share_file_response);
+  share_file: (user_id: principal, file_id: file_id) -> (share_file_response);
 
-  share_file_with_users: (user_id: vec principal, file_id: file_id, file_key_encrypted_for_user: vec blob) -> ();
+  share_file_with_users: (user_id: vec principal, file_id: file_id) -> ();
 
   revoke_share: (user_id: principal, file_id: file_id) -> (share_file_response);
 
   get_users: () -> (get_users_response) query;
 
-  vetkd_encrypted_key: (blob) -> (VetkdEncryptedKeyResponse);
+  vetkd_encrypted_key: (blob, opt nat64) -> (VetkdEncryptedKeyResponse);
 
   vetkd_public_key: () -> (VetkdPublicKeyResponse);
 }
