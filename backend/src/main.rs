@@ -80,6 +80,16 @@ fn request_file(request_name: String) -> String {
     with_state_mut(|s| backend::api::request_file(caller(), request_name, s))
 }
 
+#[update]
+fn multi_request(input: MultiRequestInput) -> MultiRequestResponse {
+    with_state_mut(|s| backend::api::multi_request(caller(), input, s))
+}
+
+#[query]
+fn get_request_groups() -> Vec<PublicRequestGroup> {
+    with_state(|s| backend::api::get_request_groups(s, caller()))
+}
+
 #[query]
 fn download_file(file_id: u64, chunk_id: u64) -> FileDownloadResponse {
     with_state(|s| backend::api::download_file(s, file_id, chunk_id, caller()))
