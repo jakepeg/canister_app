@@ -1,80 +1,63 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
+  import FileDropzone from "svelte-file-dropzone";
 
   export let type: "self" | "request" = "self";
   export let disabled: boolean = false;
   export let fileName: string = "";
+  export let onFileSelected: (file: File | null) => void = () => {};
 
   let fileNameAutoFilled: boolean = false;
-
-  function markManualFileNameEntry() {
-    fileNameAutoFilled = false;
-  }
+  let selectedFile: File | null = null;
 
   const dispatch = createEventDispatcher<{ "file-selected": File | null }>();
 
-  let files: FileList;
+  function handleFileSelection(event) {
+    const files = event.detail?.acceptedFiles || [];
 
-  function onChange() {
-    const file = files[0];
-    if (
-      file &&
-      type === "self" &&
-      (fileNameAutoFilled || fileName.trim() === "")
-    ) {
+    if (files.length === 0) {
+      console.warn("No files selected");
+      return;
+    }
+
+    selectedFile = files[0];
+
+    if (type === "self" && (fileNameAutoFilled || fileName.trim() === "")) {
       fileNameAutoFilled = true;
-      fileName = file.name;
+      fileName = selectedFile.name;
     }
 
-    if (!file && fileNameAutoFilled) {
-      fileName = "";
-    }
-
-    dispatch("file-selected", file);
+    dispatch("file-selected", selectedFile);
+    onFileSelected(selectedFile);
   }
 </script>
 
 {#if type === "self"}
-  <div class="">
+  <div>
     <label for="fileName" class="input-label">File Name</label>
     <input
       type="text"
-      required={true}
+      required
       class="input"
       id="fileName"
       name="fileName"
       placeholder="File name"
       {disabled}
       bind:value={fileName}
-      on:input={markManualFileNameEntry}
+      on:input={() => (fileNameAutoFilled = false)}
     />
   </div>
 {/if}
-<div class="mb-3">
-  <label for="fileNfile-selectorame" class="input-label">File to upload</label>
-  <input
-    bind:files
-    on:change={onChange}
-    id="file-selector"
-    required
-    {disabled}
+
+<!-- Drag & Drop Zone -->
+<FileDropzone on:drop={handleFileSelection} {disabled}>
+  <div
     class="
-          block
-          w-full
-          file:cursor-pointer
-          file:disabled:cursor-auto
-          file:py-2 file:px-4
-          file:body-1 file:text-text-100
-          file:rounded-full file:bg-silver file:border-none
-          file:mr-2
-          hover:file:brightness-110
-          hover:file:disabled:brightness-100
-          file:disabled:bg-silver/50
-          p-2
-          bg-background-100 rounded-md disabled:bg-background-300
-          border-silver border-solid border-[1.5px]
-          text-text-100
-          body-1"
-    type="file"
-  />
-</div>
+      flex items-center justify-center
+      p-6 border-2 border-dashed border-gray-300
+      rounded-lg cursor-pointer hover:border-gray-400
+      text-gray-500"
+  >
+    <p>Drag & drop files here or click to select</p>
+  </div>
+</FileDropzone>
