@@ -1,14 +1,6 @@
 // api/get_request_groups.rs
-use crate::{PublicRequestGroup, RequestGroup, State};
+use crate::{PublicFileMetadata, PublicRequestGroup, RequestGroup, State};
 use candid::Principal;
-
-// #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-// pub struct PublicRequestGroup {
-//     pub group_id: u64,
-//     pub name: String,
-//     pub files: Vec<PublicFileMetadata>,
-//     pub created_at: u64,
-// }
 
 pub fn get_request_groups(state: &State, caller: Principal) -> Vec<PublicRequestGroup> {
     state

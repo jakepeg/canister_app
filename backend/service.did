@@ -1,5 +1,22 @@
 type file_id = nat64;
 
+type multi_request_input = record {
+  group_name: text;
+  file_names: vec text;
+};
+
+type multi_request_response = record {
+  group_id: nat64;
+  file_aliases: vec text;
+};
+
+type public_request_group = record {
+  group_id: nat64;
+  name: text;
+  files: vec file_metadata;
+  created_at: nat64;
+};
+
 type file_status = variant {
   pending: record { alias: text; requested_at: nat64; };
   partially_uploaded;
@@ -127,6 +144,10 @@ service docutrack : {
   // Requests a file to be uploaded.
   // An alias is returned that can be used to create an upload link.
   request_file: (request_name: text) -> (alias: text);
+
+  // New methods for multi-document requests
+  multi_request: (multi_request_input) -> (multi_request_response);
+  get_request_groups: () -> (vec public_request_group) query;
 
   // Based on the alias (or download link) of the file,
   // it returns the name and id of the file to be uploaded.
