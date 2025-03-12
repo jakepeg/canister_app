@@ -16,6 +16,8 @@
   let documents: string[] = [""]; // At least one document field by default
   let selectedTemplate: string = "";
   let saveAsTemplate: boolean = false;
+  let generatedLinks: string[] = [];
+  let groupId: bigint | null = null;
 
   const dispatch = createEventDispatcher<{
     "request-created": void;
@@ -39,21 +41,57 @@
 
   async function updateRequestUrl(e) {
     loading = true;
-    const formData = new FormData(e.target);
-    const data: any = {};
-    for (let field of formData) {
-      const [key, value] = field;
-      data[key] = value;
+
+    // Filter out empty document names
+    const validDocuments = documents.filter((doc) => doc.trim() !== "");
+
+    if (validDocuments.length === 0) {
+      // Alert the user to add at least one document
+      alert("Please add at least one document name");
+      loading = false;
+      return;
     }
 
-    if (data.requestName && !data.requestLink) {
-      requestName = data.requestName;
-      const alias = await auth.actor.request_file(data.requestName);
-      requestLink = new URL($page.url.origin + "/upload");
-      requestLink.searchParams.append("alias", alias);
+    if (requestName && validDocuments.length > 0) {
+      if (validDocuments.length === 1) {
+        // Single document request - use the original API
+        const alias = await auth.actor.request_file(validDocuments[0]);
+        requestLink = new URL($page.url.origin + "/upload");
+        requestLink.searchParams.append("alias", alias);
+        generatedLinks = [requestLink.toString()];
+      } else {
+        // Multiple document request - use the new API
+        try {
+          const response = await auth.actor.multi_request({
+            group_name: requestName,
+            file_names: validDocuments,
+          });
+
+          groupId = response.group_id;
+          generatedLinks = response.file_aliases.map((alias) => {
+            const url = new URL($page.url.origin + "/upload");
+            url.searchParams.append("alias", alias);
+            return url.toString();
+          });
+
+          // Set the first link as the main requestLink for backward compatibility
+          if (generatedLinks.length > 0) {
+            requestLink = new URL(generatedLinks[0]);
+          }
+        } catch (error) {
+          console.error("Error creating multi-document request:", error);
+          alert("Failed to create document requests. Please try again.");
+        }
+      }
+
+      // Save as template if option selected
+      if (saveAsTemplate && !savedTemplates.includes(requestName)) {
+        // This is a mock implementation - you'll need to actually save the template
+        savedTemplates = [...savedTemplates, requestName];
+      }
     }
+
     loading = false;
-
     dispatch("request-created");
   }
 
@@ -67,10 +105,22 @@
     documents = [""];
   }
 
-  async function copyText() {
-    if (requestLink) {
-      await navigator.clipboard.writeText(requestLink.toString());
+  async function copyText(link = null) {
+      if (link) {
+        await navigator.clipboard.writeText(link);
+      } else if (generatedLinks.length > 0) {
+        // Copy all links as a list
+        const linksList = generatedLinks.map((link, i) =>
+          `${documents[i] || `Document ${i+1}`}: ${link}`
+        ).join('\n');
+        await navigator.clipboard.writeText(linksList);
+      } else if (requestLink) {
+        await navigator.clipboard.writeText(requestLink.toString());
+      }
       copied = true;
+      setTimeout(() => {
+        copied = false;
+      }, 2000);
     }
   }
 </script>

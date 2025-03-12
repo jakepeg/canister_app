@@ -41,6 +41,20 @@ export type get_alias_info_response = {
   { 'Err' : { 'not_found' : null } };
 export type get_users_response = { 'permission_error' : null } |
   { 'users' : Array<user> };
+export interface multi_request_input {
+  'file_names' : Array<string>,
+  'group_name' : string,
+}
+export interface multi_request_response {
+  'file_aliases' : Array<string>,
+  'group_id' : bigint,
+}
+export interface public_request_group {
+  'files' : Array<file_metadata>,
+  'name' : string,
+  'created_at' : bigint,
+  'group_id' : bigint,
+}
 export type set_user_response = { 'ok' : null } |
   { 'username_exists' : null };
 export type share_file_response = { 'ok' : null } |
@@ -78,10 +92,12 @@ export type who_am_i_response = { 'known_user' : { 'username' : string } } |
 export interface _SERVICE {
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
+  'get_request_groups' : ActorMethod<[], Array<public_request_group>>,
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
   'get_users' : ActorMethod<[], get_users_response>,
   'hello_world' : ActorMethod<[], string>,
+  'multi_request' : ActorMethod<[multi_request_input], multi_request_response>,
   'request_file' : ActorMethod<[string], string>,
   'revoke_share' : ActorMethod<[Principal, file_id], share_file_response>,
   'set_user' : ActorMethod<[string, Uint8Array | number[]], set_user_response>,
