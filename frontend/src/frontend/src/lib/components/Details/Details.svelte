@@ -111,7 +111,7 @@
 </script>
 
 <section>
-  <a href="/" class="btn btn-ghost">
+  <a href="/" class="btn btn-ghost" style="padding-left:0">
     <BackIcon /> Back to files
   </a>
   {#if state.type === "loading" || state.type === "uninitialized"}
