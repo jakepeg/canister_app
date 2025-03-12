@@ -111,7 +111,7 @@
 </script>
 
 <section>
-  <a href="/" class="btn btn-ghost" style="padding-left:0">
+  <a href="/" class="btn btn-ghost text-sm" style="padding-left:0">
     <BackIcon /> Back to files
   </a>
   {#if state.type === "loading" || state.type === "uninitialized"}
@@ -128,19 +128,19 @@
         <span class="opacity-50">Unnamed file</span>
       {/if}
     </h1>
-    <p class="mb-6 text-text-200">Uploaded: {state.uploadDate}</p>
-    <div class="mb-6 flex gap-2">
+    <p class=" text-text-200 text-sm">Uploaded: {state.uploadDate}</p>
+    <div class="flex gap-2">
       <a
         href={state.downloadUrl}
-        class="btn btn-accent md:w-64"
+        class="btn btn-ghost"
+        style="padding-left:0"
         download={state.name}
       >
-        <DownloadIcon />
-        Download</a
+        <DownloadIcon /></a
       >
 
-      <button class="btn btn-accent md:w-64" on:click={openShareDialog}>
-        <ShareIcon /> Share
+      <button class="btn btn-ghost" on:click={openShareDialog}>
+        <ShareIcon />
       </button>
     </div>
     <FilePreview
