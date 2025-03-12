@@ -1,5 +1,6 @@
 mod download_file;
 mod get_alias_info;
+mod get_group_by_alias;
 mod get_request_groups;
 mod get_requests;
 mod get_users;
@@ -13,6 +14,7 @@ mod user_info;
 use crate::{FileContent, State, UploadFileContinueRequest};
 pub use download_file::download_file;
 pub use get_alias_info::get_alias_info;
+pub use get_group_by_alias::{get_group_by_alias, FileInfo, GroupInfo};
 pub use get_request_groups::get_request_groups;
 pub use get_requests::get_requests;
 pub use get_users::get_users;

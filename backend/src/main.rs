@@ -91,6 +91,11 @@ fn get_request_groups() -> Vec<PublicRequestGroup> {
 }
 
 #[query]
+fn get_group_by_alias(alias: String) -> Result<GroupInfo, GetAliasInfoError> {
+    with_state(|s| backend::api::get_group_by_alias(s, alias))
+}
+
+#[query]
 fn download_file(file_id: u64, chunk_id: u64) -> FileDownloadResponse {
     with_state(|s| backend::api::download_file(s, file_id, chunk_id, caller()))
 }
