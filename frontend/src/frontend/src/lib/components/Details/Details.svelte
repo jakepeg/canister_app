@@ -5,6 +5,9 @@
   import BackIcon from "$lib/components/icons/BackIcon.svelte";
   import DownloadIcon from "$lib/components/icons/DownloadIcon.svelte";
   import ShareIcon from "$lib/components/icons/ShareIcon.svelte";
+  import DeleteIcon from "$lib/components/icons/DeleteIcon.svelte";
+  import EditIcon from "$lib/components/icons/EditIcon.svelte";
+  import TickIcon from "$lib/components/icons/TickIcon.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
   import { DecryptService } from "$lib/services/decrypt";
   import { ObjectUrlManager } from "$lib/services/objectUrls";
@@ -47,6 +50,9 @@
   let state: State = {
     type: "uninitialized",
   };
+
+  let isEditing = false;
+  let editedName = "";
 
   onMount(async () => {
     initialize();
@@ -108,27 +114,73 @@
       };
     }
   }
+
+  function saveEdit() {
+    console.log("Saving new name:", editedName); // Debugging statement
+    if (state.type === "loaded") {
+      state.name = editedName;
+    }
+    isEditing = false; // Finish editing
+  }
+
+  function startEdit() {
+    if (state.type === "loaded") {
+      editedName = state.name; // Set current name as initial value
+      isEditing = true; // Start editing mode
+    }
+  }
+
+  // Type guard to check if state is in the 'loaded' state
+  function isLoadedState(
+    state: State,
+  ): state is Extract<State, { type: "loaded" }> {
+    return state.type === "loaded";
+  }
 </script>
 
 <section>
   <a href="/" class="btn btn-ghost text-sm" style="padding-left:0">
     <BackIcon /> Back to files
   </a>
+
   {#if state.type === "loading" || state.type === "uninitialized"}
     <div class="title-1 mb-2 mt-3 text-text-200">Loading...</div>
-
     <DecryptProgress progress={$decryptService} />
   {:else if state.type === "error"}
     <ErrorMessage class="mt-6">{state.error}</ErrorMessage>
-  {:else if state.type === "loaded"}
-    <h1 class="title-1 mb-2 mt-3">
-      {#if state.name}
-        {state.name}
+  {:else if isLoadedState(state)}
+    <div class="flex items-center justify-between mt-3 mb-2">
+      {#if isEditing}
+        <input
+          type="text"
+          bind:value={editedName}
+          class="title-1"
+          on:blur={saveEdit}
+          autofocus
+        />
+        <TickIcon on:click={saveEdit} />
+        <!-- Click to save -->
       {:else}
-        <span class="opacity-50">Unnamed file</span>
+        <h1 id="DocName" class="title-1">
+          {#if state.name}
+            {state.name}
+          {:else}
+            <span class="opacity-50">Unnamed file</span>
+          {/if}
+        </h1>
+        <button on:click={startEdit} class="btn btn-ghost">
+          <!-- Edit icon as button -->
+          <EditIcon />
+        </button>
       {/if}
-    </h1>
+      <button class="btn btn-ghost">
+        <!-- Delete icon as button -->
+        <DeleteIcon />
+      </button>
+    </div>
+
     <p class=" text-text-200 text-sm">Uploaded: {state.uploadDate}</p>
+
     <div class="flex gap-2">
       <a
         href={state.downloadUrl}
@@ -136,19 +188,21 @@
         style="padding-left:0"
         download={state.name}
       >
-        <DownloadIcon /></a
-      >
+        <DownloadIcon />
+      </a>
 
       <button class="btn btn-ghost" on:click={openShareDialog}>
         <ShareIcon />
       </button>
     </div>
+
     <FilePreview
       file={{
         objectUrl: state.downloadUrl,
         dataType: state.dataType,
       }}
     />
+
     <ShareModal
       {auth}
       bind:isOpen={state.isOpenShareModal}
