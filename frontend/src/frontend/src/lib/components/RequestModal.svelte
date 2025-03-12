@@ -68,6 +68,8 @@
           });
 
           groupId = response.group_id;
+
+          // Create URLs for each alias
           generatedLinks = response.file_aliases.map((alias) => {
             const url = new URL($page.url.origin + "/upload");
             url.searchParams.append("alias", alias);
@@ -106,22 +108,21 @@
   }
 
   async function copyText(link = null) {
-      if (link) {
-        await navigator.clipboard.writeText(link);
-      } else if (generatedLinks.length > 0) {
-        // Copy all links as a list
-        const linksList = generatedLinks.map((link, i) =>
-          `${documents[i] || `Document ${i+1}`}: ${link}`
-        ).join('\n');
-        await navigator.clipboard.writeText(linksList);
-      } else if (requestLink) {
-        await navigator.clipboard.writeText(requestLink.toString());
-      }
-      copied = true;
-      setTimeout(() => {
-        copied = false;
-      }, 2000);
+    if (link) {
+      await navigator.clipboard.writeText(link);
+    } else if (generatedLinks.length > 0) {
+      // Copy all links as a list
+      const linksList = generatedLinks
+        .map((link, i) => `${documents[i] || `Document ${i + 1}`}: ${link}`)
+        .join("\n");
+      await navigator.clipboard.writeText(linksList);
+    } else if (requestLink) {
+      await navigator.clipboard.writeText(requestLink.toString());
     }
+    copied = true;
+    setTimeout(() => {
+      copied = false;
+    }, 2000);
   }
 </script>
 
@@ -161,7 +162,7 @@
             />
           </div>
           <div class="mt-3">
-            <label class="input-label">Documents</label>
+            <span class="input-label">Documents</span>
             {#each documents as doc, index}
               <div class="flex gap-2 items-center mt-2">
                 <input
@@ -169,12 +170,14 @@
                   class="input flex-1"
                   placeholder="Document name"
                   bind:value={documents[index]}
+                  disabled={!!requestLink}
                 />
                 {#if documents.length > 1}
                   <button
                     type="button"
                     class="btn btn-danger"
-                    on:click={() => removeDocument(index)}>✖</button
+                    on:click={() => removeDocument(index)}
+                    disabled={!!requestLink}>✖</button
                   >
                 {/if}
               </div>
@@ -190,9 +193,46 @@
               type="checkbox"
               id="saveTemplate"
               bind:checked={saveAsTemplate}
+              disabled={!!requestLink}
             />
             <label for="saveTemplate">Save as Template</label>
           </div>
+
+          {#if generatedLinks.length > 0}
+            <div class="mt-4 border p-3 rounded-md bg-gray-50">
+              <h3 class="font-medium mb-2">Generated Links:</h3>
+              <ul class="space-y-2">
+                {#each generatedLinks as link, i}
+                  <li class="text-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium"
+                        >{documents[i] || `Document ${i + 1}`}</span
+                      >
+                      <button
+                        type="button"
+                        class="text-blue-600 hover:text-blue-800"
+                        on:click={() => copyText(link)}
+                      >
+                        <CopyIcon />
+                      </button>
+                    </div>
+                    <div class="truncate text-gray-500 text-xs">
+                      {link}
+                    </div>
+                  </li>
+                {/each}
+              </ul>
+              <div class="mt-3">
+                <button
+                  type="button"
+                  class="btn btn-secondary w-full"
+                  on:click={() => copyText()}
+                >
+                  {copied ? "Copied!" : "Copy All Links"}
+                </button>
+              </div>
+            </div>
+          {/if}
         </form>
       </div>
       <div class="p-4 border-t bg-white">
