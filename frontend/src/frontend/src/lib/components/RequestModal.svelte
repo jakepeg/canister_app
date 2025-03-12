@@ -107,7 +107,7 @@
     documents = [""];
   }
 
-  async function copyText(link = null) {
+  async function copyText(link: string | null = null) {
     if (link) {
       await navigator.clipboard.writeText(link);
     } else if (generatedLinks.length > 0) {
