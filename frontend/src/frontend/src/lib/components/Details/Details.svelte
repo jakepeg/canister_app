@@ -139,7 +139,7 @@
 </script>
 
 <section style="padding-bottom:5rem">
-  <a href="/" class="btn btn-ghost text-sm" style="padding-left:0">
+  <a href="/" class="btn btn-ghost text-sm" style="padding-left:0; height:0">
     <BackIcon /> Back to files
   </a>
 
@@ -149,7 +149,7 @@
   {:else if state.type === "error"}
     <ErrorMessage class="mt-6">{state.error}</ErrorMessage>
   {:else if isLoadedState(state)}
-    <div class="flex items-center justify-between mt-3 mb-2">
+    <div class="flex items-center gap-10 mt-3 mb-2">
       {#if isEditing}
         <input
           type="text"

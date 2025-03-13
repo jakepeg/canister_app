@@ -61,7 +61,7 @@
       <Sidebar.Inset class="flex-1 flex overflow-auto">
         <main class="flex-1">
           <Sidebar.Trigger class="sticky top-4 left-4" />
-          <div class="max-w-5xl mx-auto px-4 py-6 ml-10">
+          <div class="max-w-5xl mx-auto px-4 ml-10">
             {@render children?.()}
           </div>
         </main>
