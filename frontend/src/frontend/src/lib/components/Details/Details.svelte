@@ -162,7 +162,8 @@
           <TickIcon on:click={DeleteFile} class="cursor-pointer" />
           <button
             on:click={() => (showDeletePrompt = false)}
-            class="cursor-pointer">X</button
+            class="cursor-pointer"
+            style="color:#C73B3B">X</button
           >
         </div>
       {:else}
