@@ -7,16 +7,35 @@
 
   export let isOpen = false;
   export let auth: AuthStateAuthenticated;
+  export let savedTemplates: string[] = []; // Mocked saved templates list
 
   let requestLink: URL | null = null;
   let loading: boolean = false;
   let requestName: string = "";
   let copied = false;
+  let documents: string[] = [""]; // At least one document field by default
+  let selectedTemplate: string = "";
+  let saveAsTemplate: boolean = false;
 
   const dispatch = createEventDispatcher<{
     "request-created": void;
     "request-completed": void;
   }>();
+
+  function addDocument() {
+    documents = [...documents, ""];
+  }
+
+  function removeDocument(index: number) {
+    documents = documents.filter((_, i) => i !== index);
+  }
+
+  function loadTemplate(template: string) {
+    if (template) {
+      requestName = template;
+      documents = ["Document 1", "Document 2"]; // Mocked template documents
+    }
+  }
 
   async function updateRequestUrl(e) {
     loading = true;
@@ -27,7 +46,6 @@
       data[key] = value;
     }
 
-    // Do not request new url when there is already one
     if (data.requestName && !data.requestLink) {
       requestName = data.requestName;
       const alias = await auth.actor.request_file(data.requestName);
@@ -43,10 +61,10 @@
     if (requestLink) {
       dispatch("request-completed");
     }
-
     isOpen = false;
     requestName = "";
     requestLink = null;
+    documents = [""];
   }
 
   async function copyText() {
@@ -59,70 +77,91 @@
 
 <div>
   <Modal bind:isOpen title="Create Request" on:cancelled={close}>
-    <form class="w-full md:w-96" on:submit|preventDefault={updateRequestUrl}>
-      <div class="">
-        <label for="requestName" class="input-label">Request Name</label>
-
-        <input
-          type="text"
-          required={true}
-          class="input"
-          id="requestName"
-          placeholder="Request name"
-          name="requestName"
-          disabled={!!requestLink}
-          readonly={!!requestLink}
-        />
-      </div>
-      <div class="mt-3">
-        {#if requestLink}
-          <div class="flex justify-between items-center">
-            <label for="requestLink" class="input-label"> Request Link </label>
-            {#if copied}
-              <span class="text-text-100 body-1"> Copied! </span>
-            {/if}
+    <div class="flex flex-col max-h-[55vh]">
+      <div class="overflow-y-auto flex-1 p-2">
+        <form
+          class="w-full md:w-96"
+          on:submit|preventDefault={updateRequestUrl}
+        >
+          <div>
+            <label for="template" class="input-label">Load Template</label>
+            <select
+              id="template"
+              bind:value={selectedTemplate}
+              on:change={() => loadTemplate(selectedTemplate)}
+              class="input"
+            >
+              <option value="">Select a template</option>
+              {#each savedTemplates as template}
+                <option value={template}>{template}</option>
+              {/each}
+            </select>
           </div>
-          <div class="relative">
+          <div class="mt-3">
+            <label for="requestName" class="input-label">Request Name</label>
             <input
               type="text"
-              class="input pr-10"
-              id="requestLink"
-              placeholder=""
-              name="requestLink"
-              value={requestLink}
-              readonly
+              required
+              class="input"
+              id="requestName"
+              placeholder="Request name"
+              bind:value={requestName}
+              disabled={!!requestLink}
+              readonly={!!requestLink}
             />
+          </div>
+          <div class="mt-3">
+            <label class="input-label">Documents</label>
+            {#each documents as doc, index}
+              <div class="flex gap-2 items-center mt-2">
+                <input
+                  type="text"
+                  class="input flex-1"
+                  placeholder="Document name"
+                  bind:value={documents[index]}
+                />
+                {#if documents.length > 1}
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    on:click={() => removeDocument(index)}>✖</button
+                  >
+                {/if}
+              </div>
+            {/each}
             <button
-              class="btn btn-icon absolute right-0 top-1/2 -translate-y-1/2"
-              on:click={copyText}
-            >
-              <CopyIcon />
-            </button>
-          </div>
-          <div class="mt-4">
-            <a
-              href="mailto:?subject=Share your file&body=Please share a file with me here: {requestLink}"
-              target="_blank"
-              class="text-accent-100">Send in email</a
+              type="button"
+              class="btn btn-secondary mt-2"
+              on:click={addDocument}>+ Add Document</button
             >
           </div>
-        {/if}
+          <div class="mt-3 flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="saveTemplate"
+              bind:checked={saveAsTemplate}
+            />
+            <label for="saveTemplate">Save as Template</label>
+          </div>
+        </form>
       </div>
-      <div class=" mt-10">
+      <div class="p-4 border-t bg-white">
         {#if loading}
-          <button type="submit" class="btn btn-accent btn-full btn-" disabled
+          <button type="submit" class="btn btn-accent btn-full" disabled
             >Generating link...</button
           >
-        {:else if !loading && requestLink}
+        {:else if requestLink}
           <button type="button" class="btn btn-accent btn-full" on:click={close}
             >Request sent, close this window</button
           >
         {:else}
-          <button type="submit" class="btn btn-accent btn-full"
-            >Generate link</button
+          <button
+            type="submit"
+            class="btn btn-accent btn-full"
+            on:click={updateRequestUrl}>Generate link</button
           >
         {/if}
       </div>
-    </form>
+    </div>
   </Modal>
 </div>
