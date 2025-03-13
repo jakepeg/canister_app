@@ -1,17 +1,17 @@
-use crate::{AliasInfo, FileMetadata, GetAliasInfoError, PublicUser, RequestGroup, State};
+use crate::{FileInfo, GetAliasInfoError, GroupInfo, PublicUser, State};
 
-pub struct GroupInfo {
-    pub group_id: u64,
-    pub group_name: String,
-    pub files: Vec<FileInfo>,
-    pub requester: PublicUser,
-}
+// pub struct GroupInfo {
+//     pub group_id: u64,
+//     pub group_name: String,
+//     pub files: Vec<FileInfo>,
+//     pub requester: PublicUser,
+// }
 
-pub struct FileInfo {
-    pub file_id: u64,
-    pub file_name: String,
-    pub alias: String,
-}
+// pub struct FileInfo {
+//     pub file_id: u64,
+//     pub file_name: String,
+//     pub alias: String,
+// }
 
 pub fn get_group_by_alias(state: &State, alias: String) -> Result<GroupInfo, GetAliasInfoError> {
     // First, get the file ID from the alias

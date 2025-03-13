@@ -15,6 +15,11 @@ export interface file {
   'metadata' : file_metadata,
 }
 export type file_id = bigint;
+export interface file_info {
+  'alias' : string,
+  'file_name' : string,
+  'file_id' : file_id,
+}
 export interface file_metadata {
   'file_status' : file_status,
   'file_name' : string,
@@ -41,6 +46,12 @@ export type get_alias_info_response = {
   { 'Err' : { 'not_found' : null } };
 export type get_users_response = { 'permission_error' : null } |
   { 'users' : Array<user> };
+export interface group_info {
+  'files' : Array<file_info>,
+  'requester' : user,
+  'group_id' : bigint,
+  'group_name' : string,
+}
 export interface multi_request_input {
   'file_names' : Array<string>,
   'group_name' : string,
@@ -92,6 +103,11 @@ export type who_am_i_response = { 'known_user' : { 'username' : string } } |
 export interface _SERVICE {
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
+  'get_group_by_alias' : ActorMethod<
+    [string],
+    { 'Ok' : group_info } |
+      { 'Err' : { 'not_found' : null } }
+  >,
   'get_request_groups' : ActorMethod<[], Array<public_request_group>>,
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,

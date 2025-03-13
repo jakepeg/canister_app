@@ -3,14 +3,22 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { encrypt } from "$lib/crypto/upload";
-  import type { AuthState } from "$lib/services/auth";
+  import type {
+    AuthStateAuthenticated,
+    AuthStateUnauthenticated,
+  } from "$lib/services/auth";
   import { unreachable } from "$lib/shared/unreachable";
-  import LoadingIndicator from "../LoadingIndicator.svelte";
+  // import LoadingIndicator from "../LoadingIndicator.svelte";
   import UploadIcon from "../icons/UploadIcon.svelte";
-  import SuccessIcon from "../icons/SuccessIcon.svelte";
-  import { VetkdCryptoService } from "$lib/vetkeys/vetkdCrypto";
+  import { enumIs } from "$lib/shared/enums";
 
-  export let auth: AuthState;
+  import {
+    UploadService,
+    uploadInProgress,
+    type UploadType,
+  } from "$lib/services/upload";
+
+  export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
 
   let alias = $page.url.searchParams.get("alias") || "";
   let groupInfo = null;
@@ -28,7 +36,28 @@
 
     try {
       // Get the group info using the provided alias
-      const result = await auth.actor.get_group_by_alias(alias);
+      const groupInfoResult = await auth.actor.get_group_by_alias(alias);
+
+      console.log("aliasInfo: ", groupInfoResult);
+
+      if (enumIs(groupInfoResult, "Ok")) {
+        uploadType = {
+          type: "request",
+          fileInfo: groupInfoResult.Ok,
+        };
+        console.log("uploadType: ", uploadType.type);
+        group_id = groupInfoResult.Ok.group_id;
+        console.log("fileId: ", group_id);
+      } else if (enumIs(groupInfoResult, "Err")) {
+        state = "error";
+        if (enumIs(groupInfoResult.Err, "not_found")) {
+          fatalError = true;
+          error = "Request not found or already uploaded";
+        } else {
+          unreachable(groupInfoResult.Err);
+        }
+        return;
+      }
 
       if ("Err" in result) {
         error = "File request not found";
@@ -141,7 +170,8 @@
 <div class="container mx-auto p-4">
   {#if loading}
     <div class="flex justify-center items-center h-64">
-      <LoadingIndicator />
+      <!-- <LoadingIndicator /> -->
+      LoadingIndicator goes here
     </div>
   {:else if error}
     <div class="p-4 bg-red-100 text-red-700 rounded-lg mb-4">
@@ -152,7 +182,8 @@
     <div class="bg-white rounded-lg p-6 shadow-md mb-4">
       <div class="flex flex-col items-center justify-center text-center p-8">
         <div class="mb-4 text-green-500">
-          <SuccessIcon size={48} />
+          <!-- <SuccessIcon size={48} /> -->
+          SuccessIcon goes here
         </div>
         <h2 class="title-1 mb-2">All files uploaded successfully!</h2>
         <p class="mb-6">All documents have been securely uploaded</p>
@@ -174,7 +205,8 @@
 
             {#if fileUpload.status === "uploaded"}
               <div class="flex items-center text-green-500">
-                <SuccessIcon class="mr-2" />
+                <!-- <SuccessIcon class="mr-2" /> -->
+                SuccessIcon goes here
                 <span>Uploaded successfully</span>
               </div>
             {:else if fileUpload.status === "uploading"}

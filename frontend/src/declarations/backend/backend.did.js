@@ -25,6 +25,17 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
   });
+  const file_info = IDL.Record({
+    'alias' : IDL.Text,
+    'file_name' : IDL.Text,
+    'file_id' : file_id,
+  });
+  const group_info = IDL.Record({
+    'files' : IDL.Vec(file_info),
+    'requester' : user,
+    'group_id' : IDL.Nat64,
+    'group_name' : IDL.Text,
+  });
   const file_status = IDL.Variant({
     'partially_uploaded' : IDL.Null,
     'pending' : IDL.Record({ 'alias' : IDL.Text, 'requested_at' : IDL.Nat64 }),
@@ -113,6 +124,16 @@ export const idlFactory = ({ IDL }) => {
     'get_alias_info' : IDL.Func(
         [IDL.Text],
         [get_alias_info_response],
+        ['query'],
+      ),
+    'get_group_by_alias' : IDL.Func(
+        [IDL.Text],
+        [
+          IDL.Variant({
+            'Ok' : group_info,
+            'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
+          }),
+        ],
         ['query'],
       ),
     'get_request_groups' : IDL.Func(

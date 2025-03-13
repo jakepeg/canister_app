@@ -53,6 +53,21 @@ pub struct PublicRequestGroup {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct FileInfo {
+    pub file_id: u64,
+    pub file_name: String,
+    pub alias: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct GroupInfo {
+    pub group_id: u64,
+    pub group_name: String,
+    pub files: Vec<FileInfo>,
+    pub requester: PublicUser,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct User {
     pub username: String,
     pub public_key: Vec<u8>,
