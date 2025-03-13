@@ -159,7 +159,6 @@
           autofocus
         />
         <TickIcon on:click={saveEdit} />
-        <!-- Click to save -->
       {:else}
         <h1 id="DocName" class="title-1">
           {#if state.name}
@@ -169,14 +168,9 @@
           {/if}
         </h1>
         <button on:click={startEdit} class="btn btn-ghost">
-          <!-- Edit icon as button -->
           <EditIcon />
         </button>
       {/if}
-      <button class="btn btn-ghost">
-        <!-- Delete icon as button -->
-        <DeleteIcon />
-      </button>
     </div>
 
     <p class=" text-text-200 text-sm">Uploaded: {state.uploadDate}</p>
@@ -202,6 +196,10 @@
         dataType: state.dataType,
       }}
     />
+
+    <button class="btn btn-ghost" style="padding-left:0">
+      <DeleteIcon />
+    </button>
 
     <ShareModal
       {auth}
