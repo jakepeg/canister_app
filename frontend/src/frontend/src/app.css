@@ -32,11 +32,11 @@
   }
 
   .btn-ghost {
-    @apply hover:bg-background-100 hover:text-accent-100 h-12 px-4;
+    @apply hover:text-accent-100 h-12 px-4;
   }
 
   .btn-ghost-active {
-    @apply bg-background-100 text-accent-100;
+    @apply text-accent-100;
   }
 
   .btn-icon {
