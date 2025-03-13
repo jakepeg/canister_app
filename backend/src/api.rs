@@ -1,3 +1,4 @@
+mod delete_file;
 mod download_file;
 mod get_alias_info;
 mod get_group_by_alias;
@@ -5,6 +6,7 @@ mod get_request_groups;
 mod get_requests;
 mod get_users;
 mod multi_request;
+mod rename_file;
 mod request_file;
 mod share_file;
 mod upload_file;
@@ -12,6 +14,7 @@ mod upload_file_atomic;
 mod user_info;
 
 use crate::{FileContent, State, UploadFileContinueRequest};
+pub use delete_file::delete_file;
 pub use download_file::download_file;
 pub use get_alias_info::get_alias_info;
 pub use get_group_by_alias::get_group_by_alias;
@@ -19,6 +22,7 @@ pub use get_request_groups::get_request_groups;
 pub use get_requests::get_requests;
 pub use get_users::get_users;
 pub use multi_request::multi_request;
+pub use rename_file::rename_file;
 pub use request_file::request_file;
 pub use share_file::{get_shared_files, revoke_share, share_file};
 pub use upload_file::upload_file;

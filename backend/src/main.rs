@@ -129,6 +129,16 @@ fn revoke_share(user_id: Principal, file_id: u64) -> FileSharingResponse {
     with_state_mut(|s| backend::api::revoke_share(s, caller(), user_id, file_id))
 }
 
+#[update]
+fn delete_file(file_id: u64) -> FileSharingResponse {
+    with_state_mut(|s| backend::api::delete_file(s, caller(), file_id))
+}
+
+#[update]
+fn rename_file(file_id: u64, new_name: String) -> FileSharingResponse {
+    with_state_mut(|s| backend::api::rename_file(s, caller(), file_id, new_name))
+}
+
 #[query]
 fn get_users() -> GetUsersResponse {
     with_state(|s| backend::api::get_users(s, caller()))

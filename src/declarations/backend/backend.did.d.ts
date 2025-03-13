@@ -101,6 +101,7 @@ export interface user {
 export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
 export interface _SERVICE {
+  'delete_file' : ActorMethod<[file_id], share_file_response>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
   'get_group_by_alias' : ActorMethod<
@@ -114,6 +115,7 @@ export interface _SERVICE {
   'get_users' : ActorMethod<[], get_users_response>,
   'hello_world' : ActorMethod<[], string>,
   'multi_request' : ActorMethod<[multi_request_input], multi_request_response>,
+  'rename_file' : ActorMethod<[file_id, string], share_file_response>,
   'request_file' : ActorMethod<[string], string>,
   'revoke_share' : ActorMethod<[Principal, file_id], share_file_response>,
   'set_user' : ActorMethod<[string, Uint8Array | number[]], set_user_response>,

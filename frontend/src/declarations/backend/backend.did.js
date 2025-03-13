@@ -1,5 +1,9 @@
 export const idlFactory = ({ IDL }) => {
   const file_id = IDL.Nat64;
+  const share_file_response = IDL.Variant({
+    'ok' : IDL.Null,
+    'permission_error' : IDL.Null,
+  });
   const found_file = IDL.Record({
     'contents' : IDL.Vec(IDL.Nat8),
     'owner_key' : IDL.Vec(IDL.Nat8),
@@ -68,10 +72,6 @@ export const idlFactory = ({ IDL }) => {
     'file_aliases' : IDL.Vec(IDL.Text),
     'group_id' : IDL.Nat64,
   });
-  const share_file_response = IDL.Variant({
-    'ok' : IDL.Null,
-    'permission_error' : IDL.Null,
-  });
   const set_user_response = IDL.Variant({
     'ok' : IDL.Null,
     'username_exists' : IDL.Null,
@@ -116,6 +116,7 @@ export const idlFactory = ({ IDL }) => {
     'unknown_user' : IDL.Null,
   });
   return IDL.Service({
+    'delete_file' : IDL.Func([file_id], [share_file_response], []),
     'download_file' : IDL.Func(
         [file_id, IDL.Nat64],
         [download_file_response],
@@ -150,6 +151,7 @@ export const idlFactory = ({ IDL }) => {
         [multi_request_response],
         [],
       ),
+    'rename_file' : IDL.Func([file_id, IDL.Text], [share_file_response], []),
     'request_file' : IDL.Func([IDL.Text], [IDL.Text], []),
     'revoke_share' : IDL.Func(
         [IDL.Principal, file_id],

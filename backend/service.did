@@ -190,4 +190,7 @@ service docutrack : {
   vetkd_encrypted_key: (blob) -> (VetkdEncryptedKeyResponse);
 
   vetkd_public_key: () -> (VetkdPublicKeyResponse);
+
+  delete_file: (file_id: file_id) -> (share_file_response);
+  rename_file: (file_id: file_id, new_name: text) -> (share_file_response);
 }
