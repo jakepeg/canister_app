@@ -138,7 +138,7 @@
   }
 </script>
 
-<section>
+<section style="padding-bottom:5rem">
   <a href="/" class="btn btn-ghost text-sm" style="padding-left:0">
     <BackIcon /> Back to files
   </a>
