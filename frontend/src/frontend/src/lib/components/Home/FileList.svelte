@@ -82,7 +82,7 @@
             <th class="body-2 pt-4 pb-2 pl-4">Name</th>
             <th class="body-2 pt-6 pb-2">Access</th>
             <th class="body-2 pt-6 pb-2">Uploaded</th>
-            <th />
+            <th></th>
           </tr>
         </thead>
         <tbody class="">

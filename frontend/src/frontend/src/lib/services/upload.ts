@@ -113,20 +113,12 @@ export class UploadService {
       console.log("firstChunk done");
       let fileId: bigint = 0n;
 
-      // Get the vetkd public key to use as the owner key
-      const publicKeyResponse = await this.auth.actor.vetkd_public_key();
-      if (!publicKeyResponse || "Err" in publicKeyResponse) {
-        throw new Error("Error getting public key");
-      }
-      const publicKey = publicKeyResponse.Ok as Uint8Array;
-
       if (uploadType.type === "request") {
         fileId = uploadType.fileInfo.file_id;
         console.log("fileId for request: ", fileId);
         const res = await this.auth.actor.upload_file({
           file_id: fileId,
           file_content: firstChunk,
-          owner_key: publicKey,
           file_type: dataType,
           num_chunks: BigInt(numChunks),
         });
@@ -139,14 +131,23 @@ export class UploadService {
           return;
         }
       } else {
+        console.log(
+          "About to upload file atomically, content: ",
+          firstChunk,
+          "name: ",
+          fileName,
+          "dataType: ",
+          dataType,
+          "numChunks: ",
+          numChunks,
+        );
         fileId = await this.auth.actor.upload_file_atomic({
           content: firstChunk,
-          owner_key: publicKey,
           name: fileName,
           file_type: dataType,
           num_chunks: BigInt(numChunks),
         });
-        // console.log("fileId for self: ", fileId);
+        console.log("fileId for self: ", fileId);
       }
 
       onChunkUploaded(0, firstChunk.length);

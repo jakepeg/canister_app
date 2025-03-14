@@ -28,15 +28,9 @@ export interface file_metadata {
 }
 export type file_status = { 'partially_uploaded' : null } |
   { 'pending' : { 'alias' : string, 'requested_at' : bigint } } |
-  {
-    'uploaded' : {
-      'document_key' : Uint8Array | number[],
-      'uploaded_at' : bigint,
-    }
-  };
+  { 'uploaded' : { 'uploaded_at' : bigint } };
 export interface found_file {
   'contents' : Uint8Array | number[],
-  'owner_key' : Uint8Array | number[],
   'file_type' : string,
   'num_chunks' : bigint,
 }
@@ -72,7 +66,6 @@ export type share_file_response = { 'ok' : null } |
   { 'permission_error' : null };
 export interface upload_file_atomic_request {
   'content' : Uint8Array | number[],
-  'owner_key' : Uint8Array | number[],
   'name' : string,
   'file_type' : string,
   'num_chunks' : bigint,
@@ -85,7 +78,6 @@ export interface upload_file_continue_request {
 export type upload_file_error = { 'not_requested' : null } |
   { 'already_uploaded' : null };
 export interface upload_file_request {
-  'owner_key' : Uint8Array | number[],
   'file_type' : string,
   'num_chunks' : bigint,
   'file_content' : Uint8Array | number[],
@@ -115,6 +107,7 @@ export interface _SERVICE {
       { 'Err' : { 'not_found' : null } }
   >,
   'get_request_groups' : ActorMethod<[], Array<public_request_group>>,
+
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
   'get_users' : ActorMethod<[], get_users_response>,
@@ -124,14 +117,8 @@ export interface _SERVICE {
   'request_file' : ActorMethod<[string], string>,
   'revoke_share' : ActorMethod<[Principal, file_id], share_file_response>,
   'set_user' : ActorMethod<[string, Uint8Array | number[]], set_user_response>,
-  'share_file' : ActorMethod<
-    [Principal, file_id, Uint8Array | number[]],
-    share_file_response
-  >,
-  'share_file_with_users' : ActorMethod<
-    [Array<Principal>, file_id, Array<Uint8Array | number[]>],
-    undefined
-  >,
+  'share_file' : ActorMethod<[Principal, file_id], share_file_response>,
+  'share_file_with_users' : ActorMethod<[Array<Principal>, file_id], undefined>,
   'upload_file' : ActorMethod<[upload_file_request], upload_file_response>,
   'upload_file_atomic' : ActorMethod<[upload_file_atomic_request], file_id>,
   'upload_file_continue' : ActorMethod<
@@ -140,7 +127,7 @@ export interface _SERVICE {
   >,
   'username_exists' : ActorMethod<[string], boolean>,
   'vetkd_encrypted_key' : ActorMethod<
-    [Uint8Array | number[]],
+    [Uint8Array | number[], [] | [bigint]],
     VetkdEncryptedKeyResponse
   >,
   'vetkd_public_key' : ActorMethod<[], VetkdPublicKeyResponse>,

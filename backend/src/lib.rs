@@ -108,7 +108,8 @@ pub enum FileStatus {
     #[serde(rename = "uploaded")]
     Uploaded {
         uploaded_at: u64,
-        document_key: Vec<u8>,
+        // No document_key needed here as we moved to vertkeys
+        // document_key: Vec<u8>,
     },
 }
 
@@ -148,14 +149,16 @@ pub enum FileContent {
     Uploaded {
         num_chunks: u64,
         file_type: String,
-        owner_key: Vec<u8>,
-        shared_keys: BTreeMap<Principal, Vec<u8>>,
+        // owner_key: Vec<u8>, // VetKD public key
+        // No need for shared_keys map as we are moving to vetkeys
+        // shared_keys: BTreeMap<Principal, Vec<u8>>,
     },
     PartiallyUploaded {
         num_chunks: u64,
         file_type: String,
-        owner_key: Vec<u8>,
-        shared_keys: BTreeMap<Principal, Vec<u8>>,
+        // owner_key: Vec<u8>, // VetKD public key
+        // No need for shared_keys map as we are moving to vetkeys
+        // shared_keys: BTreeMap<Principal, Vec<u8>>,
     },
 }
 
@@ -163,7 +166,8 @@ pub enum FileContent {
 pub struct FileData {
     contents: Vec<u8>,
     file_type: String,
-    owner_key: Vec<u8>,
+    // Remove owner_key field as it's not needed with VetKD
+    // owner_key: Vec<u8>,
     num_chunks: u64,
 }
 
@@ -323,7 +327,8 @@ pub struct UploadFileRequest {
     pub file_id: u64,
     pub file_content: Vec<u8>,
     pub file_type: String,
-    pub owner_key: Vec<u8>,
+    // Not needed for VetKD
+    // pub owner_key: Vec<u8>,
     pub num_chunks: u64,
 }
 

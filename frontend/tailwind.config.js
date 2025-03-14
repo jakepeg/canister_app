@@ -97,7 +97,7 @@ const config = {
         sans: [...fontFamily.sans],
       },
       fontSize: {
-        "title-1": ["32px", "40px"],
+        "title-1": ["20px", "30px"],
         "title-1-mobile": ["28px", "32px"],
         "title-2": ["16px", "21px"],
         "body-1": ["14px", "16px"],
@@ -105,7 +105,7 @@ const config = {
       },
       fontWeight: {
         book: 450,
-        medium: 500,
+        medium: 400,
       },
     },
   },

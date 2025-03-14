@@ -5,6 +5,9 @@
   import BackIcon from "$lib/components/icons/BackIcon.svelte";
   import DownloadIcon from "$lib/components/icons/DownloadIcon.svelte";
   import ShareIcon from "$lib/components/icons/ShareIcon.svelte";
+  import DeleteIcon from "$lib/components/icons/DeleteIcon.svelte";
+  import EditIcon from "$lib/components/icons/EditIcon.svelte";
+  import TickIcon from "$lib/components/icons/TickIcon.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
   import { DecryptService } from "$lib/services/decrypt";
   import { ObjectUrlManager } from "$lib/services/objectUrls";
@@ -24,12 +27,8 @@
   }
 
   type State =
-    | {
-        type: "uninitialized";
-      }
-    | {
-        type: "loading";
-      }
+    | { type: "uninitialized" }
+    | { type: "loading" }
     | {
         type: "loaded";
         name: string;
@@ -39,14 +38,12 @@
         isOpenShareModal: boolean;
         originalMetadata: file_metadata;
       }
-    | {
-        type: "error";
-        error: string;
-      };
+    | { type: "error"; error: string };
 
-  let state: State = {
-    type: "uninitialized",
-  };
+  let state: State = { type: "uninitialized" };
+  let showDeletePrompt = false;
+  let isEditing = false;
+  let editedName = "";
 
   onMount(async () => {
     initialize();
@@ -57,35 +54,16 @@
     objectUrls.clear();
   });
 
-  function openShareDialog() {
-    if (state.type === "loaded") {
-      state = {
-        ...state,
-        isOpenShareModal: true,
-      };
-    }
-  }
-
   async function initialize() {
     decryptService.reset();
-
     const fileId = BigInt(getFileId());
 
     try {
-      const file = await decryptService.decryptFile({
-        fileId,
-      });
-
+      const file = await decryptService.decryptFile({ fileId });
       if (file === "aborted") {
-        console.log("file download/decrypt aborted");
-
-        state = {
-          type: "error",
-          error: "File not found.",
-        };
+        state = { type: "error", error: "File not found." };
         return;
       }
-
       state = {
         type: "loaded",
         downloadUrl: objectUrls.createObjectURLFromArrayBuffer(
@@ -108,53 +86,100 @@
       };
     }
   }
+
+  function DeleteFile() {
+    console.log("File deleted");
+    showDeletePrompt = false;
+  }
+
+  function saveEdit() {
+    if (state.type === "loaded") {
+      state.name = editedName;
+    }
+    isEditing = false;
+  }
+
+  function startEdit() {
+    if (state.type === "loaded") {
+      editedName = state.name;
+      isEditing = true;
+    }
+  }
 </script>
 
-<section>
-  <a href="/" class="btn btn-ghost">
+<section style="padding-bottom:5rem">
+  <a href="/" class="btn btn-ghost text-sm" style="padding-left:0; height:0">
     <BackIcon /> Back to files
   </a>
+
   {#if state.type === "loading" || state.type === "uninitialized"}
     <div class="title-1 mb-2 mt-3 text-text-200">Loading...</div>
-
     <DecryptProgress progress={$decryptService} />
   {:else if state.type === "error"}
     <ErrorMessage class="mt-6">{state.error}</ErrorMessage>
-  {:else if state.type === "loaded"}
-    <h1 class="title-1 mb-2 mt-3">
-      {#if state.name}
-        {state.name}
+  {:else}
+    <div class="flex items-center gap-10 mt-3 mb-2">
+      {#if isEditing}
+        <input
+          type="text"
+          bind:value={editedName}
+          class="title-1"
+          on:blur={saveEdit}
+          autofocus
+        />
+        <TickIcon on:click={saveEdit} class="cursor-pointer" />
       {:else}
-        <span class="opacity-50">Unnamed file</span>
+        <h1 id="DocName" class="title-1">{state.name || "Unnamed file"}</h1>
+        <button on:click={startEdit} class="btn btn-ghost">
+          <EditIcon />
+        </button>
       {/if}
-    </h1>
-    <p class="mb-6 text-text-200">Uploaded: {state.uploadDate}</p>
-    <div class="mb-6 flex gap-2">
+    </div>
+    <p class="text-text-200 text-sm">Uploaded: {state.uploadDate}</p>
+    <div class="flex gap-2">
       <a
         href={state.downloadUrl}
-        class="btn btn-accent md:w-64"
+        class="btn btn-ghost"
+        style="padding-left:0"
         download={state.name}
       >
         <DownloadIcon />
-        Download</a
+      </a>
+      <button
+        class="btn btn-ghost"
+        on:click={() => (state.isOpenShareModal = true)}
       >
-
-      <button class="btn btn-accent md:w-64" on:click={openShareDialog}>
-        <ShareIcon /> Share
+        <ShareIcon />
       </button>
     </div>
     <FilePreview
-      file={{
-        objectUrl: state.downloadUrl,
-        dataType: state.dataType,
-      }}
+      file={{ objectUrl: state.downloadUrl, dataType: state.dataType }}
     />
+    <div class="flex items-center gap-10 mt-3">
+      {#if showDeletePrompt}
+        <div class="flex items-center gap-2 border p-2 rounded">
+          <span>Delete?</span>
+          <TickIcon on:click={DeleteFile} class="cursor-pointer" />
+          <button
+            on:click={() => (showDeletePrompt = false)}
+            class="cursor-pointer"
+            style="color:#C73B3B">X</button
+          >
+        </div>
+      {:else}
+        <button
+          class="btn btn-ghost"
+          style="padding-left:0"
+          on:click={() => (showDeletePrompt = true)}
+        >
+          <DeleteIcon />
+        </button>
+      {/if}
+    </div>
     <ShareModal
       {auth}
       bind:isOpen={state.isOpenShareModal}
       bind:fileData={state.originalMetadata}
     />
-  {:else}
-    {unreachable(state)}
   {/if}
 </section>
