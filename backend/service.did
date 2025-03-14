@@ -175,6 +175,8 @@ service docutrack : {
 
   get_shared_files: () -> (vec file_metadata) query;
 
+  get_file_owner_principal: (file_id: nat64) -> (variant { Ok: blob; Err: text }) query;
+
   upload_file_atomic: (upload_file_atomic_request) -> (file_id);
 
   upload_file_continue: (upload_file_continue_request) -> ();

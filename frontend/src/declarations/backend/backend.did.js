@@ -127,6 +127,11 @@ export const idlFactory = ({ IDL }) => {
         [get_alias_info_response],
         ['query'],
       ),
+    'get_file_owner_principal' : IDL.Func(
+        [IDL.Nat64],
+        [IDL.Variant({ 'Ok' : IDL.Vec(IDL.Nat8), 'Err' : IDL.Text })],
+        ['query'],
+      ),
     'get_group_by_alias' : IDL.Func(
         [IDL.Text],
         [

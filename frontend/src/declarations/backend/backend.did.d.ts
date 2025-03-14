@@ -104,6 +104,11 @@ export interface _SERVICE {
   'delete_file' : ActorMethod<[file_id], share_file_response>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
+  'get_file_owner_principal' : ActorMethod<
+    [bigint],
+    { 'Ok' : Uint8Array | number[] } |
+      { 'Err' : string }
+  >,
   'get_group_by_alias' : ActorMethod<
     [string],
     { 'Ok' : group_info } |
