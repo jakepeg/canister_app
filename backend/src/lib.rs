@@ -41,7 +41,7 @@ pub struct MultiRequestInput {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct MultiRequestResponse {
     pub group_id: u64,
-    pub file_aliases: Vec<String>,
+    pub group_alias: String, // Changed from file_aliases
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -179,7 +179,7 @@ pub enum FileDownloadResponse {
     FoundFile(FileData),
 }
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(Debug, CandidType, Serialize, Deserialize)]
 pub enum UploadFileError {
     #[serde(rename = "not_requested")]
     NotRequested,
@@ -231,6 +231,11 @@ pub struct State {
 
     /// Mapping between group IDs and request groups
     pub request_groups: BTreeMap<u64, RequestGroup>,
+
+    /// Mapping between group aliases and group IDs
+    group_alias_index: BTreeMap<String, u64>,
+    /// Mapping between group IDs and their file IDs
+    group_files: BTreeMap<u64, Vec<u64>>,
 }
 
 impl State {
@@ -260,6 +265,8 @@ impl State {
             file_contents: init_file_contents(),
             group_count: 0,
             request_groups: BTreeMap::new(),
+            group_alias_index: BTreeMap::new(),
+            group_files: BTreeMap::new(),
         }
     }
 

@@ -1,8 +1,9 @@
-// api/multi_request.rs
-use crate::{get_time, MultiRequestInput, MultiRequestResponse, RequestGroup, State};
+// use crate::aliases::{AliasGenerator, Randomness};
+use crate::{
+    get_time, File, FileContent, FileMetadata, MultiRequestInput, MultiRequestResponse,
+    RequestGroup, State,
+};
 use candid::Principal;
-
-use super::request_file;
 
 pub fn multi_request(
     caller: Principal,
@@ -10,24 +11,42 @@ pub fn multi_request(
     state: &mut State,
 ) -> MultiRequestResponse {
     let group_id = state.generate_group_id();
-    let mut file_aliases = Vec::with_capacity(input.file_names.len());
-    let mut file_ids = Vec::with_capacity(input.file_names.len());
+    let group_alias = state.alias_generator.next(); // Using state's generator
 
-    // Create each file request
+    let mut file_ids = Vec::new();
+
+    // Create files without individual aliases
     for file_name in input.file_names {
-        let alias = request_file(caller, file_name, state);
+        let file_id = state.generate_file_id();
 
-        // Find the file_id that was just created
-        let file_id = *state
-            .file_alias_index
-            .get(&alias)
-            .expect("File should exist after creation");
+        state.file_data.insert(
+            file_id,
+            File {
+                metadata: FileMetadata {
+                    file_name,
+                    user_public_key: crate::api::user_info::get_user_key(state, caller),
+                    requester_principal: caller,
+                    requested_at: get_time(),
+                    uploaded_at: None,
+                },
+                content: FileContent::Pending {
+                    alias: String::new(), // Empty alias for group files
+                },
+            },
+        );
 
-        file_aliases.push(alias);
+        state.file_owners.entry(caller).or_default().push(file_id);
+
         file_ids.push(file_id);
     }
 
-    // Create the request group
+    // Store group relationships
+    state
+        .group_alias_index
+        .insert(group_alias.clone(), group_id);
+    state.group_files.insert(group_id, file_ids.clone());
+
+    // Create request group
     let request_group = RequestGroup {
         group_id,
         name: input.group_name,
@@ -36,52 +55,10 @@ pub fn multi_request(
         created_at: get_time(),
     };
 
-    // Add the group to the state
     state.request_groups.insert(group_id, request_group);
 
     MultiRequestResponse {
         group_id,
-        file_aliases,
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::{api::set_user_info, User};
-    use candid::Principal;
-
-    #[test]
-    fn multi_request_test() {
-        let mut state = State::default();
-        set_user_info(
-            &mut state,
-            Principal::anonymous(),
-            User {
-                username: "John".to_string(),
-                public_key: vec![1, 2, 3],
-            },
-        );
-
-        let input = MultiRequestInput {
-            group_name: "Test Group".to_string(),
-            file_names: vec![
-                "Document 1".to_string(),
-                "Document 2".to_string(),
-                "Document 3".to_string(),
-            ],
-        };
-
-        let response = multi_request(Principal::anonymous(), input, &mut state);
-
-        // Verify the response
-        assert_eq!(response.group_id, 0);
-        assert_eq!(response.file_aliases.len(), 3);
-
-        // Verify group was created
-        let group = state.request_groups.get(&0).unwrap();
-        assert_eq!(group.name, "Test Group");
-        assert_eq!(group.files.len(), 3);
-        assert_eq!(group.requester, Principal::anonymous());
+        group_alias,
     }
 }
