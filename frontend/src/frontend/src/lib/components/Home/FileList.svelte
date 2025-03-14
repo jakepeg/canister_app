@@ -13,6 +13,7 @@
   import * as Dialog from "$lib/components/ui/dialog";
   import { Button, buttonVariants } from "$lib/components/ui/button";
   import { authStore } from "$lib/services/auth";
+  import { parse, format } from "date-fns";
 
   export let auth: AuthStateAuthenticated;
   let isOpenRequestModal = false;
@@ -36,20 +37,77 @@
     isOpenShareModal = true;
   }
 
-  // Function to handle sorting of files
   function sortedFiles(files) {
     return [...files].sort((a, b) => {
+      console.log("Raw uploadedAt value:", a.uploadedAt);
       if (sortBy === "name") {
         return sortOrder === "asc"
           ? (a.name || "").localeCompare(b.name || "")
           : (b.name || "").localeCompare(a.name || "");
       } else if (sortBy === "uploadedAt") {
-        return sortOrder === "asc"
-          ? (a.uploadedAt || "").localeCompare(b.uploadedAt || "")
-          : (b.uploadedAt || "").localeCompare(a.uploadedAt || "");
+        const dateA =
+          typeof a.uploadedAt === "bigint"
+            ? Number(a.uploadedAt / 1_000_000n) // Convert bigint to timestamp
+            : parse(
+                a.uploadedAt,
+                "EEEE, dd MMMM yyyy 'at' HH:mm:ss",
+                new Date(),
+              ).getTime();
+
+        const dateB =
+          typeof b.uploadedAt === "bigint"
+            ? Number(b.uploadedAt / 1_000_000n)
+            : parse(
+                b.uploadedAt,
+                "EEEE, dd MMMM yyyy 'at' HH:mm:ss",
+                new Date(),
+              ).getTime();
+
+        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       }
       return 0;
     });
+  }
+
+  function formatDate(dateString: bigint | string | undefined) {
+    if (!dateString) return "Unknown date";
+
+    // If the date is a BigInt, convert it to milliseconds
+    let timestamp: number;
+
+    if (typeof dateString === "bigint") {
+      timestamp = Number(dateString / 1_000_000n); // Convert from nanoseconds to milliseconds
+    } else {
+      return "Invalid date"; // If it's not a BigInt, we return "Invalid date"
+    }
+
+    // Create a Date object from the timestamp
+    const date = new Date(timestamp);
+
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid date";
+    }
+
+    // Return the formatted date
+    return date.toLocaleDateString(); // You can customize this further as needed
+  }
+
+  function testDateParsing(dateString: string) {
+    if (!dateString) return "Unknown date";
+
+    console.log("Testing with Date.parse():", dateString);
+
+    const parsedDate = Date.parse(dateString); // Use native Date.parse()
+
+    if (isNaN(parsedDate)) {
+      return "Invalid date";
+    }
+
+    const formattedDate = new Date(parsedDate).toLocaleDateString(); // This will just format to default style
+    console.log("Formatted date:", formattedDate);
+
+    return formattedDate;
   }
 
   // Toggle sorting between ascending and descending order
@@ -127,7 +185,7 @@
                 {/if}
               </td>
               <td class="body-1">{file.access || "N/A"}</td>
-              <td class="body-1">{file.uploadedAt || "Unknown date"}</td>
+              <td class="body-1">{formatDate(file.uploadedAt)}</td>
               <td
                 class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
               >
@@ -178,7 +236,7 @@
           <div class="flex justify-between items-center">
             <span class="body-1 text-text-200">Uploaded:</span>
             <span class="body-1 text-text-100"
-              >{file.uploadedAtShort || "Unknown date"}</span
+              >{formatDate(file.uploadedAt)}</span
             >
           </div>
         </div>
