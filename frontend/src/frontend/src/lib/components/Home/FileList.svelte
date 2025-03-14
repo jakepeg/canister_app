@@ -18,6 +18,11 @@
   let isOpenRequestModal = false;
   let isOpenShareModal = false;
   let shareFileData: file_metadata | undefined = undefined;
+
+  // Sorting state
+  let sortBy = "name"; // Default sorting by name
+  let sortOrder = "asc"; // Default ascending order
+
   onMount(() => {
     auth.filesService.reload();
   });
@@ -29,6 +34,32 @@
   function openShareModal(file: file_metadata) {
     shareFileData = file;
     isOpenShareModal = true;
+  }
+
+  // Function to handle sorting of files
+  function sortedFiles(files) {
+    return [...files].sort((a, b) => {
+      if (sortBy === "name") {
+        return sortOrder === "asc"
+          ? (a.name || "").localeCompare(b.name || "")
+          : (b.name || "").localeCompare(a.name || "");
+      } else if (sortBy === "uploadedAt") {
+        return sortOrder === "asc"
+          ? (a.uploadedAt || "").localeCompare(b.uploadedAt || "")
+          : (b.uploadedAt || "").localeCompare(a.uploadedAt || "");
+      }
+      return 0;
+    });
+  }
+
+  // Toggle sorting between ascending and descending order
+  function toggleSort(key: "name" | "uploadedAt") {
+    if (sortBy === key) {
+      sortOrder = sortOrder === "asc" ? "desc" : "asc";
+    } else {
+      sortBy = key;
+      sortOrder = "asc"; // Reset to ascending when changing the column
+    }
   }
 </script>
 
@@ -48,45 +79,42 @@
           >Upload</Dialog.Trigger
         >
         <Dialog.Content class="sm:max-w-[425px] md:max-w-[725px] blue-border">
-          <!-- <Dialog.Header>
-            <Dialog.Title>Edit profile</Dialog.Title>
-            <Dialog.Description>
-              Make changes to your profile here. Click save when you're done.
-            </Dialog.Description>
-          </Dialog.Header> -->
           {#if $authStore.state === "authenticated" || $authStore.state === "unauthenticated"}
             <Upload auth={$authStore} />
           {/if}
-
-          <!-- <Dialog.Footer>
-            <Button type="submit">Save changes</Button>
-          </Dialog.Footer> -->
         </Dialog.Content>
       </Dialog.Root>
       {#if $filesStore.files.length > 0}
         <Button variant="outline" onclick={() => (isOpenRequestModal = true)}
           >Request</Button
         >
-        <!-- <button
-          class="hidden md:inline-block btn btn-accent"
-          on:click={() => (isOpenRequestModal = true)}>Request</button
-        > -->
       {/if}
     </div>
   </div>
+
   {#if $filesStore.files.length > 0}
     <div class="hidden md:block w-full rounded-2xl px-2">
       <table class="table-auto w-full border-spacing-y-2 border-separate">
-        <thead class="">
+        <thead>
           <tr class="body-2 text-text-200 text-left">
-            <th class="body-2 pt-4 pb-2 pl-4">Name</th>
+            <th
+              class="body-2 pt-4 pb-2 pl-4"
+              on:click={() => toggleSort("name")}
+            >
+              Name {#if sortBy === "name"}({sortOrder}){/if}
+            </th>
             <th class="body-2 pt-6 pb-2">Access</th>
-            <th class="body-2 pt-6 pb-2">Uploaded</th>
+            <th
+              class="body-2 pt-6 pb-2"
+              on:click={() => toggleSort("uploadedAt")}
+            >
+              Uploaded {#if sortBy === "uploadedAt"}({sortOrder}){/if}
+            </th>
             <th></th>
           </tr>
         </thead>
-        <tbody class="">
-          {#each $filesStore.files as file}
+        <tbody>
+          {#each sortedFiles($filesStore.files) as file}
             <tr
               class="hover:drop-shadow-xl cursor-pointer"
               on:click={() => goToDetails(file.file_id)}
@@ -98,8 +126,8 @@
                   <span class="opacity-50">Unnamed file</span>
                 {/if}
               </td>
-              <td class=" body-1">{file.access}</td>
-              <td class="body-1">{file.uploadedAt}</td>
+              <td class="body-1">{file.access || "N/A"}</td>
+              <td class="body-1">{file.uploadedAt || "Unknown date"}</td>
               <td
                 class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
               >
@@ -116,68 +144,64 @@
         </tbody>
       </table>
     </div>
-    <div class="md:hidden flex flex-col gap-2">
-      {#each $filesStore.files as file}
-        <a
-          class="bg-white rounded-xl py-3 px-4 flex flex-col"
-          href="/details?fileId={file.file_id}"
-        >
-          <div class="flex justify-between items-center mb-3">
-            <span class="text-text-100 title-2">
-              {#if file.name}
-                {file.name}
-              {:else}
-                <span class="opacity-50">Unnamed file</span>
-              {/if}
-            </span>
-            <span>
-              <button
-                on:click|preventDefault|stopPropagation={() =>
-                  openShareModal(file.metadata)}
-                class="btn btn-icon"
-              >
-                <ShareIcon />
-              </button>
-            </span>
-          </div>
-          <div class="flex flex-col gap-2">
-            <div class="flex justify-between items-center">
-              <span class="body-1 text-text-200">Access:</span>
-              <span class="body-1 text-text-100">{file.access}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="body-1 text-text-200">Uploaded:</span>
-              <span class="body-1 text-text-100">{file.uploadedAtShort}</span>
-            </div>
-          </div>
-        </a>
-      {/each}
-    </div>
-  {:else}
-    <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
-      <PlaceholderLogo />
-      <h2 class="">
-        No files found. Upload or request documents to get started.
-      </h2>
-      <div class="pt-4 pb-8">
-        <button
-          class="btn btn-accent md:w-96"
-          on:click|preventDefault={() => (isOpenRequestModal = true)}
-          >Create new file request</button
-        >
-      </div>
-    </div>
   {/if}
+
+  <div class="md:hidden flex flex-col gap-2">
+    {#each sortedFiles($filesStore.files) as file}
+      <a
+        class="bg-white rounded-xl py-3 px-4 flex flex-col"
+        href="/details?fileId={file.file_id}"
+      >
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-text-100 title-2">
+            {#if file.name}
+              {file.name}
+            {:else}
+              <span class="opacity-50">Unnamed file</span>
+            {/if}
+          </span>
+          <span>
+            <button
+              on:click|preventDefault|stopPropagation={() =>
+                openShareModal(file.metadata)}
+              class="btn btn-icon"
+            >
+              <ShareIcon />
+            </button>
+          </span>
+        </div>
+        <div class="flex flex-col gap-2">
+          <div class="flex justify-between items-center">
+            <span class="body-1 text-text-200">Access:</span>
+            <span class="body-1 text-text-100">{file.access || "N/A"}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="body-1 text-text-200">Uploaded:</span>
+            <span class="body-1 text-text-100"
+              >{file.uploadedAtShort || "Unknown date"}</span
+            >
+          </div>
+        </div>
+      </a>
+    {/each}
+  </div>
 {:else}
-  {unreachable($filesStore)}
+  <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
+    <PlaceholderLogo />
+    <h2>No files found. Upload or request documents to get started.</h2>
+    <div class="pt-4 pb-8">
+      <button
+        class="btn btn-accent md:w-96"
+        on:click={() => (isOpenRequestModal = true)}
+      >
+        Create new file request
+      </button>
+    </div>
+  </div>
 {/if}
-<div class="md:hidden fixed bottom-0 left-0 right-0 bg-background-200 p-4">
-  <button
-    class="btn btn-accent btn-full"
-    on:click={() => (isOpenRequestModal = true)}>Create new file request</button
-  >
-</div>
+
 <RequestModal bind:isOpen={isOpenRequestModal} {auth} />
+
 {#if shareFileData}
   <ShareModal
     {auth}
