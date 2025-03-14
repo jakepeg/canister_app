@@ -2,29 +2,39 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
-  import { encrypt } from "$lib/crypto/upload";
-  import type {
-    AuthStateAuthenticated,
-    AuthStateUnauthenticated,
-  } from "$lib/services/auth";
-  import { unreachable } from "$lib/shared/unreachable";
-  // import LoadingIndicator from "../LoadingIndicator.svelte";
-  import UploadIcon from "../icons/UploadIcon.svelte";
-  import { enumIs } from "$lib/shared/enums";
-
+  // import { encrypt } from "$lib/crypto/upload";
   import {
     UploadService,
     uploadInProgress,
     type UploadType,
   } from "$lib/services/upload";
+  import { enumIs } from "$lib/shared/enums";
+  import UploadIcon from "../icons/UploadIcon.svelte";
+  import type {
+    AuthStateAuthenticated,
+    AuthStateUnauthenticated,
+  } from "$lib/services/auth";
+  import type { group_info } from "../../../../../declarations/backend/backend.did";
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
+  let uploadService: UploadService | null = null;
 
   let alias = $page.url.searchParams.get("alias") || "";
-  let groupInfo = null;
+  let groupInfo: group_info | null = null;
   let error: string | null = null;
   let loading = true;
-  let fileUploads = [];
+  let fatalError = false;
+
+  type FileUpload = {
+    fileId: bigint;
+    fileName: string;
+    file: File | null;
+    status: "pending" | "ready" | "uploading" | "uploaded" | "error";
+    progress: number;
+    error: string | null;
+  };
+
+  let fileUploads: FileUpload[] = [];
   let allUploaded = false;
 
   onMount(async () => {
@@ -35,50 +45,24 @@
     }
 
     try {
-      // Get the group info using the provided alias
-      const groupInfoResult = await auth.actor.get_group_by_alias(alias);
+      const result = await auth.actor.get_group_by_alias(alias);
 
-      console.log("aliasInfo: ", groupInfoResult);
-
-      if (enumIs(groupInfoResult, "Ok")) {
-        uploadType = {
-          type: "request",
-          fileInfo: groupInfoResult.Ok,
-        };
-        console.log("uploadType: ", uploadType.type);
-        group_id = groupInfoResult.Ok.group_id;
-        console.log("fileId: ", group_id);
-      } else if (enumIs(groupInfoResult, "Err")) {
-        state = "error";
-        if (enumIs(groupInfoResult.Err, "not_found")) {
-          fatalError = true;
-          error = "Request not found or already uploaded";
-        } else {
-          unreachable(groupInfoResult.Err);
-        }
-        return;
-      }
-
-      if ("Err" in result) {
-        error = "File request not found";
+      if (enumIs(result, "Ok")) {
+        groupInfo = result.Ok;
+        fileUploads = groupInfo.files.map((file) => ({
+          fileId: BigInt(file.file_id),
+          fileName: file.file_name,
+          file: null,
+          status: "pending",
+          progress: 0,
+          error: null,
+        }));
         loading = false;
-        return;
+      } else if (enumIs(result, "Err")) {
+        fatalError = true;
+        error = "Request not found or already uploaded";
+        loading = false;
       }
-
-      groupInfo = result.Ok;
-
-      // Initialize the file uploads array
-      fileUploads = groupInfo.files.map((file) => ({
-        fileId: file.file_id,
-        fileName: file.file_name,
-        alias: file.alias,
-        file: null,
-        status: "pending", // pending, uploading, uploaded, error
-        progress: 0,
-        error: null,
-      }));
-
-      loading = false;
     } catch (e) {
       console.error(e);
       error = "Failed to load file information";
@@ -86,72 +70,80 @@
     }
   });
 
-  function handleFileSelect(fileIndex, event) {
-    const files = event.target.files;
+  function handleFileSelect(fileIndex: number, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = input.files;
     if (!files || files.length === 0) return;
 
     fileUploads[fileIndex].file = files[0];
     fileUploads[fileIndex].status = "ready";
-    fileUploads = [...fileUploads]; // Trigger reactivity
+    fileUploads = [...fileUploads];
   }
 
-  async function uploadFile(fileIndex) {
+  async function uploadFile(fileIndex: number) {
     const fileUpload = fileUploads[fileIndex];
-    if (
-      !fileUpload.file ||
-      fileUpload.status === "uploading" ||
-      fileUpload.status === "uploaded"
-    ) {
-      return;
-    }
-
-    fileUpload.status = "uploading";
-    fileUpload.progress = 0;
-    fileUploads = [...fileUploads];
+    if (!fileUpload.file || fileUpload.status === "uploading") return;
 
     try {
-      const fileReader = new FileReader();
-      const filePromise = new Promise((resolve, reject) => {
-        fileReader.onload = () => resolve(fileReader.result);
-        fileReader.onerror = reject;
-      });
-
-      fileReader.readAsArrayBuffer(fileUpload.file);
-      const arrayBuffer = await filePromise;
-
-      // Encrypt the file
-      const { encryptedContent, fileKey } = await encrypt(
-        new Uint8Array(arrayBuffer),
-        auth.keys.publicKey,
-      );
-
-      const encoded = Array.from(encryptedContent);
-
-      // Upload the file
-      await auth.actor.upload_file({
-        file_id: fileUpload.fileId,
-        file_content: encoded,
-        file_type: fileUpload.file.type,
-        owner_key: Array.from(fileKey),
-        num_chunks: 1,
-      });
-
-      fileUpload.status = "uploaded";
-      fileUpload.progress = 100;
+      fileUploads[fileIndex].status = "uploading";
+      fileUploads[fileIndex].progress = 0;
       fileUploads = [...fileUploads];
 
-      // Check if all files are uploaded
-      checkAllUploaded();
+      const uploadService = new UploadService(auth);
+
+      const uploadType: UploadType = {
+        type: "request",
+        fileInfo: {
+          file_id: fileUpload.fileId,
+          file_name: fileUpload.fileName,
+          user: groupInfo!.requester,
+        },
+      };
+
+      await uploadService.uploadFile({
+        file: fileUpload.file,
+        dataType: fileUpload.file.type,
+        uploadType,
+        onAborted: () => {
+          fileUploads[fileIndex].status = "ready";
+          fileUploads = [...fileUploads];
+        },
+        onError: (msg) => {
+          fileUploads[fileIndex].status = "error";
+          fileUploads[fileIndex].error = msg;
+          fileUploads = [...fileUploads];
+        },
+        onCompleted: () => {
+          fileUploads[fileIndex].status = "uploaded";
+          fileUploads[fileIndex].progress = 100;
+          fileUploads = [...fileUploads];
+          checkAllUploaded();
+        },
+        onChunkUploaded: (chunkId, chunkSize) => {
+          // Update progress based on your chunking strategy
+          const progress = Math.min(
+            100,
+            (chunkId + 1) * ((100 / fileUpload.file!.size) * chunkSize),
+          );
+          fileUploads[fileIndex].progress = progress;
+          fileUploads = [...fileUploads];
+        },
+        onStarted: (totalBytes) => {
+          // Initialize progress
+          fileUploads[fileIndex].progress = 0;
+          fileUploads = [...fileUploads];
+        },
+      });
     } catch (e) {
       console.error(e);
-      fileUpload.status = "error";
-      fileUpload.error = "Upload failed";
+      fileUploads[fileIndex].status = "error";
+      fileUploads[fileIndex].error = "Upload failed";
       fileUploads = [...fileUploads];
     }
   }
 
   function checkAllUploaded() {
-    allUploaded = fileUploads.every((file) => file.status === "uploaded");
+    allUploaded = fileUploads.every((f) => f.status === "uploaded");
   }
 
   async function uploadAll() {
@@ -194,7 +186,7 @@
     <div class="bg-white rounded-lg p-6 shadow-md mb-4">
       <h1 class="title-1 mb-4">Multiple Document Upload</h1>
       <p class="mb-4">
-        <strong>{groupInfo.requester.username}</strong> has requested the following
+        <strong>{groupInfo?.requester.username}</strong> has requested the following
         documents:
       </p>
 
@@ -227,7 +219,7 @@
                   on:change={(e) => handleFileSelect(index, e)}
                 />
                 <label for="file-{index}" class="btn btn-secondary">
-                  <UploadIcon class="mr-2" />
+                  <UploadIcon />
                   Select File
                 </label>
                 <button
@@ -247,7 +239,7 @@
                   on:change={(e) => handleFileSelect(index, e)}
                 />
                 <label for="file-{index}" class="btn btn-secondary">
-                  <UploadIcon class="mr-2" />
+                  <UploadIcon />
                   {fileUpload.file ? fileUpload.file.name : "Select File"}
                 </label>
                 <button
@@ -265,7 +257,7 @@
 
       <div class="flex justify-between">
         <span class="text-sm text-gray-500">
-          Request group: {groupInfo.group_name}
+          Request group: {groupInfo?.group_name}
         </span>
         <button
           class="btn btn-accent"

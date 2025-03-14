@@ -57,7 +57,7 @@ export interface multi_request_input {
   'group_name' : string,
 }
 export interface multi_request_response {
-  'file_aliases' : Array<string>,
+  'group_alias' : string,
   'group_id' : bigint,
 }
 export interface public_request_group {

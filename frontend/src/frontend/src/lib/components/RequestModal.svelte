@@ -4,6 +4,7 @@
   import Modal from "./Modal.svelte";
   import CopyIcon from "./icons/CopyIcon.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
+  import { goto } from "$app/navigation";
 
   export let isOpen = false;
   export let auth: AuthStateAuthenticated;
@@ -41,55 +42,32 @@
 
   async function updateRequestUrl(e) {
     loading = true;
-
-    // Filter out empty document names
     const validDocuments = documents.filter((doc) => doc.trim() !== "");
 
     if (validDocuments.length === 0) {
-      // Alert the user to add at least one document
       alert("Please add at least one document name");
       loading = false;
       return;
     }
 
     if (requestName && validDocuments.length > 0) {
-      if (validDocuments.length === 1) {
-        // Single document request - use the original API
-        const alias = await auth.actor.request_file(validDocuments[0]);
-        requestLink = new URL($page.url.origin + "/upload");
-        requestLink.searchParams.append("alias", alias);
-        generatedLinks = [requestLink.toString()];
-      } else {
-        // Multiple document request - use the new API
-        try {
-          const response = await auth.actor.multi_request({
-            group_name: requestName,
-            file_names: validDocuments,
-          });
+      try {
+        const response = await auth.actor.multi_request({
+          group_name: requestName,
+          file_names: validDocuments,
+        });
 
-          groupId = response.group_id;
+        // Create URL with group alias
+        const groupUrl = new URL($page.url.origin + "/upload");
+        groupUrl.searchParams.append("alias", response.group_alias);
+        generatedLinks = [groupUrl.toString()];
+        requestLink = groupUrl;
 
-          // Create URLs for each alias
-          generatedLinks = response.file_aliases.map((alias) => {
-            const url = new URL($page.url.origin + "/upload");
-            url.searchParams.append("alias", alias);
-            return url.toString();
-          });
-
-          // Set the first link as the main requestLink for backward compatibility
-          if (generatedLinks.length > 0) {
-            requestLink = new URL(generatedLinks[0]);
-          }
-        } catch (error) {
-          console.error("Error creating multi-document request:", error);
-          alert("Failed to create document requests. Please try again.");
-        }
-      }
-
-      // Save as template if option selected
-      if (saveAsTemplate && !savedTemplates.includes(requestName)) {
-        // This is a mock implementation - you'll need to actually save the template
-        savedTemplates = [...savedTemplates, requestName];
+        // Redirect directly to multi-upload
+        goto(`/upload?alias=${response.group_alias}`);
+      } catch (error) {
+        console.error("Error creating request:", error);
+        alert("Failed to create document request. Please try again.");
       }
     }
 

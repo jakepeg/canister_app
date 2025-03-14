@@ -69,7 +69,7 @@ export const idlFactory = ({ IDL }) => {
     'group_name' : IDL.Text,
   });
   const multi_request_response = IDL.Record({
-    'file_aliases' : IDL.Vec(IDL.Text),
+    'group_alias' : IDL.Text,
     'group_id' : IDL.Nat64,
   });
   const set_user_response = IDL.Variant({

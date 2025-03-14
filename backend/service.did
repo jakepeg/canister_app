@@ -7,7 +7,7 @@ type multi_request_input = record {
 
 type multi_request_response = record {
   group_id: nat64;
-  file_aliases: vec text;
+  group_alias: text;
 };
 
 type public_request_group = record {
