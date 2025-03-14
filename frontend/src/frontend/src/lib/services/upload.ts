@@ -122,7 +122,7 @@ export class UploadService {
           file_type: dataType,
           num_chunks: BigInt(numChunks),
         });
-        console.log("res done for request");
+        console.log("res done for request", res);
 
         if (enumIs(res, "Err")) {
           onError(

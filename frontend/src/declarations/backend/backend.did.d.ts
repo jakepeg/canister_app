@@ -15,6 +15,11 @@ export interface file {
   'metadata' : file_metadata,
 }
 export type file_id = bigint;
+export interface file_info {
+  'alias' : string,
+  'file_name' : string,
+  'file_id' : file_id,
+}
 export interface file_metadata {
   'file_status' : file_status,
   'file_name' : string,
@@ -35,6 +40,26 @@ export type get_alias_info_response = {
   { 'Err' : { 'not_found' : null } };
 export type get_users_response = { 'permission_error' : null } |
   { 'users' : Array<user> };
+export interface group_info {
+  'files' : Array<file_info>,
+  'requester' : user,
+  'group_id' : bigint,
+  'group_name' : string,
+}
+export interface multi_request_input {
+  'file_names' : Array<string>,
+  'group_name' : string,
+}
+export interface multi_request_response {
+  'group_alias' : string,
+  'group_id' : bigint,
+}
+export interface public_request_group {
+  'files' : Array<file_metadata>,
+  'name' : string,
+  'created_at' : bigint,
+  'group_id' : bigint,
+}
 export type set_user_response = { 'ok' : null } |
   { 'username_exists' : null };
 export type share_file_response = { 'ok' : null } |
@@ -68,6 +93,7 @@ export interface user {
 export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
 export interface _SERVICE {
+  'delete_file' : ActorMethod<[file_id], share_file_response>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
   'get_file_owner_principal' : ActorMethod<
@@ -75,10 +101,19 @@ export interface _SERVICE {
     { 'Ok' : Uint8Array | number[] } |
       { 'Err' : string }
   >,
+  'get_group_by_alias' : ActorMethod<
+    [string],
+    { 'Ok' : group_info } |
+      { 'Err' : { 'not_found' : null } }
+  >,
+  'get_request_groups' : ActorMethod<[], Array<public_request_group>>,
+
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
   'get_users' : ActorMethod<[], get_users_response>,
   'hello_world' : ActorMethod<[], string>,
+  'multi_request' : ActorMethod<[multi_request_input], multi_request_response>,
+  'rename_file' : ActorMethod<[file_id, string], share_file_response>,
   'request_file' : ActorMethod<[string], string>,
   'revoke_share' : ActorMethod<[Principal, file_id], share_file_response>,
   'set_user' : ActorMethod<[string, Uint8Array | number[]], set_user_response>,

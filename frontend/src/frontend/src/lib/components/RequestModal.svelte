@@ -4,6 +4,7 @@
   import Modal from "./Modal.svelte";
   import CopyIcon from "./icons/CopyIcon.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
+  import { goto } from "$app/navigation";
 
   export let isOpen = false;
   export let auth: AuthStateAuthenticated;
@@ -16,6 +17,8 @@
   let documents: string[] = [""]; // At least one document field by default
   let selectedTemplate: string = "";
   let saveAsTemplate: boolean = false;
+  let generatedLinks: string[] = [];
+  let groupId: bigint | null = null;
 
   const dispatch = createEventDispatcher<{
     "request-created": void;
@@ -39,21 +42,36 @@
 
   async function updateRequestUrl(e) {
     loading = true;
-    const formData = new FormData(e.target);
-    const data: any = {};
-    for (let field of formData) {
-      const [key, value] = field;
-      data[key] = value;
+    const validDocuments = documents.filter((doc) => doc.trim() !== "");
+
+    if (validDocuments.length === 0) {
+      alert("Please add at least one document name");
+      loading = false;
+      return;
     }
 
-    if (data.requestName && !data.requestLink) {
-      requestName = data.requestName;
-      const alias = await auth.actor.request_file(data.requestName);
-      requestLink = new URL($page.url.origin + "/upload");
-      requestLink.searchParams.append("alias", alias);
+    if (requestName && validDocuments.length > 0) {
+      try {
+        const response = await auth.actor.multi_request({
+          group_name: requestName,
+          file_names: validDocuments,
+        });
+
+        // Create URL with group alias
+        const groupUrl = new URL($page.url.origin + "/upload");
+        groupUrl.searchParams.append("alias", response.group_alias);
+        generatedLinks = [groupUrl.toString()];
+        requestLink = groupUrl;
+
+        // Redirect directly to multi-upload
+        goto(`/upload?alias=${response.group_alias}`);
+      } catch (error) {
+        console.error("Error creating request:", error);
+        alert("Failed to create document request. Please try again.");
+      }
     }
+
     loading = false;
-
     dispatch("request-created");
   }
 
@@ -67,11 +85,22 @@
     documents = [""];
   }
 
-  async function copyText() {
-    if (requestLink) {
+  async function copyText(link: string | null = null) {
+    if (link) {
+      await navigator.clipboard.writeText(link);
+    } else if (generatedLinks.length > 0) {
+      // Copy all links as a list
+      const linksList = generatedLinks
+        .map((link, i) => `${documents[i] || `Document ${i + 1}`}: ${link}`)
+        .join("\n");
+      await navigator.clipboard.writeText(linksList);
+    } else if (requestLink) {
       await navigator.clipboard.writeText(requestLink.toString());
-      copied = true;
     }
+    copied = true;
+    setTimeout(() => {
+      copied = false;
+    }, 2000);
   }
 </script>
 
@@ -111,7 +140,7 @@
             />
           </div>
           <div class="mt-3">
-            <label class="input-label">Documents</label>
+            <span class="input-label">Documents</span>
             {#each documents as doc, index}
               <div class="flex gap-2 items-center mt-2">
                 <input
@@ -119,12 +148,14 @@
                   class="input flex-1"
                   placeholder="Document name"
                   bind:value={documents[index]}
+                  disabled={!!requestLink}
                 />
                 {#if documents.length > 1}
                   <button
                     type="button"
                     class="btn btn-danger"
-                    on:click={() => removeDocument(index)}>✖</button
+                    on:click={() => removeDocument(index)}
+                    disabled={!!requestLink}>✖</button
                   >
                 {/if}
               </div>
@@ -140,9 +171,46 @@
               type="checkbox"
               id="saveTemplate"
               bind:checked={saveAsTemplate}
+              disabled={!!requestLink}
             />
             <label for="saveTemplate">Save as Template</label>
           </div>
+
+          {#if generatedLinks.length > 0}
+            <div class="mt-4 border p-3 rounded-md bg-gray-50">
+              <h3 class="font-medium mb-2">Generated Links:</h3>
+              <ul class="space-y-2">
+                {#each generatedLinks as link, i}
+                  <li class="text-sm">
+                    <div class="flex justify-between items-center">
+                      <span class="font-medium"
+                        >{documents[i] || `Document ${i + 1}`}</span
+                      >
+                      <button
+                        type="button"
+                        class="text-blue-600 hover:text-blue-800"
+                        on:click={() => copyText(link)}
+                      >
+                        <CopyIcon />
+                      </button>
+                    </div>
+                    <div class="truncate text-gray-500 text-xs">
+                      {link}
+                    </div>
+                  </li>
+                {/each}
+              </ul>
+              <div class="mt-3">
+                <button
+                  type="button"
+                  class="btn btn-secondary w-full"
+                  on:click={() => copyText()}
+                >
+                  {copied ? "Copied!" : "Copy All Links"}
+                </button>
+              </div>
+            </div>
+          {/if}
         </form>
       </div>
       <div class="p-4 border-t bg-white">

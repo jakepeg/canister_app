@@ -26,10 +26,6 @@
   import ErrorMessage from "../ErrorMessage.svelte";
   import FileSelect from "./FileSelect.svelte";
   import UploadProgress from "./UploadProgress.svelte";
-  import { filesStore } from "$lib/services/files";
-  // import { VetKeyService } from "$lib/vetkeys/encrypt";
-
-  // let vetKeyService: VetKeyService;
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
 

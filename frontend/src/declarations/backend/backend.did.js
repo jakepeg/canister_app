@@ -1,5 +1,9 @@
 export const idlFactory = ({ IDL }) => {
   const file_id = IDL.Nat64;
+  const share_file_response = IDL.Variant({
+    'ok' : IDL.Null,
+    'permission_error' : IDL.Null,
+  });
   const found_file = IDL.Record({
     'contents' : IDL.Vec(IDL.Nat8),
     'file_type' : IDL.Text,
@@ -24,6 +28,17 @@ export const idlFactory = ({ IDL }) => {
     }),
     'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
   });
+  const file_info = IDL.Record({
+    'alias' : IDL.Text,
+    'file_name' : IDL.Text,
+    'file_id' : file_id,
+  });
+  const group_info = IDL.Record({
+    'files' : IDL.Vec(file_info),
+    'requester' : user,
+    'group_id' : IDL.Nat64,
+    'group_name' : IDL.Text,
+  });
   const file_status = IDL.Variant({
     'partially_uploaded' : IDL.Null,
     'pending' : IDL.Record({ 'alias' : IDL.Text, 'requested_at' : IDL.Nat64 }),
@@ -35,13 +50,23 @@ export const idlFactory = ({ IDL }) => {
     'shared_with' : IDL.Vec(user),
     'file_id' : file_id,
   });
+  const public_request_group = IDL.Record({
+    'files' : IDL.Vec(file_metadata),
+    'name' : IDL.Text,
+    'created_at' : IDL.Nat64,
+    'group_id' : IDL.Nat64,
+  });
   const get_users_response = IDL.Variant({
     'permission_error' : IDL.Null,
     'users' : IDL.Vec(user),
   });
-  const share_file_response = IDL.Variant({
-    'ok' : IDL.Null,
-    'permission_error' : IDL.Null,
+  const multi_request_input = IDL.Record({
+    'file_names' : IDL.Vec(IDL.Text),
+    'group_name' : IDL.Text,
+  });
+  const multi_request_response = IDL.Record({
+    'group_alias' : IDL.Text,
+    'group_id' : IDL.Nat64,
   });
   const set_user_response = IDL.Variant({
     'ok' : IDL.Null,
@@ -85,6 +110,7 @@ export const idlFactory = ({ IDL }) => {
     'unknown_user' : IDL.Null,
   });
   return IDL.Service({
+    'delete_file' : IDL.Func([file_id], [share_file_response], []),
     'download_file' : IDL.Func(
         [file_id, IDL.Nat64],
         [download_file_response],
@@ -100,10 +126,32 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Variant({ 'Ok' : IDL.Vec(IDL.Nat8), 'Err' : IDL.Text })],
         ['query'],
       ),
+    'get_group_by_alias' : IDL.Func(
+        [IDL.Text],
+        [
+          IDL.Variant({
+            'Ok' : group_info,
+            'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
+          }),
+        ],
+        ['query'],
+      ),
+    'get_request_groups' : IDL.Func(
+        [],
+        [IDL.Vec(public_request_group)],
+        ['query'],
+      ),
+
     'get_requests' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_shared_files' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_users' : IDL.Func([], [get_users_response], ['query']),
     'hello_world' : IDL.Func([], [IDL.Text], []),
+    'multi_request' : IDL.Func(
+        [multi_request_input],
+        [multi_request_response],
+        [],
+      ),
+    'rename_file' : IDL.Func([file_id, IDL.Text], [share_file_response], []),
     'request_file' : IDL.Func([IDL.Text], [IDL.Text], []),
     'revoke_share' : IDL.Func(
         [IDL.Principal, file_id],

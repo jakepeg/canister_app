@@ -1,5 +1,35 @@
 type file_id = nat64;
 
+type multi_request_input = record {
+  group_name: text;
+  file_names: vec text;
+};
+
+type multi_request_response = record {
+  group_id: nat64;
+  group_alias: text;
+};
+
+type public_request_group = record {
+  group_id: nat64;
+  name: text;
+  files: vec file_metadata;
+  created_at: nat64;
+};
+
+type file_info = record {
+  file_id: file_id;
+  file_name: text;
+  alias: text;
+};
+
+type group_info = record {
+  group_id: nat64;
+  group_name: text;
+  files: vec file_info;
+  requester: user;
+};
+
 type file_status = variant {
   pending: record { alias: text; requested_at: nat64; };
   partially_uploaded;
@@ -125,6 +155,11 @@ service docutrack : {
   // An alias is returned that can be used to create an upload link.
   request_file: (request_name: text) -> (alias: text);
 
+  // New methods for multi-document requests
+  multi_request: (multi_request_input) -> (multi_request_response);
+  get_request_groups: () -> (vec public_request_group) query;
+  get_group_by_alias: (alias: text) -> (variant { Ok: group_info; Err: variant { not_found } }) query;
+
   // Based on the alias (or download link) of the file,
   // it returns the name and id of the file to be uploaded.
   get_alias_info: (alias: text) -> (get_alias_info_response) query;
@@ -154,4 +189,7 @@ service docutrack : {
   vetkd_encrypted_key: (blob, opt nat64) -> (VetkdEncryptedKeyResponse);
 
   vetkd_public_key: () -> (VetkdPublicKeyResponse);
+
+  delete_file: (file_id: file_id) -> (share_file_response);
+  rename_file: (file_id: file_id, new_name: text) -> (share_file_response);
 }

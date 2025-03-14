@@ -24,6 +24,50 @@ type FileId = u64;
 type ChunkId = u64;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RequestGroup {
+    pub group_id: u64,
+    pub name: String,
+    pub files: Vec<u64>, // file_ids in this group
+    pub requester: Principal,
+    pub created_at: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MultiRequestInput {
+    pub group_name: String,
+    pub file_names: Vec<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MultiRequestResponse {
+    pub group_id: u64,
+    pub group_alias: String, // Changed from file_aliases
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct PublicRequestGroup {
+    pub group_id: u64,
+    pub name: String,
+    pub files: Vec<PublicFileMetadata>,
+    pub created_at: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct FileInfo {
+    pub file_id: u64,
+    pub file_name: String,
+    pub alias: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct GroupInfo {
+    pub group_id: u64,
+    pub group_name: String,
+    pub files: Vec<FileInfo>,
+    pub requester: PublicUser,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct User {
     pub username: String,
     pub public_key: Vec<u8>,
@@ -139,7 +183,7 @@ pub enum FileDownloadResponse {
     FoundFile(FileData),
 }
 
-#[derive(CandidType, Serialize, Deserialize)]
+#[derive(Debug, CandidType, Serialize, Deserialize)]
 pub enum UploadFileError {
     #[serde(rename = "not_requested")]
     NotRequested,
@@ -185,6 +229,17 @@ pub struct State {
     // Generates aliases for file requests.
     #[serde(skip, default = "init_alias_generator")]
     alias_generator: AliasGenerator,
+
+    /// Counter for group IDs
+    group_count: u64,
+
+    /// Mapping between group IDs and request groups
+    pub request_groups: BTreeMap<u64, RequestGroup>,
+
+    /// Mapping between group aliases and group IDs
+    group_alias_index: BTreeMap<String, u64>,
+    /// Mapping between group IDs and their file IDs
+    group_files: BTreeMap<u64, Vec<u64>>,
 }
 
 impl State {
@@ -194,6 +249,12 @@ impl State {
         let file_id = self.file_count;
         self.file_count += 1;
         file_id
+    }
+
+    pub(crate) fn generate_group_id(&mut self) -> u64 {
+        let group_id = self.group_count;
+        self.group_count += 1;
+        group_id
     }
 
     fn new(rand_seed: &[u8]) -> Self {
@@ -206,6 +267,10 @@ impl State {
             file_shares: BTreeMap::new(),
             alias_generator: AliasGenerator::new(Randomness::try_from(rand_seed).unwrap()),
             file_contents: init_file_contents(),
+            group_count: 0,
+            request_groups: BTreeMap::new(),
+            group_alias_index: BTreeMap::new(),
+            group_files: BTreeMap::new(),
         }
     }
 

@@ -40,7 +40,9 @@
     on:click={() => !mandatory && cancel()}
     aria-label="Close Modal"
     on:keypress={() => {}}
-  />
+    role="button"
+    tabindex="0"
+  ></div>
 
   <div
     class="fixed z-30 bottom-0 left-0 right-0 md:right-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2"

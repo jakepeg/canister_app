@@ -35,7 +35,9 @@ export const idlFactory = ({ IDL }) => {
     'time_per_token_ns' : IDL.Nat64,
   });
   const InternetIdentityInit = IDL.Record({
+    'fetch_root_key' : IDL.Opt(IDL.Bool),
     'openid_google' : IDL.Opt(IDL.Opt(OpenIdConfig)),
+    'enable_dapps_explorer' : IDL.Opt(IDL.Bool),
     'assigned_user_number_range' : IDL.Opt(IDL.Tuple(IDL.Nat64, IDL.Nat64)),
     'archive_config' : IDL.Opt(ArchiveConfig),
     'canister_creation_cycles_cost' : IDL.Opt(IDL.Nat64),
@@ -642,7 +644,9 @@ export const init = ({ IDL }) => {
     'time_per_token_ns' : IDL.Nat64,
   });
   const InternetIdentityInit = IDL.Record({
+    'fetch_root_key' : IDL.Opt(IDL.Bool),
     'openid_google' : IDL.Opt(IDL.Opt(OpenIdConfig)),
+    'enable_dapps_explorer' : IDL.Opt(IDL.Bool),
     'assigned_user_number_range' : IDL.Opt(IDL.Tuple(IDL.Nat64, IDL.Nat64)),
     'archive_config' : IDL.Opt(ArchiveConfig),
     'canister_creation_cycles_cost' : IDL.Opt(IDL.Nat64),

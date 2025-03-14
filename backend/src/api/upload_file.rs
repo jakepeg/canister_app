@@ -55,11 +55,13 @@ pub fn upload_file(
         }
     };
 
-    // The file is now uploaded. Delete the alias from the state.
-    state
-        .file_alias_index
-        .remove(&alias)
-        .expect("alias must exist");
+    // CHANGED: Only remove alias if it exists
+    if !alias.is_empty() {
+        state
+            .file_alias_index
+            .remove(&alias)
+            .ok_or(UploadFileError::NotRequested)?;
+    }
 
     Ok(())
 }
