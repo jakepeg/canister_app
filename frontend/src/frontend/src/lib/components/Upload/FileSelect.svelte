@@ -24,7 +24,7 @@
 
     if (type === "self" && (fileNameAutoFilled || fileName.trim() === "")) {
       fileNameAutoFilled = true;
-      fileName = selectedFile.name;
+      fileName = selectedFile?.name || "";
     }
 
     dispatch("file-selected", selectedFile);
