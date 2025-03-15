@@ -16,6 +16,8 @@
   import type { file_metadata } from "../../../../../declarations/backend/backend.did";
   import ErrorMessage from "../ErrorMessage.svelte";
   import DecryptProgress from "./DecryptProgress.svelte";
+  import { goto } from "$app/navigation";
+  import { enumIs } from "$lib/shared/enums";
 
   export let auth: AuthStateAuthenticated;
 
@@ -87,16 +89,42 @@
     }
   }
 
-  function DeleteFile() {
-    console.log("File deleted");
+  async function DeleteFile() {
+    try {
+      const fileId = BigInt(getFileId());
+      const response = await auth.actor.delete_file(fileId);
+
+      if (enumIs(response, "ok")) {
+        await goto("/");
+        console.log("File deleted with fileId:", fileId);
+      } else {
+        console.error("Delete failed:", response);
+      }
+    } catch (error) {
+      console.error("Error deleting file:", error);
+    }
     showDeletePrompt = false;
   }
 
-  function saveEdit() {
+  async function saveEdit() {
     if (state.type === "loaded") {
-      state.name = editedName;
+      try {
+        const fileId = BigInt(getFileId());
+        const response = await auth.actor.rename_file(fileId, editedName);
+
+        console.log("fileId:", fileId);
+        console.log("newName:", editedName);
+
+        if (enumIs(response, "ok")) {
+          state.name = editedName;
+          isEditing = false;
+        } else {
+          console.error("Rename failed:", response);
+        }
+      } catch (error) {
+        console.error("Error renaming file:", error);
+      }
     }
-    isEditing = false;
   }
 
   function startEdit() {
@@ -125,9 +153,8 @@
           bind:value={editedName}
           class="title-1"
           on:blur={saveEdit}
-          autofocus
         />
-        <TickIcon on:click={saveEdit} class="cursor-pointer" />
+        <TickIcon on:click={saveEdit} />
       {:else}
         <h1 id="DocName" class="title-1">{state.name || "Unnamed file"}</h1>
         <button on:click={startEdit} class="btn btn-ghost">
@@ -147,7 +174,11 @@
       </a>
       <button
         class="btn btn-ghost"
-        on:click={() => (state.isOpenShareModal = true)}
+        on:click={() => {
+          if (state.type === "loaded") {
+            state.isOpenShareModal = true;
+          }
+        }}
       >
         <ShareIcon />
       </button>
@@ -159,7 +190,10 @@
       {#if showDeletePrompt}
         <div class="flex items-center gap-2 border p-2 rounded">
           <span>Delete?</span>
-          <TickIcon on:click={DeleteFile} class="cursor-pointer" />
+          <button on:click={DeleteFile} class="cursor-pointer">
+            <TickIcon />
+          </button>
+
           <button
             on:click={() => (showDeletePrompt = false)}
             class="cursor-pointer"

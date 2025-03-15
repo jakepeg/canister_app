@@ -25,7 +25,8 @@
         type="application/pdf"
         data={file.objectUrl}
         class="w-full aspect-square"
-      />
+      >
+      </object>
     {:else}
       <slot />
     {/if}
