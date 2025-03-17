@@ -184,7 +184,7 @@
     </div>
   {:else}
     <div class="bg-white rounded-lg p-6 shadow-md mb-4">
-      <h1 class="title-1 mb-4">Multiple Document Upload</h1>
+      <h1 class="title-1 mb-4">{groupInfo?.group_name} Document Upload</h1>
       <p class="mb-4">
         <strong>{groupInfo?.requester.username}</strong> has requested the following
         documents:
@@ -256,9 +256,6 @@
       </div>
 
       <div class="flex justify-between">
-        <span class="text-sm text-gray-500">
-          Request group: {groupInfo?.group_name}
-        </span>
         <button
           class="btn btn-accent"
           on:click={uploadAll}
