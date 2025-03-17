@@ -64,7 +64,7 @@
         requestLink = groupUrl;
 
         // Redirect directly to multi-upload
-        goto(`/upload?alias=${response.group_alias}`);
+        // goto(`/upload?alias=${response.group_alias}`);
       } catch (error) {
         console.error("Error creating request:", error);
         alert("Failed to create document request. Please try again.");
@@ -85,18 +85,33 @@
     documents = [""];
   }
 
+  // async function copyText(link: string | null = null) {
+  //   if (link) {
+  //     await navigator.clipboard.writeText(link);
+  //   } else if (generatedLinks.length > 0) {
+  //     const linksList = generatedLinks
+  //       .map((link, i) => `${documents[i] || `Document ${i + 1}`}: ${link}`)
+  //       .join("\n");
+  //     await navigator.clipboard.writeText(linksList);
+  //   } else if (requestLink) {
+  //     await navigator.clipboard.writeText(requestLink.toString());
+  //   }
+  //   copied = true;
+  //   setTimeout(() => {
+  //     copied = false;
+  //   }, 2000);
+  // }
+
   async function copyText(link: string | null = null) {
     if (link) {
       await navigator.clipboard.writeText(link);
     } else if (generatedLinks.length > 0) {
-      // Copy all links as a list
-      const linksList = generatedLinks
-        .map((link, i) => `${documents[i] || `Document ${i + 1}`}: ${link}`)
-        .join("\n");
+      const linksList = generatedLinks.join("\n");
       await navigator.clipboard.writeText(linksList);
     } else if (requestLink) {
       await navigator.clipboard.writeText(requestLink.toString());
     }
+
     copied = true;
     setTimeout(() => {
       copied = false;
@@ -206,7 +221,7 @@
                   class="btn btn-secondary w-full"
                   on:click={() => copyText()}
                 >
-                  {copied ? "Copied!" : "Copy All Links"}
+                  {copied ? "Copied!" : "Copy"}
                 </button>
               </div>
             </div>
