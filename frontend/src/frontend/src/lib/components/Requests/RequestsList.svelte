@@ -46,30 +46,26 @@
       >
     </div>
     {#if $requestsStore.requests.length > 0}
-      <div class="hidden md:block bg-background-200 w-full rounded-2xl px-2">
+      <div class="hidden md:block bg-background w-full rounded-2xl px-2">
         <table class="table-auto w-full border-spacing-y-2 border-separate">
           <thead class="">
-            <tr class="body-2 text-text-200 text-left">
-              <th class="body-2 pt-4 pb-2 pl-4">Name</th>
+            <tr class="body-2 text-left">
+              <th class="body-2 pt-4 pb-2 pl-4">Request</th>
 
-              <th class="body-2 pt-6 pb-2">Access</th>
+              <th class="body-2 pt-6 pb-2">File</th>
               <th class="body-2 pt-6 pb-2">Created</th>
               <th class="body-2 pt-6 pb-2">Link</th>
             </tr>
           </thead>
           <tbody class="">
             {#each $requestsStore.requests as request}
-              <tr class="text-text-100">
+              <tr>
                 <td
-                  class="pl-4 bg-background-100 rounded-tl-xl rounded-bl-xl body-1 h-[52px]"
-                  >{request.name}</td
-                >
-                <td class="bg-background-100 body-1">{request.access}</td>
-                <td class="bg-background-100 body-1">{request.formattedDate}</td
-                >
-                <td
-                  class="pr-4 bg-background-100 rounded-tr-xl rounded-br-xl body-1"
-                >
+                  class="pl-4 bg-background rounded-tl-xl rounded-bl-xl body-1 h-[52px]"
+                ></td>
+                <td class="body-1">{request.name}</td>
+                <td class="body-1">{request.formattedDateShort}</td>
+                <td class="pr-4 rounded-tr-xl rounded-br-xl body-1">
                   <a
                     href="/upload?alias={request.alias}"
                     class="underline text-accent-100"
@@ -82,7 +78,7 @@
           </tbody>
         </table>
       </div>
-      <div class="md:hidden flex flex-col gap-2">
+      <!-- <div class="md:hidden flex flex-col gap-2">
         {#each $requestsStore.requests as request}
           <div class="bg-white rounded-xl py-3 px-4 flex flex-col">
             <div class="mb-3">
@@ -119,7 +115,7 @@
             </div>
           </div>
         {/each}
-      </div>
+      </div> -->
     {:else}
       <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
         <PlaceholderLogo />

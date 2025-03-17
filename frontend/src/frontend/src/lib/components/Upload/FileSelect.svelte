@@ -52,12 +52,8 @@
 <!-- Drag & Drop Zone -->
 <FileDropzone on:drop={handleFileSelection} {disabled}>
   <div
-    class="
-      flex items-center justify-center
-      p-6 border-2 border-dashed border-gray-300
-      rounded-lg cursor-pointer hover:border-gray-400
-      text-gray-500"
+    class="flex items-center justify-center p-6 rounded-lg cursor-pointer bg-background"
   >
-    <p>Drag & drop files here or click to select</p>
+    <p>Drag & drop files here<br />or click to select</p>
   </div>
 </FileDropzone>

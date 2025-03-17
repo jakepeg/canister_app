@@ -20,7 +20,7 @@
 <div>
   <Modal {isOpen} title="Register Yourself" mandatory>
     <form class="" on:submit|preventDefault={() => register()}>
-      <p class="body-1 text-text-200 mb-4">
+      <p class="body-1 mb-4">
         Choose a username to setup an account on Canister.
       </p>
       <div class="mb-4">

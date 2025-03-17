@@ -78,7 +78,7 @@
     <div class="hidden md:block w-full rounded-2xl px-2">
       <table class="table-auto w-full border-spacing-y-2 border-separate">
         <thead class="">
-          <tr class="body-2 text-text-200 text-left">
+          <tr class="text-left">
             <th class="body-2 pt-4 pb-2 pl-4">Name</th>
             <th class="body-2 pt-6 pb-2">Access</th>
             <th class="body-2 pt-6 pb-2">Uploaded</th>
@@ -119,11 +119,11 @@
     <div class="md:hidden flex flex-col gap-2">
       {#each $filesStore.files as file}
         <a
-          class="bg-white rounded-xl py-3 px-4 flex flex-col"
+          class="bg-background rounded-xl py-3 px-4 flex flex-col"
           href="/details?fileId={file.file_id}"
         >
           <div class="flex justify-between items-center mb-3">
-            <span class="text-text-100 title-2">
+            <span class="title-2">
               {#if file.name}
                 {file.name}
               {:else}
@@ -142,12 +142,12 @@
           </div>
           <div class="flex flex-col gap-2">
             <div class="flex justify-between items-center">
-              <span class="body-1 text-text-200">Access:</span>
-              <span class="body-1 text-text-100">{file.access}</span>
+              <span class="body-1">Access:</span>
+              <span class="body-1">{file.access}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="body-1 text-text-200">Uploaded:</span>
-              <span class="body-1 text-text-100">{file.uploadedAtShort}</span>
+              <span class="body-1">Uploaded:</span>
+              <span class="body-1">{file.uploadedAtShort}</span>
             </div>
           </div>
         </a>

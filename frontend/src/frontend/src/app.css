@@ -56,7 +56,7 @@
   }
 
   .input-label {
-    @apply text-text-200 text-body-1 mb-2 block;
+    @apply text-body-1 mb-2 block;
   }
 }
 @layer base {

@@ -178,6 +178,7 @@
             <button
               type="button"
               class="btn btn-secondary mt-2"
+              style="font-size:14px"
               on:click={addDocument}>+ Add Document</button
             >
           </div>
@@ -188,7 +189,9 @@
               bind:checked={saveAsTemplate}
               disabled={!!requestLink}
             />
-            <label for="saveTemplate">Save as Template</label>
+            <label for="saveTemplate" style="font-size:14px"
+              >Save as Template</label
+            >
           </div>
 
           {#if generatedLinks.length > 0}
@@ -228,7 +231,7 @@
           {/if}
         </form>
       </div>
-      <div class="p-4 border-t bg-white">
+      <div class="p-4 border-t bg-background">
         {#if loading}
           <button type="submit" class="btn btn-accent btn-full" disabled
             >Generating link...</button

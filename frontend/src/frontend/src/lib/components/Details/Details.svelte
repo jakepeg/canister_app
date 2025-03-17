@@ -162,7 +162,7 @@
         </button>
       {/if}
     </div>
-    <p class="text-text-200 text-sm">Uploaded: {state.uploadDate}</p>
+    <p class="text-sm">Uploaded: {state.uploadDate}</p>
     <div class="flex gap-2">
       <a
         href={state.downloadUrl}

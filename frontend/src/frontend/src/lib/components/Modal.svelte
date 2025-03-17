@@ -51,7 +51,8 @@
       : { y: 0, duration: 200 }}
   >
     <div
-      class="bg-background-100 rounded-t-2xl md:panel px-6 pt-4 pb-10 md:pb-3 max-w-none lg:max-w-xl"
+      class="bg-background rounded-t-2xl blue-border px-6 pt-4 pb-10 md:pb-3 max-w-none lg:max-w-xl"
+      style="min-width:350px"
     >
       <div class="flex justify-between mb-6">
         <h2 class="text-title-2 font-medium">{title}</h2>
