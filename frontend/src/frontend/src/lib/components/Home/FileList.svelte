@@ -44,25 +44,12 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="title-1">My Files</h1>
     <div>
-      <!-- <Dialog.Root>
-        <Dialog.Trigger class={buttonVariants({ variant: "outline" })}
-          >Upload</Dialog.Trigger
-        >
-        <Dialog.Content class="sm:max-w-[425px] md:max-w-[725px] blue-border">
-          {#if $authStore.state === "authenticated" || $authStore.state === "unauthenticated"}
-            <Upload auth={$authStore} />
-          {/if}
-        </Dialog.Content>
-      </Dialog.Root> -->
-
       <Button variant="outline" onclick={() => (isOpenUploadModal = true)}
         >Upload</Button
       >
-      {#if $filesStore.files.length > 0}
-        <Button variant="outline" onclick={() => (isOpenRequestModal = true)}
-          >Request</Button
-        >
-      {/if}
+      <Button variant="outline" onclick={() => (isOpenRequestModal = true)}
+        >Request</Button
+      >
     </div>
   </div>
   {#if $filesStore.files.length > 0}
@@ -150,13 +137,6 @@
       <h2 class="">
         No files found. Upload or request documents to get started.
       </h2>
-      <div class="pt-4 pb-8">
-        <button
-          class="btn btn-accent md:w-96"
-          on:click|preventDefault={() => (isOpenRequestModal = true)}
-          >Create new file request</button
-        >
-      </div>
     </div>
   {/if}
 {:else}
