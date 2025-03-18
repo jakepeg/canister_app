@@ -1,6 +1,7 @@
 <script lang="ts">
   import RequestModal from "../RequestModal.svelte";
-  import Upload from "../Upload/Upload.svelte";
+  import UploadModal from "../Upload/UploadModal.svelte";
+  import ShareModal from "../ShareModal.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
   import { onMount } from "svelte";
   import { filesStore } from "$lib/services/files";
@@ -8,7 +9,6 @@
   import { goto } from "$app/navigation";
   import ShareIcon from "../icons/ShareIcon.svelte";
   import PlaceholderLogo from "../icons/PlaceholderLogo.svelte";
-  import ShareModal from "../ShareModal.svelte";
   import type { file_metadata } from "../../../../../declarations/backend/backend.did";
   import * as Dialog from "$lib/components/ui/dialog";
   import { Button, buttonVariants } from "$lib/components/ui/button";
@@ -17,6 +17,7 @@
   export let auth: AuthStateAuthenticated;
   let isOpenRequestModal = false;
   let isOpenShareModal = false;
+  let isOpenUploadModal = false;
   let shareFileData: file_metadata | undefined = undefined;
   onMount(() => {
     auth.filesService.reload();
@@ -43,34 +44,24 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="title-1">My Files</h1>
     <div>
-      <Dialog.Root>
+      <!-- <Dialog.Root>
         <Dialog.Trigger class={buttonVariants({ variant: "outline" })}
           >Upload</Dialog.Trigger
         >
         <Dialog.Content class="sm:max-w-[425px] md:max-w-[725px] blue-border">
-          <!-- <Dialog.Header>
-            <Dialog.Title>Edit profile</Dialog.Title>
-            <Dialog.Description>
-              Make changes to your profile here. Click save when you're done.
-            </Dialog.Description>
-          </Dialog.Header> -->
           {#if $authStore.state === "authenticated" || $authStore.state === "unauthenticated"}
             <Upload auth={$authStore} />
           {/if}
-
-          <!-- <Dialog.Footer>
-            <Button type="submit">Save changes</Button>
-          </Dialog.Footer> -->
         </Dialog.Content>
-      </Dialog.Root>
+      </Dialog.Root> -->
+
+      <Button variant="outline" onclick={() => (isOpenUploadModal = true)}
+        >Upload</Button
+      >
       {#if $filesStore.files.length > 0}
         <Button variant="outline" onclick={() => (isOpenRequestModal = true)}
           >Request</Button
         >
-        <!-- <button
-          class="hidden md:inline-block btn btn-accent"
-          on:click={() => (isOpenRequestModal = true)}>Request</button
-        > -->
       {/if}
     </div>
   </div>
@@ -178,6 +169,7 @@
   >
 </div>
 <RequestModal bind:isOpen={isOpenRequestModal} {auth} />
+<UploadModal bind:isOpen={isOpenUploadModal} {auth} />
 {#if shareFileData}
   <ShareModal
     {auth}

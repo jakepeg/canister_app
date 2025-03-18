@@ -194,7 +194,11 @@
 </script>
 
 <div>
-  <Modal title={`Share "${fileData.file_name || "Unnamed file"}"`} bind:isOpen>
+  <Modal
+    title={`Share "${fileData.file_name || "Unnamed file"}"`}
+    bind:isOpen
+    minWidth="min-w-[250px]"
+  >
     <form class="flex flex-col gap-4" on:submit|preventDefault={saveShare}>
       {#if newSharedWith.length > 0}
         <div class="flex flex-wrap gap-2">

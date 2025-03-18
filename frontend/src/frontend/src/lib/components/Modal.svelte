@@ -7,6 +7,7 @@
   export let isOpen = false;
   export let title: string;
   export let mandatory: boolean = false;
+  export let minWidth: string = "min-w-[300px]"; // Default min-width
 
   const dispatch = createEventDispatcher<{
     cancelled: void;
@@ -51,8 +52,7 @@
       : { y: 0, duration: 200 }}
   >
     <div
-      class="bg-background rounded-t-2xl blue-border px-6 pt-4 pb-10 md:pb-3 max-w-none lg:max-w-xl"
-      style="min-width:350px"
+      class={`bg-background rounded-t-2xl blue-border px-6 pt-4 pb-10 md:pb-3 max-w-none lg:max-w-xl ${minWidth}`}
     >
       <div class="flex justify-between mb-6">
         <h2 class="text-title-2 font-medium">{title}</h2>

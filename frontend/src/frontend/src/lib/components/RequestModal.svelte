@@ -120,7 +120,12 @@
 </script>
 
 <div>
-  <Modal bind:isOpen title="Create Request" on:cancelled={close}>
+  <Modal
+    bind:isOpen
+    title="Create Request"
+    minWidth="min-w-[300px]"
+    on:cancelled={close}
+  >
     <div class="flex flex-col max-h-[55vh]">
       <div class="overflow-y-auto flex-1 p-2">
         <form
