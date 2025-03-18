@@ -30,7 +30,7 @@ pub fn multi_request(
                     uploaded_at: None,
                 },
                 content: FileContent::Pending {
-                    alias: String::new(), // Empty alias for group files
+                    alias: group_alias.clone(),
                 },
             },
         );
