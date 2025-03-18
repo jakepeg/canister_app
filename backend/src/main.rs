@@ -107,7 +107,11 @@ fn get_template(name: String) -> Result<Template, GetAliasInfoError> {
 
 #[update]
 fn delete_template(name: String) {
-    with_state_mut(|s| backend::api::template::delete_template(s, caller(), name))
+    with_state_mut(|s| {
+        backend::api::template::delete_template(s, caller(), name).unwrap_or_else(|err| {
+            ic_cdk::println!("Error deleting template: {:?}", err);
+        })
+    });
 }
 
 #[query]

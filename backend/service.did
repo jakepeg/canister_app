@@ -166,8 +166,11 @@ service docutrack : {
   get_request_groups: () -> (vec public_request_group) query;
   get_group_by_alias: (alias: text) -> (variant { Ok: group_info; Err: variant { not_found } }) query;
 
+  // Methods for working with templates
   get_template_names: () -> (vec text) query;
   get_template: (text) -> (opt template) query;
+  delete_template: (text) -> ();
+  get_user_templates: () -> (vec template) query;
 
   // Based on the alias (or download link) of the file,
   // it returns the name and id of the file to be uploaded.

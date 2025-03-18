@@ -56,12 +56,17 @@ export const idlFactory = ({ IDL }) => {
     'created_at' : IDL.Nat64,
     'group_id' : IDL.Nat64,
   });
+  const template = IDL.Record({
+    'file_names' : IDL.Vec(IDL.Text),
+    'name' : IDL.Text,
+  });
   const get_users_response = IDL.Variant({
     'permission_error' : IDL.Null,
     'users' : IDL.Vec(user),
   });
   const multi_request_input = IDL.Record({
     'file_names' : IDL.Vec(IDL.Text),
+    'save_as_template' : IDL.Bool,
     'group_name' : IDL.Text,
   });
   const multi_request_response = IDL.Record({
@@ -111,6 +116,7 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'delete_file' : IDL.Func([file_id], [share_file_response], []),
+    'delete_template' : IDL.Func([IDL.Text], [], []),
     'download_file' : IDL.Func(
         [file_id, IDL.Nat64],
         [download_file_response],
@@ -141,9 +147,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(public_request_group)],
         ['query'],
       ),
-
     'get_requests' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_shared_files' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
+    'get_template' : IDL.Func([IDL.Text], [IDL.Opt(template)], ['query']),
+    'get_template_names' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
+    'get_user_templates' : IDL.Func([], [IDL.Vec(template)], ['query']),
     'get_users' : IDL.Func([], [get_users_response], ['query']),
     'hello_world' : IDL.Func([], [IDL.Text], []),
     'multi_request' : IDL.Func(

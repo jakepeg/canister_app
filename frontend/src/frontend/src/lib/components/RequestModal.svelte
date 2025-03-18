@@ -4,21 +4,29 @@
   import Modal from "./Modal.svelte";
   import CopyIcon from "./icons/CopyIcon.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
-  import { goto } from "$app/navigation";
+  import { enumIs } from "$lib/shared/enums";
+  import type { template } from "../../../../declarations/backend/backend.did";
 
   export let isOpen = false;
   export let auth: AuthStateAuthenticated;
-  export let savedTemplates: string[] = []; // Mocked saved templates list
 
   let requestLink: URL | null = null;
   let loading: boolean = false;
   let requestName: string = "";
   let copied = false;
   let documents: string[] = [""]; // At least one document field by default
-  let selectedTemplate: string = "";
-  let saveAsTemplate: boolean = false;
+
   let generatedLinks: string[] = [];
   let groupId: bigint | null = null;
+
+  let selectedTemplate: string = ""; // Change this to just a string
+  let saveAsTemplate: boolean = false;
+  export let savedTemplates: template[] = [];
+
+  // Fetch user's templates when modal opens
+  $: if (isOpen) {
+    loadTemplates();
+  }
 
   const dispatch = createEventDispatcher<{
     "request-created": void;
@@ -33,10 +41,40 @@
     documents = documents.filter((_, i) => i !== index);
   }
 
-  function loadTemplate(template: string) {
-    if (template) {
-      requestName = template;
-      documents = ["Document 1", "Document 2"]; // Mocked template documents
+  async function loadTemplates() {
+    try {
+      savedTemplates = await auth.actor.get_user_templates();
+      console.log("savedTemplates: ", savedTemplates);
+    } catch (error) {
+      console.error("Error loading templates:", error);
+    }
+  }
+
+  async function loadTemplate(templateName: string) {
+    if (templateName) {
+      try {
+        const templateResult = await auth.actor.get_template(templateName);
+        console.log("templateResult: ", templateResult);
+        if (
+          enumIs(templateResult, "some") &&
+          templateResult &&
+          templateResult.length > 0
+        ) {
+          const template = templateResult.some;
+          if (template) {
+            // Add this check
+            requestName = template.name || "";
+            documents = [...template.file_names];
+          }
+        } else {
+          console.log("Template not found");
+          // Optional: Clear fields if template not found
+          requestName = "";
+          documents = [""];
+        }
+      } catch (error) {
+        console.error("Error loading template:", error);
+      }
     }
   }
 
@@ -55,6 +93,7 @@
         const response = await auth.actor.multi_request({
           group_name: requestName,
           file_names: validDocuments,
+          save_as_template: saveAsTemplate,
         });
 
         // Create URL with group alias
@@ -142,7 +181,7 @@
             >
               <option value="">Select a template</option>
               {#each savedTemplates as template}
-                <option value={template}>{template}</option>
+                <option value={template.name}>{template.name}</option>
               {/each}
             </select>
           </div>

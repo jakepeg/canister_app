@@ -11,14 +11,17 @@ pub fn multi_request(
     state: &mut State,
 ) -> MultiRequestResponse {
     let group_id = state.generate_group_id();
-    let group_alias = state.alias_generator.next(); // Using state's generator
+    let group_alias = state.alias_generator.next();
+
+    // Clone values before moving
+    let group_name = input.group_name.clone();
+    let file_names = input.file_names.clone();
 
     let mut file_ids = Vec::new();
 
-    // Create files without individual aliases
+    // Process original file_names (consumes input.file_names)
     for file_name in input.file_names {
         let file_id = state.generate_file_id();
-
         state.file_data.insert(
             file_id,
             File {
@@ -34,36 +37,24 @@ pub fn multi_request(
                 },
             },
         );
-
         state.file_owners.entry(caller).or_default().push(file_id);
-
         file_ids.push(file_id);
     }
 
-    // Store group relationships
-    state
-        .group_alias_index
-        .insert(group_alias.clone(), group_id);
-    state.group_files.insert(group_id, file_ids.clone());
-
-    // Create request group
+    // Create request group with original group_name
     let request_group = RequestGroup {
         group_id,
         name: input.group_name,
-        files: file_ids,
+        files: file_ids.clone(),
         requester: caller,
         created_at: get_time(),
     };
 
     state.request_groups.insert(group_id, request_group);
 
+    // Save template using cloned values
     if input.save_as_template {
-        let _ = crate::api::template::save_template(
-            state,
-            caller,
-            input.group_name.clone(),
-            input.file_names.clone(),
-        );
+        let _ = crate::api::template::save_template(state, caller, group_name, file_names);
     }
 
     MultiRequestResponse {

@@ -1,5 +1,6 @@
 use crate::{GetAliasInfoError, State, Template};
 use candid::Principal;
+use std::collections::BTreeMap;
 
 pub fn save_template(
     state: &mut State,
@@ -12,7 +13,8 @@ pub fn save_template(
         .entry(caller)
         .or_insert_with(BTreeMap::new);
 
-    user_templates.insert(name, Template { name, file_names });
+    // Clone the name before moving it into the map key
+    user_templates.insert(name.clone(), Template { name, file_names });
     Ok(())
 }
 
