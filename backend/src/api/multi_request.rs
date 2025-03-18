@@ -57,6 +57,15 @@ pub fn multi_request(
 
     state.request_groups.insert(group_id, request_group);
 
+    if input.save_as_template {
+        let _ = crate::api::template::save_template(
+            state,
+            caller,
+            input.group_name.clone(),
+            input.file_names.clone(),
+        );
+    }
+
     MultiRequestResponse {
         group_id,
         group_alias,

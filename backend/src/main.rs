@@ -96,6 +96,21 @@ fn multi_request(input: MultiRequestInput) -> MultiRequestResponse {
 }
 
 #[query]
+fn get_user_templates() -> Vec<Template> {
+    with_state(|s| backend::api::template::get_user_templates(s, caller()))
+}
+
+#[query]
+fn get_template(name: String) -> Result<Template, GetAliasInfoError> {
+    with_state(|s| backend::api::template::get_template(s, caller(), name))
+}
+
+#[update]
+fn delete_template(name: String) {
+    with_state_mut(|s| backend::api::template::delete_template(s, caller(), name))
+}
+
+#[query]
 fn get_request_groups() -> Vec<PublicRequestGroup> {
     with_state(|s| backend::api::get_request_groups(s, caller()))
 }
