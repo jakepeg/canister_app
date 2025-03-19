@@ -19,7 +19,7 @@
   let generatedLinks: string[] = [];
   let groupId: bigint | null = null;
 
-  let selectedTemplate: string = ""; // Change this to just a string
+  let selectedTemplate: template;
   let saveAsTemplate: boolean = false;
   export let savedTemplates: template[] = [];
 
@@ -51,21 +51,20 @@
   }
 
   async function loadTemplate(templateName: string) {
+    console.log("templateName: ", templateName);
     if (templateName) {
       try {
-        const templateResult = await auth.actor.get_template(templateName);
-        console.log("templateResult: ", templateResult);
-        if (
-          enumIs(templateResult, "some") &&
-          templateResult &&
-          templateResult.length > 0
-        ) {
-          const template = templateResult.some;
-          if (template) {
-            // Add this check
-            requestName = template.name || "";
-            documents = [...template.file_names];
-          }
+        const template = await auth.actor.get_template(templateName);
+        console.log("templateResult: ", template);
+        // if (enumIs(template, "Err")) {
+        //   throw new Error(
+        //     "An error occurred while uploading the file. Please try again.",
+        //   );
+        // }
+        if (enumIs(template, "Ok")) {
+          // Add this check
+          requestName = template.Ok.name || "";
+          documents = [...template.Ok.file_names];
         } else {
           console.log("Template not found");
           // Optional: Clear fields if template not found
@@ -176,12 +175,12 @@
             <select
               id="template"
               bind:value={selectedTemplate}
-              on:change={() => loadTemplate(selectedTemplate)}
+              on:change={() => loadTemplate(selectedTemplate.name)}
               class="input"
             >
               <option value="">Select a template</option>
               {#each savedTemplates as template}
-                <option value={template.name}>{template.name}</option>
+                <option value={template}>{template.name}</option>
               {/each}
             </select>
           </div>

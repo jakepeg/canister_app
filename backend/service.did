@@ -5,6 +5,11 @@ type template = record {
     file_names: vec text;
 };
 
+type template_response = record {
+  Ok: template;
+  Err: variant { not_found };
+};
+
 type multi_request_input = record {
   group_name: text;
   file_names: vec text;
@@ -168,7 +173,7 @@ service docutrack : {
 
   // Methods for working with templates
   get_template_names: () -> (vec text) query;
-  get_template: (text) -> (opt template) query;
+  get_template: (text) -> (template_response) query;
   delete_template: (text) -> ();
   get_user_templates: () -> (vec template) query;
 

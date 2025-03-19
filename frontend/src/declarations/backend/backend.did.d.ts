@@ -66,6 +66,10 @@ export type set_user_response = { 'ok' : null } |
 export type share_file_response = { 'ok' : null } |
   { 'permission_error' : null };
 export interface template { 'file_names' : Array<string>, 'name' : string }
+export interface template_response {
+  'Ok' : template,
+  'Err' : { 'not_found' : null },
+}
 export interface upload_file_atomic_request {
   'content' : Uint8Array | number[],
   'name' : string,
@@ -112,7 +116,7 @@ export interface _SERVICE {
   'get_request_groups' : ActorMethod<[], Array<public_request_group>>,
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
-  'get_template' : ActorMethod<[string], [] | [template]>,
+  'get_template' : ActorMethod<[string], template_response>,
   'get_template_names' : ActorMethod<[], Array<string>>,
   'get_user_templates' : ActorMethod<[], Array<template>>,
   'get_users' : ActorMethod<[], get_users_response>,

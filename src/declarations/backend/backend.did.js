@@ -60,6 +60,10 @@ export const idlFactory = ({ IDL }) => {
     'file_names' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
   });
+  const template_response = IDL.Record({
+    'Ok' : template,
+    'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
+  });
   const get_users_response = IDL.Variant({
     'permission_error' : IDL.Null,
     'users' : IDL.Vec(user),
@@ -149,7 +153,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'get_requests' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_shared_files' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
-    'get_template' : IDL.Func([IDL.Text], [IDL.Opt(template)], ['query']),
+    'get_template' : IDL.Func([IDL.Text], [template_response], ['query']),
     'get_template_names' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'get_user_templates' : IDL.Func([], [IDL.Vec(template)], ['query']),
     'get_users' : IDL.Func([], [get_users_response], ['query']),
