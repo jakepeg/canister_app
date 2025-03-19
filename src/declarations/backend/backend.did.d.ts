@@ -48,6 +48,7 @@ export interface group_info {
 }
 export interface multi_request_input {
   'file_names' : Array<string>,
+  'save_as_template' : boolean,
   'group_name' : string,
 }
 export interface multi_request_response {
@@ -64,6 +65,9 @@ export type set_user_response = { 'ok' : null } |
   { 'username_exists' : null };
 export type share_file_response = { 'ok' : null } |
   { 'permission_error' : null };
+export interface template { 'file_names' : Array<string>, 'name' : string }
+export type template_response = { 'Ok' : template } |
+  { 'Err' : { 'not_found' : null } };
 export interface upload_file_atomic_request {
   'content' : Uint8Array | number[],
   'name' : string,
@@ -94,6 +98,7 @@ export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
 export interface _SERVICE {
   'delete_file' : ActorMethod<[file_id], share_file_response>,
+  'delete_template' : ActorMethod<[string], undefined>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
   'get_alias_info' : ActorMethod<[string], get_alias_info_response>,
   'get_file_owner_principal' : ActorMethod<
@@ -107,9 +112,11 @@ export interface _SERVICE {
       { 'Err' : { 'not_found' : null } }
   >,
   'get_request_groups' : ActorMethod<[], Array<public_request_group>>,
-
   'get_requests' : ActorMethod<[], Array<file_metadata>>,
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
+  'get_template' : ActorMethod<[string], template_response>,
+  'get_template_names' : ActorMethod<[], Array<string>>,
+  'get_user_templates' : ActorMethod<[], Array<template>>,
   'get_users' : ActorMethod<[], get_users_response>,
   'hello_world' : ActorMethod<[], string>,
   'multi_request' : ActorMethod<[multi_request_input], multi_request_response>,

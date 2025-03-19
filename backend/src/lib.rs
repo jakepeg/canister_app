@@ -36,6 +36,7 @@ pub struct RequestGroup {
 pub struct MultiRequestInput {
     pub group_name: String,
     pub file_names: Vec<String>,
+    pub save_as_template: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
@@ -201,6 +202,12 @@ pub enum FileSharingResponse {
     Ok,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Template {
+    pub name: String,
+    pub file_names: Vec<String>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct State {
     // Keeps track of how many files have been requested so far
@@ -240,6 +247,8 @@ pub struct State {
     group_alias_index: BTreeMap<String, u64>,
     /// Mapping between group IDs and their file IDs
     group_files: BTreeMap<u64, Vec<u64>>,
+
+    user_templates: BTreeMap<Principal, BTreeMap<String, Template>>,
 }
 
 impl State {
@@ -271,6 +280,7 @@ impl State {
             request_groups: BTreeMap::new(),
             group_alias_index: BTreeMap::new(),
             group_files: BTreeMap::new(),
+            user_templates: BTreeMap::new(),
         }
     }
 

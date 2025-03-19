@@ -1,8 +1,19 @@
 type file_id = nat64;
 
+type template = record {
+    name: text;
+    file_names: vec text;
+};
+
+type template_response = variant {
+  Ok: template;
+  Err: variant { not_found };
+};
+
 type multi_request_input = record {
   group_name: text;
   file_names: vec text;
+  save_as_template: bool;
 };
 
 type multi_request_response = record {
@@ -159,6 +170,12 @@ service docutrack : {
   multi_request: (multi_request_input) -> (multi_request_response);
   get_request_groups: () -> (vec public_request_group) query;
   get_group_by_alias: (alias: text) -> (variant { Ok: group_info; Err: variant { not_found } }) query;
+
+  // Methods for working with templates
+  get_template_names: () -> (vec text) query;
+  get_template: (text) -> (template_response) query;
+  delete_template: (text) -> ();
+  get_user_templates: () -> (vec template) query;
 
   // Based on the alias (or download link) of the file,
   // it returns the name and id of the file to be uploaded.
