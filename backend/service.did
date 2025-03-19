@@ -5,7 +5,7 @@ type template = record {
     file_names: vec text;
 };
 
-type template_response = record {
+type template_response = variant {
   Ok: template;
   Err: variant { not_found };
 };

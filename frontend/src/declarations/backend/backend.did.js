@@ -60,7 +60,7 @@ export const idlFactory = ({ IDL }) => {
     'file_names' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
   });
-  const template_response = IDL.Record({
+  const template_response = IDL.Variant({
     'Ok' : template,
     'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
   });

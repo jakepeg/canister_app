@@ -66,10 +66,8 @@ export type set_user_response = { 'ok' : null } |
 export type share_file_response = { 'ok' : null } |
   { 'permission_error' : null };
 export interface template { 'file_names' : Array<string>, 'name' : string }
-export interface template_response {
-  'Ok' : template,
-  'Err' : { 'not_found' : null },
-}
+export type template_response = { 'Ok' : template } |
+  { 'Err' : { 'not_found' : null } };
 export interface upload_file_atomic_request {
   'content' : Uint8Array | number[],
   'name' : string,
