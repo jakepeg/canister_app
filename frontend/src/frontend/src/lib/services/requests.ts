@@ -6,6 +6,7 @@ import { get, writable } from "svelte/store";
 
 export type Request = {
   name: string;
+  group_name: string;
   formattedDate: string;
   formattedDateShort: string;
   alias: string;
@@ -119,6 +120,7 @@ export class RequestsService {
 
         uploadedFiles.push({
           name: file.file_name,
+          group_name: file.group_name,
           access: accessMessage,
           formattedDate: formatUploadDate(
             file.file_status.pending.requested_at,

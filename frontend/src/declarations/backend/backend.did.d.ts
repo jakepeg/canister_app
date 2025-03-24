@@ -24,6 +24,7 @@ export interface file_metadata {
   'file_status' : file_status,
   'file_name' : string,
   'shared_with' : Array<user>,
+  'group_name' : string,
   'file_id' : file_id,
 }
 export type file_status = { 'partially_uploaded' : null } |
