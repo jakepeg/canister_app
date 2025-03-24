@@ -6,17 +6,24 @@ pub fn get_requests(state: &State, caller: Principal) -> Vec<PublicFileMetadata>
         None => vec![],
         Some(file_ids) => file_ids
             .iter()
-            .map(|file_id| PublicFileMetadata {
-                file_id: *file_id,
-                file_name: state
-                    .file_data
-                    .get(file_id)
-                    .expect("file must exist")
-                    .metadata
-                    .file_name
-                    .clone(),
-                shared_with: get_allowed_users(state, *file_id),
-                file_status: get_file_status(state, *file_id),
+            .map(|file_id| {
+                let file = state.file_data.get(file_id).expect("file must exist");
+
+                // Find group name for this file
+                let group_name = state
+                    .request_groups
+                    .values()
+                    .find(|group| group.files.contains(file_id))
+                    .map(|group| group.name.clone())
+                    .unwrap_or_default();
+
+                PublicFileMetadata {
+                    file_id: *file_id,
+                    file_name: file.metadata.file_name.clone(),
+                    group_name, // Add this line
+                    shared_with: get_allowed_users(state, *file_id),
+                    file_status: get_file_status(state, *file_id),
+                }
             })
             .collect(),
     }
@@ -93,6 +100,7 @@ mod test {
                 PublicFileMetadata {
                     file_id: 0,
                     file_name: "request".to_string(),
+                    group_name: "group1".to_string(),
                     file_status: FileStatus::Pending {
                         alias: alias1,
                         requested_at: get_time()
@@ -102,6 +110,7 @@ mod test {
                 PublicFileMetadata {
                     file_id: 1,
                     file_name: "request2".to_string(),
+                    group_name: "group2".to_string(),
                     file_status: FileStatus::Pending {
                         alias: alias2,
                         requested_at: get_time()
@@ -111,6 +120,7 @@ mod test {
                 PublicFileMetadata {
                     file_id: 2,
                     file_name: "request3".to_string(),
+                    group_name: "group3".to_string(),
                     file_status: FileStatus::Pending {
                         alias: alias3,
                         requested_at: get_time()
@@ -120,6 +130,7 @@ mod test {
                 PublicFileMetadata {
                     file_id: 3,
                     file_name: "request4".to_string(),
+                    group_name: "group4".to_string(),
                     file_status: FileStatus::Pending {
                         alias: alias4,
                         requested_at: get_time()

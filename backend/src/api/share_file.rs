@@ -80,17 +80,30 @@ pub fn get_shared_files(state: &State, caller: Principal) -> Vec<PublicFileMetad
         None => vec![],
         Some(file_ids) => file_ids
             .iter()
-            .map(|file_id| PublicFileMetadata {
-                file_id: *file_id,
-                file_name: state
-                    .file_data
-                    .get(file_id)
-                    .expect("file must exist")
-                    .metadata
-                    .file_name
-                    .clone(),
-                shared_with: get_allowed_users(state, *file_id),
-                file_status: get_file_status(state, *file_id),
+            .map(|file_id| {
+                let file = state.file_data.get(file_id).expect("file must exist");
+
+                // Find group name for this file
+                let group_name = state
+                    .request_groups
+                    .values()
+                    .find(|group| group.files.contains(file_id))
+                    .map(|group| group.name.clone())
+                    .unwrap_or_default();
+
+                PublicFileMetadata {
+                    file_id: *file_id,
+                    file_name: state
+                        .file_data
+                        .get(file_id)
+                        .expect("file must exist")
+                        .metadata
+                        .file_name
+                        .clone(),
+                    group_name, // Add group name here
+                    shared_with: get_allowed_users(state, *file_id),
+                    file_status: get_file_status(state, *file_id),
+                }
             })
             .collect(),
     }
@@ -181,6 +194,7 @@ mod test {
                 PublicFileMetadata {
                     file_id: 0,
                     file_name: "request".to_string(),
+                    group_name: "group1".to_string(),
                     file_status: FileStatus::Uploaded {
                         uploaded_at: get_time(),
                         // Not needed as the user can derive their vetkey so we don't need to store it
@@ -195,6 +209,7 @@ mod test {
                 PublicFileMetadata {
                     file_id: 2,
                     file_name: "request3".to_string(),
+                    group_name: "group3".to_string(),
                     file_status: FileStatus::Uploaded {
                         uploaded_at: get_time(),
                         // Not needed as the user can derive their vetkey so we don't need to store it
@@ -323,6 +338,7 @@ mod test {
             vec![PublicFileMetadata {
                 file_id: 2,
                 file_name: "request3".to_string(),
+                group_name: "group3".to_string(),
                 file_status: FileStatus::Uploaded {
                     uploaded_at: get_time(),
                     // Not needed as the user can derive their vetkey so we don't need to store it

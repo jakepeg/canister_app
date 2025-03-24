@@ -48,6 +48,7 @@ export const idlFactory = ({ IDL }) => {
     'file_status' : file_status,
     'file_name' : IDL.Text,
     'shared_with' : IDL.Vec(user),
+    'group_name' : IDL.Text,
     'file_id' : file_id,
   });
   const public_request_group = IDL.Record({
