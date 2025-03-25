@@ -35,6 +35,12 @@
     @apply hover:text-accent-100 h-12 px-4;
   }
 
+  .btn-cta {
+    @apply bg-transparent h-12 px-4 text-white border border-white 
+           hover:bg-white hover:text-blue-500 hover:border-blue-500;
+  }
+  
+
   .btn-ghost-active {
     @apply text-accent-100;
   }
