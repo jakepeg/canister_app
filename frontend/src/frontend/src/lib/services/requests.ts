@@ -9,7 +9,8 @@ export type Request = {
   group_name: string;
   formattedDate: string;
   formattedDateShort: string;
-  alias: string;
+  file_alias: string;
+  group_alias: string;
   access: string;
 };
 
@@ -128,7 +129,8 @@ export class RequestsService {
           formattedDateShort: formatUploadDateShort(
             file.file_status.pending.requested_at,
           ),
-          alias: file.file_status.pending.alias,
+          file_alias: file.file_status.pending.alias,
+          group_alias: file.group_alias?.[0] ?? "",
         });
       }
     }

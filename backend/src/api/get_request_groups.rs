@@ -26,10 +26,24 @@ pub fn get_request_groups(state: &State, caller: Principal) -> Vec<PublicRequest
                             .map(|group| group.name.clone())
                             .unwrap_or_default();
 
+                        // Find group alias for this file
+                        let group_alias = state
+                            .request_groups
+                            .values()
+                            .find(|group| group.files.contains(file_id))
+                            .and_then(|group| {
+                                state
+                                    .group_alias_index
+                                    .iter()
+                                    .find(|(a, id)| **id == group.group_id)
+                                    .map(|(alias, _)| alias.clone())
+                            });
+
                         PublicFileMetadata {
                             file_id: *file_id,
                             file_name: file_data.metadata.file_name.clone(),
                             group_name,
+                            group_alias,
                             shared_with: super::get_requests::get_allowed_users(state, *file_id),
                             file_status: super::get_requests::get_file_status(state, *file_id),
                         }
