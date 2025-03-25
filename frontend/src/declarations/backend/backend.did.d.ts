@@ -22,6 +22,7 @@ export interface file_info {
 }
 export interface file_metadata {
   'file_status' : file_status,
+  'group_alias' : [] | [string],
   'file_name' : string,
   'shared_with' : Array<user>,
   'group_name' : string,

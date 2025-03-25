@@ -67,10 +67,10 @@
                 <td class="body-1">{request.formattedDateShort}</td>
                 <td class="pr-4 rounded-tr-xl rounded-br-xl body-1">
                   <a
-                    href="/upload?alias={request.alias}"
+                    href="/upload?alias={request.group_alias}"
                     class="underline text-accent-100"
                   >
-                    {request.alias}
+                    {request.group_alias}
                   </a>
                 </td>
               </tr>
