@@ -50,6 +50,8 @@ type file_status = variant {
 type file_metadata = record {
   file_id: file_id;
   file_name : text;
+  group_name: text;
+  group_alias: opt text;
   file_status: file_status;
   shared_with: vec user;
 };

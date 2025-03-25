@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import { onMount } from "svelte";
   import * as vetkd from "ic-vetkd-utils";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
@@ -580,4 +580,4 @@
     padding: 1rem;
     border-radius: 4px;
   }
-</style>
+</style> -->

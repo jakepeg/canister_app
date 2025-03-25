@@ -118,6 +118,8 @@ pub enum FileStatus {
 pub struct PublicFileMetadata {
     pub file_id: u64,
     pub file_name: String,
+    pub group_name: String,
+    pub group_alias: Option<String>,
     pub file_status: FileStatus,
     pub shared_with: Vec<PublicUser>,
 }

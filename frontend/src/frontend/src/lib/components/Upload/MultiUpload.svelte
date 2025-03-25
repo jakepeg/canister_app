@@ -44,6 +44,8 @@
       return;
     }
 
+    console.log("alias: ", alias);
+
     try {
       const result = await auth.actor.get_group_by_alias(alias);
 
@@ -62,6 +64,7 @@
         fatalError = true;
         error = "Request not found or already uploaded";
         loading = false;
+        console.log("error: ", result);
       }
     } catch (e) {
       console.error(e);

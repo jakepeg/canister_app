@@ -61,15 +61,16 @@
               <tr>
                 <td
                   class="pl-4 bg-background rounded-tl-xl rounded-bl-xl body-1 h-[52px]"
-                ></td>
+                  >{request.group_name}</td
+                >
                 <td class="body-1">{request.name}</td>
                 <td class="body-1">{request.formattedDateShort}</td>
                 <td class="pr-4 rounded-tr-xl rounded-br-xl body-1">
                   <a
-                    href="/upload?alias={request.alias}"
+                    href="/upload?alias={request.group_alias}"
                     class="underline text-accent-100"
                   >
-                    {request.alias}
+                    {request.group_alias}
                   </a>
                 </td>
               </tr>
