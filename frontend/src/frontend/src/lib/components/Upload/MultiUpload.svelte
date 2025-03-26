@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import LinkedInIcon from "../icons/linkedin.svelte";
+  import XIcon from "../icons/x-logo.svelte";
   // import { encrypt } from "$lib/crypto/upload";
   import {
     UploadService,
@@ -14,6 +16,7 @@
     AuthStateAuthenticated,
     AuthStateUnauthenticated,
   } from "$lib/services/auth";
+  import { authService, authStore } from "$lib/services/auth";
   import type { group_info } from "../../../../../declarations/backend/backend.did";
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
@@ -163,13 +166,17 @@
 </script>
 
 <div class="container mx-auto p-4">
-  <div class="flex flex-col items-center text-center mt-16 max-w-3xl">
-    <h1 class="text-4xl font-bold">Store, Share & Collect Documents</h1>
-    <h2 class="text-lg mt-2 text-gray-400">
-      Sovereign data management designed for privacy, secured on the blockchain.
-    </h2>
-  </div>
-
+  <!-- If not logged in condition -->
+  {#if $authStore.state !== "authenticated"}
+    <div class="flex flex-col items-center text-center mt-16 mb-4">
+      <h1 class="text-4xl font-bold">Store, Share & Collect Documents</h1>
+      <h2 class="text-lg mt-2 text-gray-400">
+        Sovereign data management designed for privacy, secured on the
+        blockchain.
+      </h2>
+    </div>
+  {/if}
+  <!-- End if not logged in condition -->
   {#if loading}
     <div class="flex justify-center items-center h-64">
       <!-- <LoadingIndicator /> -->
@@ -197,7 +204,7 @@
 
       <div class="space-y-4 mb-6">
         {#each fileUploads as fileUpload, index}
-          <div class="border rounded-lg p-4">
+          <div class="border blue-border p-4">
             <h3 class="title-2 mb-2">{fileUpload.fileName}</h3>
 
             {#if fileUpload.status === "uploaded"}
@@ -276,3 +283,38 @@
     </div>
   {/if}
 </div>
+<!-- If not logged in condition -->
+{#if $authStore.state !== "authenticated"}
+  <div class="text-center text-gray-400">
+    <h2 class="text-lg">
+      With Canister, your file transfers are encrypted to be secure and private.
+    </h2>
+    <a href="/" class="btn btn-cta mt-6"> Learn More </a>
+  </div>
+
+  <!-- Fixed Social Icons Section -->
+  <div class="fixed-social-icons">
+    <a href="https://www.linkedin.com/company/canister-cloud/" target="_blank">
+      <span class="h-6 w-6">
+        <LinkedInIcon />
+      </span>
+    </a>
+    <a href="https://x.com/CanisterCloud" target="_blank">
+      <span class="h-6 w-6">
+        <XIcon />
+      </span>
+    </a>
+  </div>
+{/if}
+
+<!-- End if not logged in condition -->
+<style>
+  .fixed-social-icons {
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+</style>

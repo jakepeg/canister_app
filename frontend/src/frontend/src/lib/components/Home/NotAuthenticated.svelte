@@ -56,7 +56,7 @@
   <!-- New CTA Section -->
   <div class="flex flex-col md:flex-row gap-6 mt-12">
     <a href="/personal" class="btn btn-cta"> Personal Canisters </a>
-    <a href="/business" class="btn btn-cta"> Business Canisters </a>
+    <a href="/business" class="btn btn-cta"> Enterprise Canisters </a>
   </div>
 
   <!-- Demo Notice Section -->
