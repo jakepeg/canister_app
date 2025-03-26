@@ -12,6 +12,13 @@
 
   onMount(async () => {
     authService.init();
+
+    // Apply dark mode for non-authenticated users
+    if ($authStore.state !== "authenticated") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   });
 
   let { children } = $props();
@@ -45,5 +52,15 @@
   {/if}
 {:else}
   <!-- No layout applied for non-authenticated users -->
-  {@render children?.()}
+  <div class="flex flex-col h-screen overflow-hidden gap-y-2">
+    <ModeWatcher />
+    <Navbar />
+    <div class="flex flex-1 overflow-hidden">
+      <main class="flex-1">
+        <div class="max-w-5xl mx-auto px-4">
+          {@render children?.()}
+        </div>
+      </main>
+    </div>
+  </div>
 {/if}

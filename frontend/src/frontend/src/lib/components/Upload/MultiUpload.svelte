@@ -163,6 +163,13 @@
 </script>
 
 <div class="container mx-auto p-4">
+  <div class="flex flex-col items-center text-center mt-16 max-w-3xl">
+    <h1 class="text-4xl font-bold">Store, Share & Collect Documents</h1>
+    <h2 class="text-lg mt-2 text-gray-400">
+      Sovereign data management designed for privacy, secured on the blockchain.
+    </h2>
+  </div>
+
   {#if loading}
     <div class="flex justify-center items-center h-64">
       <!-- <LoadingIndicator /> -->

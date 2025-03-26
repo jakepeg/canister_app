@@ -6,11 +6,9 @@
   import { Button, buttonVariants } from "$lib/components/ui/button";
 </script>
 
-<div
-  class="bg-[#18181A] min-h-screen flex flex-col items-center text-white px-6"
->
+<div class="bg-background min-h-screen flex flex-col items-center px-6">
   <!-- Header -->
-  <div class="w-full flex justify-between items-center py-6 px-8">
+  <!-- <div class="w-full flex justify-between items-center py-6 px-8">
     <div class="flex items-center gap-2">
       <img src="/logo.svg" alt="Logo" class="h-10" />CANISTER
     </div>
@@ -21,7 +19,7 @@
       <LogoIcon />
       Login
     </button>
-  </div>
+  </div> -->
 
   <!-- Main Content -->
   <div class="flex flex-col items-center text-center mt-16 max-w-3xl">

@@ -47,7 +47,9 @@
 
     <!-- Right side with buttons -->
     <div class="flex items-center ml-auto">
-      <ModeToggle />
+      {#if $authStore.state === "authenticated"}
+        <ModeToggle />
+      {/if}
 
       {#if $authStore.state === "unauthenticated"}
         <button
