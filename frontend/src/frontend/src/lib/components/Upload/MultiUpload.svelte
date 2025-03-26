@@ -174,19 +174,14 @@
     </div>
     <button class="btn btn-accent" on:click={goHome}>Go Home</button>
   {:else if allUploaded}
-    <div class="bg-white rounded-lg p-6 shadow-md mb-4">
+    <div class="bg-background rounded-lg p-6 mb-4">
       <div class="flex flex-col items-center justify-center text-center p-8">
-        <div class="mb-4 text-green-500">
-          <!-- <SuccessIcon size={48} /> -->
-          SuccessIcon goes here
-        </div>
-        <h2 class="title-1 mb-2">All files uploaded successfully!</h2>
-        <p class="mb-6">All documents have been securely uploaded</p>
-        <button class="btn btn-accent" on:click={goHome}>Return Home</button>
+        <h2 class="title-1 mb-2">All documents have been securely uploaded</h2>
+        <!-- <button class="btn btn-accent" on:click={goHome}>Return Home</button> -->
       </div>
     </div>
   {:else}
-    <div class="bg-white rounded-lg p-6 shadow-md mb-4">
+    <div class="bg-background rounded-lg p-6 mb-4">
       <h1 class="title-1 mb-4">{groupInfo?.group_name} Document Upload</h1>
       <p class="mb-4">
         <strong>{groupInfo?.requester.username}</strong> has requested the following
@@ -200,8 +195,6 @@
 
             {#if fileUpload.status === "uploaded"}
               <div class="flex items-center text-green-500">
-                <!-- <SuccessIcon class="mr-2" /> -->
-                SuccessIcon goes here
                 <span>Uploaded successfully</span>
               </div>
             {:else if fileUpload.status === "uploading"}
@@ -221,12 +214,15 @@
                   class="hidden"
                   on:change={(e) => handleFileSelect(index, e)}
                 />
-                <label for="file-{index}" class="btn btn-secondary">
+                <label
+                  for="file-{index}"
+                  class="btn btn-secondary cursor-pointer"
+                >
                   <UploadIcon />
                   Select File
                 </label>
                 <button
-                  class="btn btn-primary"
+                  class="btn btn-accent"
                   disabled={!fileUpload.file}
                   on:click={() => uploadFile(index)}
                 >
@@ -241,12 +237,15 @@
                   class="hidden"
                   on:change={(e) => handleFileSelect(index, e)}
                 />
-                <label for="file-{index}" class="btn btn-secondary">
+                <label
+                  for="file-{index}"
+                  class="btn btn-secondary cursor-pointer"
+                >
                   <UploadIcon />
                   {fileUpload.file ? fileUpload.file.name : "Select File"}
                 </label>
                 <button
-                  class="btn btn-primary"
+                  class="btn btn-accent"
                   disabled={!fileUpload.file}
                   on:click={() => uploadFile(index)}
                 >
@@ -258,7 +257,7 @@
         {/each}
       </div>
 
-      <div class="flex justify-between">
+      <!-- <div class="flex justify-between">
         <button
           class="btn btn-accent"
           on:click={uploadAll}
@@ -266,7 +265,7 @@
         >
           Upload All
         </button>
-      </div>
+      </div> -->
     </div>
   {/if}
 </div>
