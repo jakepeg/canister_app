@@ -9,6 +9,15 @@ Canister Cloud is a secure, scalable, and fully on-chain document storage and ma
 - **VETKey-Backed Storage Security** – Strengthened file storage with VETKey-based encryption.
 - **File Management Tools** – Rename and delete files for better organization.
 
+## Technology Stack
+
+Canister Cloud is developed using:
+- **Rust**
+- **Svelte**
+- **TailwindCSS**
+- **Internet Identity** – Secure, decentralized authentication for user access.
+- **VETKeys** – Advanced encryption mechanism for securing document storage and access.
+
 ## Development
 
 To run the dApp locally, start the Internet Computer backend:
