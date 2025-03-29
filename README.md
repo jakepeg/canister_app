@@ -1,6 +1,6 @@
 # Canister Cloud
 
-Canister Cloud is a secure, scalable, and fully on-chain document storage and management dApp designed for Human Resources (HR) departments. It streamlines HR workflows, particularly for new hire onboarding, by simplifying the collection of signed contracts, work permits, identification documents, and other essential paperwork.
+Canister Cloud is a secure, scalable, and fully on-chain document storage and management dApp. Built on the **Internet Computer (ICP)** by **Dfinity**, it leverages blockchain technology to provide a decentralized, tamper-proof solution for document management. 
 
 ## Features
 
