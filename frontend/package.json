@@ -65,6 +65,7 @@
     "@dfinity/utils": "^2.11.0",
     "@macfja/svelte-persistent-store": "^2.4.0",
     "@shipstone-labs/ic-vetkd-notes-client": "^0.1.13",
+    "@sveltejs/adapter-auto": "^5.0.0",
     "ic-vetkd-utils": "file:./ic-vetkd-utils-0.1.0.tgz",
     "mode-watcher": "^0.5.0",
     "p-limit": "^5.0.0",
