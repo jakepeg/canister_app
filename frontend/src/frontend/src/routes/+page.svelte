@@ -24,7 +24,7 @@
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 		// Mock data - replace with actual backend call
 		canisters = [
-			// { id: 'canister-1', name: 'My First Canister' },
+			{ id: 'canister-1', name: 'My First Canister' },
 			// { id: 'canister-2', name: 'Project Data' },
 			// { id: 'canister-3', name: 'Shared Files' }
 		];
