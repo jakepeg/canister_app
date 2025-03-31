@@ -63,22 +63,26 @@
         <button
           class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
           on:click={() => (showMobileMenu = !showMobileMenu)}
+          aria-label="Open menu"
         >
           <span
             class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
               ? 'rotate-45 translate-y-[7px]'
               : 'rotate-0'}"
-          />
+          >
+          </span>
           <span
             class="h-[2px] bg-accent-100 rounded-full transition-opacity {showMobileMenu
               ? 'opacity-0'
               : 'opacity-100'}"
-          />
+          >
+          </span>
           <span
             class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
               ? '-rotate-45 translate-y-[-7px]'
               : 'rotate-0'}"
-          />
+          >
+          </span>
         </button>
 
         <div class="hidden md:flex gap-2 lg:gap-8">
@@ -95,7 +99,8 @@
   <div
     class="md:hidden fixed inset-0 bg-black/50"
     transition:fade|global={{ duration: 200 }}
-  />
+  >
+  </div>
   <div
     transition:fly|global={{ duration: 300, x: 1000, opacity: 1 }}
     class="fixed md:hidden inset-0 bg-background-300 z-10 pt-16"
@@ -128,7 +133,7 @@
         <RequestsIcon />
         Requests</a
       >
-      <div class="flex-1" />
+      <div class="flex-1" ></div>
       <button
         on:click={() => {
           authService.logout();

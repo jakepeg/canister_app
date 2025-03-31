@@ -5,6 +5,8 @@
 	import NotAuthenticated from '$lib/components/Home/NotAuthenticated.svelte';
 	import { authStore } from '$lib/services/auth';
 
+	// export const prerender = false;
+
 	// Extract canisterId from the route parameters
 	$: canisterId = $page.params.canisterId;
 

@@ -98,7 +98,7 @@
     box-shadow: 0 0 15px rgba(0, 162, 255, 0.8);
   }
 
-  .btn-primary {
+  /* .btn-primary {
     background-color: #007bff;
     color: white;
     font-weight: bold;
@@ -120,7 +120,7 @@
 
   .btn-secondary:hover {
     background-color: #1e7e34;
-  }
+  } */
 
   .fixed-social-icons {
     position: fixed;
