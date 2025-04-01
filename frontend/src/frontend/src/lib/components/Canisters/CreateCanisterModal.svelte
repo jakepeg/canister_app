@@ -76,10 +76,10 @@
 <Dialog.Root bind:open onOpenChange={(val) => !val && closeModal()}>
 	<Dialog.Portal>
 		<!-- Backdrop: Based on Rectangle 107 fill_RMREMI -->
-		<Dialog.Overlay class="fixed inset-0 z-50 bg-black/70" />
+		<Dialog.Overlay class="fixed inset-0 z-50 " />
 		<!-- Modal Container: Based on 289:141 -->
 		<Dialog.Content
-			class="fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] bg-[#1F1F1F] p-6 shadow-lg duration-200 rounded-[21px] text-white font-inder"
+			class="fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] p-6 shadow-lg duration-200 rounded-[21px] font-inder"
 			aria-describedby="create-canister-description"
 		>
 			<!-- Header -->
@@ -88,13 +88,13 @@
 				<Dialog.Title class="text-lg font-inder">Create New Canister</Dialog.Title>
 				<!-- Close Button: Style: style_GUBF0I - Inder, 17px, White -->
 				<!-- Reverted to simple button with typed on:click -->
-				<button
+				<!-- <button
 					on:click={(e: MouseEvent) => closeModal()}
 					class="p-1 rounded-full hover:bg-white/10 transition-colors"
 					aria-label="Close"
 				>
 					<X class="h-5 w-5" />
-				</button>
+				</button> -->
 			</Dialog.Header>
 
 			<!-- Description for Accessibility -->
@@ -113,7 +113,7 @@
 						id="canisterName"
 						bind:value={canisterName}
 						placeholder="Enter canister name"
-						class="bg-transparent border border-[#0B8CE9] rounded-[9px] placeholder:text-white/50 placeholder:font-inder placeholder:text-base focus:ring-1 focus:ring-[#0B8CE9]"
+						class="bg-transparent border border-[#0B8CE9] rounded-[9px] placeholder:font-inder placeholder:text-base focus:ring-1 focus:ring-[#0B8CE9]"
 						disabled={isLoading}
 					/>
 				</div>
@@ -124,7 +124,7 @@
 					<Label class="block text-sm font-inder mb-1">Size (GB)</Label>
 					<!-- Display Field: Based on Rectangle 94 (289:151) -->
 					<div
-						class="bg-transparent border border-[#0B8CE9] rounded-[9px] px-3 py-2 text-white/50 font-inder text-base"
+						class="bg-transparent border border-[#0B8CE9] rounded-[9px] px-3 py-2 font-inder text-base"
 					>
 						500gb <!-- Static value as per spec -->
 					</div>
@@ -135,7 +135,7 @@
 					<!-- Label: Style: style_GUBF0I - Inder, 17px, White -->
 					<Label class="block text-base font-inder mb-1">Setup Cost:</Label>
 					<!-- Value: Needs clarification - Using placeholder -->
-					<div class="text-white/80 font-inder text-base">
+					<div class="font-inder text-base">
 						TBD <!-- Placeholder - Needs clarification -->
 					</div>
 				</div>
@@ -150,7 +150,7 @@
 			<Dialog.Footer class="mt-6">
 				<!-- Button: Based on Rectangle 95 (289:154) -->
 				<Button
-					class="w-full font-inder text-base border border-white rounded-[22px] hover:bg-white/10"
+					class="w-full font-inder text-base borderrounded-[22px]"
 					variant="outline"
 					onclick={handleCreateCanister} 
 					disabled={isLoading}

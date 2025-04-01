@@ -35,14 +35,13 @@
 	// }
 </script>
 
-<div class="container mx-auto px-4 py-8 text-white">
+<div class="container mx-auto px-4 py-8 ">
 	<div class="flex justify-between items-center mb-6">
 		<!-- Header: Style: style_ESKRTZ - Inder, 20px, White -->
 		<h1 class="font-inder text-xl">My Canisters</h1>
 		<!-- New Canister Button: Style: style_GUBF0I - Inder, 17px, White, white stroke, 6px border-radius -->
 		<Button
-			variant="outline"
-			class="font-inder text-base border-white rounded-md hover:bg-white/10"
+			
 			onclick={openCreateModal}
 		>
 			New Canister
@@ -64,7 +63,7 @@
 				>
 					<!-- Canister Card: Based on 288:110, 288:115 -->
 					<Card.Root
-						class="bg-[#1F1F1F] border border-white rounded-xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] cursor-pointer hover:border-blue-500 transition-colors h-full"
+						class="border border-white rounded-xl shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] cursor-pointer hover:border-blue-500 transition-colors h-full"
 					>
 						<Card.Content class="p-4 flex flex-col items-center h-full">
 							<!-- Placeholder Icon: Based on fill_U5YNZA -->
@@ -80,7 +79,6 @@
 								stroke-width="2"
 								stroke-linecap="round"
 								stroke-linejoin="round"
-								class="text-white"
 							>
 								<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
 								<polyline points="3.27 6.96 12 12.01 20.73 6.96" />

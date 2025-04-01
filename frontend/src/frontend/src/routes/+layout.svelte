@@ -6,6 +6,7 @@
   import { authService, authStore } from "$lib/services/auth";
   import { userStore } from "$lib/services/user";
   import { onMount } from "svelte";
+  import { page } from '$app/stores'; // Import page store
   import "../app.css";
   import { ModeWatcher } from "mode-watcher";
   import * as Sidebar from "$lib/components/ui/sidebar";
@@ -30,17 +31,27 @@
     <ModeWatcher />
     <Navbar />
     <div class="flex flex-1 overflow-hidden">
-      <Sidebar.Provider>
-        <AppSidebar />
-        <Sidebar.Inset class="flex-1 flex overflow-auto">
-          <main class="flex-1">
-            <Sidebar.Trigger class="sticky top-4 left-4" />
-            <div class="max-w-5xl mx-auto px-4 ml-10">
-              {@render children?.()}
-            </div>
-          </main>
-        </Sidebar.Inset>
-      </Sidebar.Provider>
+      {#if $page.route.id?.startsWith('/canister/')}
+        <!-- Layout WITH Sidebar (for canister-specific pages) -->
+        <Sidebar.Provider>
+          <AppSidebar />
+          <Sidebar.Inset class="flex-1 flex overflow-auto">
+            <main class="flex-1">
+              <Sidebar.Trigger class="sticky top-4 left-4" />
+              <div class="max-w-5xl mx-auto px-4 ml-10">
+                {@render children?.()}
+              </div>
+            </main>
+          </Sidebar.Inset>
+        </Sidebar.Provider>
+      {:else}
+        <!-- Layout WITHOUT Sidebar (for main page /) -->
+        <main class="flex-1 overflow-auto">
+           <div class="max-w-5xl mx-auto px-4">
+             {@render children?.()}
+           </div>
+        </main>
+      {/if}
     </div>
   </div>
 
