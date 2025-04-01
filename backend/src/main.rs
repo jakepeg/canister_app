@@ -1,6 +1,8 @@
 use backend::api::UploadFileAtomicRequest;
 // use backend::vetkd::{vetkd_encrypted_key, vetkd_public_key};
 use backend::*;
+// Import necessary types from the api module (which re-exports from canister_management)
+use backend::api::{RegisterCanisterResponse, GetUserCanistersResponse};
 use candid::Principal;
 use ic_cdk::api::caller;
 use ic_cdk_macros::{post_upgrade, pre_upgrade, query, update};
@@ -171,6 +173,23 @@ fn rename_file(file_id: u64, new_name: String) -> FileSharingResponse {
 fn get_users() -> GetUsersResponse {
     with_state(|s| backend::api::get_users(s, caller()))
 }
+
+// --- New Canister Management Endpoints ---
+
+#[query]
+fn get_user_canisters() -> GetUserCanistersResponse {
+    // Directly call the implementation from the api module
+    backend::api::get_user_canisters()
+}
+
+#[update]
+async fn register_canister(canister_id: Principal, name: String) -> RegisterCanisterResponse {
+    // Directly call the implementation from the api module
+    // Note: This function in api is async, so we need await here.
+    backend::api::register_canister(canister_id, name).await
+}
+
+// --- End New Endpoints ---
 
 #[pre_upgrade]
 fn pre_upgrade() {

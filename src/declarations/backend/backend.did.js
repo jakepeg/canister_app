@@ -66,6 +66,11 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : template,
     'Err' : IDL.Variant({ 'not_found' : IDL.Null }),
   });
+  const CanisterInfo = IDL.Record({ 'id' : IDL.Principal, 'name' : IDL.Text });
+  const GetUserCanistersResponse = IDL.Variant({
+    'Ok' : IDL.Vec(CanisterInfo),
+    'NotAuthenticated' : IDL.Null,
+  });
   const get_users_response = IDL.Variant({
     'permission_error' : IDL.Null,
     'users' : IDL.Vec(user),
@@ -78,6 +83,13 @@ export const idlFactory = ({ IDL }) => {
   const multi_request_response = IDL.Record({
     'group_alias' : IDL.Text,
     'group_id' : IDL.Nat64,
+  });
+  const RegisterCanisterResponse = IDL.Variant({
+    'Ok' : IDL.Null,
+    'AlreadyRegistered' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'VerificationFailed' : IDL.Text,
+    'InternalError' : IDL.Text,
   });
   const set_user_response = IDL.Variant({
     'ok' : IDL.Null,
@@ -157,12 +169,18 @@ export const idlFactory = ({ IDL }) => {
     'get_shared_files' : IDL.Func([], [IDL.Vec(file_metadata)], ['query']),
     'get_template' : IDL.Func([IDL.Text], [template_response], ['query']),
     'get_template_names' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
+    'get_user_canisters' : IDL.Func([], [GetUserCanistersResponse], ['query']),
     'get_user_templates' : IDL.Func([], [IDL.Vec(template)], ['query']),
     'get_users' : IDL.Func([], [get_users_response], ['query']),
     'hello_world' : IDL.Func([], [IDL.Text], []),
     'multi_request' : IDL.Func(
         [multi_request_input],
         [multi_request_response],
+        [],
+      ),
+    'register_canister' : IDL.Func(
+        [IDL.Principal, IDL.Text],
+        [RegisterCanisterResponse],
         [],
       ),
     'rename_file' : IDL.Func([file_id, IDL.Text], [share_file_response], []),

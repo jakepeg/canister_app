@@ -1,3 +1,5 @@
+// Add the new module
+mod canister_management;
 mod delete_file;
 mod download_file;
 mod get_alias_info;
@@ -9,10 +11,13 @@ mod multi_request;
 mod rename_file;
 mod request_file;
 mod share_file;
-pub mod template;
+mod template;
 mod upload_file;
 mod upload_file_atomic;
 mod user_info;
+
+// Re-export functions from the new module
+pub use canister_management::{get_user_canisters, register_canister};
 
 use crate::{FileContent, State, UploadFileContinueRequest};
 pub use delete_file::delete_file;
