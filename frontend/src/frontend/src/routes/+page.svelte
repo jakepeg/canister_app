@@ -1,46 +1,81 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { type ActorSubclass } from '@dfinity/agent'; // Import ActorSubclass
 	import NotAuthenticated from '$lib/components/Home/NotAuthenticated.svelte';
-	import { authStore } from '$lib/services/auth';
+	import { get } from 'svelte/store'; // Import get
+	import { authStore, type AuthStateAuthenticated } from '$lib/services/auth'; // Keep only this authStore import
 	import CanisterList from '$lib/components/Canisters/CanisterList.svelte';
 	import CreateCanisterModal from '$lib/components/Canisters/CreateCanisterModal.svelte';
+	// Corrected import path again (relative to src/frontend/src/routes)
+	import type { CanisterInfo as BackendCanisterInfo, _SERVICE as BackendService } from '../../../declarations/backend/backend.did';
 
-	// Define mock CanisterInfo type matching CanisterList
-	type CanisterInfo = {
-		id: string;
+	// Local type alias for the component prop, expecting id as string
+	type ComponentCanisterInfo = {
+		id: string; // Expecting string ID for the component
 		name: string;
-		iconUrl?: string;
+		// iconUrl?: string; // Add if needed
 	};
 
-	let canisters: CanisterInfo[] = [];
+	let canisters: ComponentCanisterInfo[] = []; // Use the local type alias
 	let isLoadingCanisters = true;
 	let isModalOpen = false;
+	let fetchError = '';
 
-	// Mock function to fetch canisters
+	// Function to fetch canisters from the backend
 	async function fetchCanisters() {
 		isLoadingCanisters = true;
-		console.log('Fetching canisters...');
-		// Simulate network delay
-		await new Promise((resolve) => setTimeout(resolve, 1000));
-		// Mock data - replace with actual backend call
-		canisters = [
-			{ id: 'canister-1', name: 'My First Canister' },
-			// { id: 'canister-2', name: 'Project Data' },
-			// { id: 'canister-3', name: 'Shared Files' }
-		];
-		// To test empty state, keep the array empty initially
-		console.log('Canisters fetched:', canisters);
-		isLoadingCanisters = false;
+		fetchError = '';
+		console.log('Fetching canisters from backend...');
+
+		const authState = get(authStore);
+		if (authState.state !== 'authenticated') {
+			console.log('Not authenticated, skipping fetch.');
+			isLoadingCanisters = false;
+			canisters = []; // Clear canisters if not authenticated
+			return;
+		}
+
+		// Cast actor to the imported BackendService type
+		const actor = (authState as AuthStateAuthenticated).actor as ActorSubclass<BackendService>;
+		if (!actor) {
+			console.error('Backend actor not available.');
+			fetchError = 'Backend actor not available.';
+			isLoadingCanisters = false;
+			return;
+		}
+
+		try {
+			const result = await actor.get_user_canisters();
+			if ('Ok' in result) {
+				// Map backend CanisterInfo (with Principal id) to ComponentCanisterInfo (with string id)
+				canisters = result.Ok.map((backendInfo: BackendCanisterInfo) => ({
+					id: backendInfo.id.toText(), // Convert Principal to string
+					name: backendInfo.name
+					// Map other fields if necessary
+				}));
+				console.log('Canisters fetched:', canisters);
+			} else if ('NotAuthenticated' in result) {
+				console.warn('Backend reported user not authenticated.');
+				fetchError = 'Not authenticated according to backend.';
+				canisters = [];
+			} else {
+				console.error('Unknown response from get_user_canisters:', result);
+				fetchError = 'Unknown error fetching canisters.';
+				canisters = [];
+			}
+		} catch (err: any) {
+			console.error('Error fetching canisters:', err);
+			fetchError = `Error fetching canisters: ${err.message || 'Unknown error'}`;
+			canisters = [];
+		} finally {
+			isLoadingCanisters = false;
+		}
 	}
 
-	// Mock function to refresh list after creation
+	// Function to refresh list after creation - just re-fetches
 	function handleCanisterCreated() {
 		console.log('Canister created event received, refreshing list...');
-		// In a real app, re-fetch or add the new canister to the list
-		// For mock, let's add a new one
-		const newId = `canister-${Date.now()}`;
-		canisters = [...canisters, { id: newId, name: `New Canister ${canisters.length + 1}` }];
-		fetchCanisters(); // Or just update the local state: canisters = newCanisters;
+		fetchCanisters(); // Re-fetch from backend
 	}
 
 	function openModal() {

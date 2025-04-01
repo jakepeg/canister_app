@@ -3,9 +3,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import * as Dialog from '$lib/components/ui/dialog'; // Assuming shadcn-svelte dialog components
-	import {Label} from "$lib/components/ui/label";
+	import * as Dialog from '$lib/components/ui/dialog';
+	import { Label } from '$lib/components/ui/label';
 	import { X } from 'lucide-svelte';
+	import { createAndRegisterCanister } from '$lib/services/canisterManagement'; // Import the service function
 
 	export let open = false; // Control modal visibility from parent
 
@@ -31,36 +32,26 @@
 		isLoading = true;
 		error = '';
 
-		// --- Mock Backend Interaction ---
-		console.log('Attempting to create canister:', canisterName);
-		await new Promise((resolve) => setTimeout(resolve, 1500)); // Simulate network delay
-		const success = Math.random() > 0.2; // Simulate success/failure
-		// --- End Mock Backend Interaction ---
+		try {
+			console.log(`Attempting to create and register canister: ${canisterName}`);
+			const result = await createAndRegisterCanister(canisterName.trim());
 
-		if (success) {
-			console.log('Canister created successfully!');
-			// TODO: Replace with actual backend call
-			// try {
-			//   const result = await backendActor.createCanister(canisterName);
-			//   if (result.ok) {
-			//     dispatch('canisterCreated'); // Notify parent to refresh list
-			//     closeModal();
-			//   } else {
-			//     throw new Error(result.err);
-			//   }
-			// } catch (err) {
-			//   console.error("Failed to create canister:", err);
-			//   error = `Failed to create canister: ${err.message}`;
-			// } finally {
-			//   isLoading = false;
-			// }
-			dispatch('canisterCreated'); // Notify parent to refresh list (mock success)
-			closeModal(); // Close on mock success
-		} else {
-			console.error('Failed to create canister (mock failure)');
-			error = 'Failed to create canister. Please try again. (Mock Error)'; // Mock error
+			if ('ok' in result) {
+				console.log(`Canister ${result.ok.toText()} created and registered successfully!`);
+				dispatch('canisterCreated'); // Notify parent to refresh list
+				closeModal();
+			} else {
+				// Handle specific error from the service
+				console.error('Failed to create/register canister:', result.err);
+				error = `Failed: ${result.err}`;
+			}
+		} catch (err: any) {
+			// Catch unexpected errors during the process
+			console.error('Unexpected error during canister creation:', err);
+			error = `An unexpected error occurred: ${err.message || 'Unknown error'}`;
+		} finally {
+			isLoading = false; // Ensure loading state is always reset
 		}
-		isLoading = false; // Ensure loading state is reset on mock failure
 	}
 
 	// Handle Escape key press to close modal
