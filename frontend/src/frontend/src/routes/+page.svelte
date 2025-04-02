@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte'; // Import onDestroy
 	import { type ActorSubclass } from '@dfinity/agent'; // Import ActorSubclass
 	import NotAuthenticated from '$lib/components/Home/NotAuthenticated.svelte';
 	import { get } from 'svelte/store'; // Import get
@@ -20,6 +20,7 @@
 	let isLoadingCanisters = true;
 	let isModalOpen = false;
 	let fetchError = '';
+	let unsubscribeAuth: () => void; // To store the unsubscribe function
 
 	// Function to fetch canisters from the backend
 	async function fetchCanisters() {
@@ -87,15 +88,46 @@
 	}
 
 	onMount(() => {
-		if ($authStore.state === 'authenticated') {
-			fetchCanisters();
+		unsubscribeAuth = authStore.subscribe(authState => {
+			if (authState.state === 'authenticated') {
+				// Check if we haven't fetched yet or if the actor just became available
+				// Avoid fetching repeatedly if canisters list is empty but fetch was successful
+				// Use isLoadingCanisters to track if initial fetch is done
+				if (isLoadingCanisters && !fetchError) {
+					console.log('Auth state is authenticated (subscribe), fetching canisters...');
+					fetchCanisters();
+				} else if (canisters.length === 0 && !isLoadingCanisters && !fetchError) {
+					// If initial fetch finished with no canisters, don't refetch unless forced
+					console.log('Auth state is authenticated, but canisters already fetched (empty) or error occurred.');
+				}
+			} else {
+				// Reset state if user logs out or state changes otherwise
+				canisters = [];
+				isLoadingCanisters = false; // Stop loading if logged out
+				fetchError = '';
+			}
+		});
+
+		// Initial check in case already authenticated when mounting
+		const initialAuthState = get(authStore);
+		if (initialAuthState.state === 'authenticated') {
+			// Check if fetch hasn't started (isLoadingCanisters is true initially)
+			if (isLoadingCanisters) {
+				console.log('Authenticated on mount, fetching canisters...');
+				fetchCanisters();
+			}
+		} else {
+			isLoadingCanisters = false; // Not authenticated on mount, stop loading
 		}
 	});
 
-	// Re-fetch if auth state changes to authenticated after mount
-	$: if ($authStore.state === 'authenticated' && canisters.length === 0 && !isLoadingCanisters) {
-		fetchCanisters();
-	}
+	onDestroy(() => {
+		if (unsubscribeAuth) {
+			unsubscribeAuth(); // Clean up the subscription
+		}
+	});
+
+	// Removed the problematic reactive block that caused infinite loops
 </script>
 
 <section class="w-full">

@@ -11,6 +11,7 @@ import { get } from 'svelte/store'; // Import get to read store value
 import { authStore, type AuthStateAuthenticated } from '$lib/services/auth'; // To get identity and main actor, import state type
 // Corrected import path assuming declarations are at the root src level and _SERVICE is exported
 import type { _SERVICE as BackendService } from '../../../../declarations/backend/backend.did';
+import { createAgent } from "@dfinity/utils";
 
 // --- Configuration (using SvelteKit env variables) ---
 const host = import.meta.env.VITE_HOST;
@@ -55,7 +56,7 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 	console.log(`Connecting to IC host: ${host}`);
 
 	// Agent for management canister calls - use the user's identity
-	const agent = new HttpAgent({ identity, host });
+	const agent = await createAgent({ identity, host });
 
 	// Fetch root key for local development network ONLY
 	if (host.includes('localhost') || host.includes('127.0.0.1')) {
@@ -96,9 +97,9 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 	// computeAllocation, memoryAllocation, freezingThreshold are Option<Nat>, so None becomes []
 	const canisterSettings: CanisterSettings = {
 		controllers: [principal.toString()], // Provide the principal in an array for Some(principal)
-		computeAllocation: 0n, // Use [] for None (use default)
-		memoryAllocation: 0n, // Use [] for None (use default)
-		freezingThreshold: 0n, // Use [] for None (use default)
+		computeAllocation: 1n, // Use [] for None (use default)
+		memoryAllocation: 1n, // Use [] for None (use default)
+		freezingThreshold: 1n, // Use [] for None (use default)
 	};
 
 	// createCanister expects settings: Option<CanisterSettings> and amount: Option<Nat>
