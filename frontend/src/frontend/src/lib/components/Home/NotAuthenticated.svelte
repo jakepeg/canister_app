@@ -3,6 +3,7 @@
   import LogoIcon from "../icons/LogoIcon.svelte";
   import LinkedInIcon from "../icons/linkedin.svelte";
   import XIcon from "../icons/x-logo.svelte";
+  import Badge from "../icons/on-chain.svelte";
   import { Button, buttonVariants } from "$lib/components/ui/button";
 </script>
 
@@ -67,20 +68,29 @@
       Follow us for updates and news on our upcoming launch!
     </h2>
   </div>
-</div>
 
-<!-- Fixed Social Icons Section -->
-<div class="fixed-social-icons">
-  <a href="https://www.linkedin.com/company/canister-cloud/" target="_blank">
-    <span class="h-6 w-6">
-      <LinkedInIcon />
-    </span>
-  </a>
-  <a href="https://x.com/CanisterCloud" target="_blank">
-    <span class="h-6 w-6">
-      <XIcon />
-    </span>
-  </a>
+  <div class="mt-6 text-center">
+    <div class="flex gap-4">
+      <a
+        href="https://www.linkedin.com/company/canister-cloud/"
+        target="_blank"
+      >
+        <span class="h-6 w-6">
+          <LinkedInIcon />
+        </span>
+      </a>
+      <a href="https://x.com/CanisterCloud" target="_blank">
+        <span class="h-6 w-6">
+          <XIcon />
+        </span>
+      </a>
+    </div>
+  </div>
+  <div class="mt-6 text-center">
+    <a href="https://internetcomputer.org/" target="_blank">
+      <Badge />
+    </a>
+  </div>
 </div>
 
 <style>
@@ -96,38 +106,5 @@
 
   .glow-box:hover {
     box-shadow: 0 0 15px rgba(0, 162, 255, 0.8);
-  }
-
-  .btn-primary {
-    background-color: #007bff;
-    color: white;
-    font-weight: bold;
-    text-align: center;
-    transition: background-color 0.3s ease;
-  }
-
-  .btn-primary:hover {
-    background-color: #0056b3;
-  }
-
-  .btn-secondary {
-    background-color: #28a745;
-    color: white;
-    font-weight: bold;
-    text-align: center;
-    transition: background-color 0.3s ease;
-  }
-
-  .btn-secondary:hover {
-    background-color: #1e7e34;
-  }
-
-  .fixed-social-icons {
-    position: fixed;
-    bottom: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
   }
 </style>
