@@ -5,8 +5,13 @@ mod upgrade;
 use crate::aliases::{AliasGenerator, Randomness};
 use candid::CandidType;
 use candid::Principal;
-use ic_stable_structures::{memory_manager::{MemoryId, MemoryManager, VirtualMemory}, BoundedStorable, DefaultMemoryImpl, StableBTreeMap, Storable};
-use memory::{Memory, get_user_canisters_memory}; // Assuming get_user_canisters_memory will be added to memory.rs
+use ic_stable_structures::{
+    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
+    storable::{Bound, Storable}, // Import Bound from storable submodule
+    DefaultMemoryImpl,
+    StableBTreeMap,
+};
+use memory::{get_user_canisters_memory, Memory}; // Assuming get_user_canisters_memory will be added to memory.rs
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -37,12 +42,14 @@ impl Storable for CanisterInfo {
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
         ciborium::de::from_reader(bytes.as_ref()).unwrap()
     }
-}
 
-impl BoundedStorable for CanisterInfo {
-    // Max size for Principal text representation (~63 chars) + name + overhead
-    const MAX_SIZE: u32 = 128 + 256; // Example: Max 256 chars for name
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: ic_stable_structures::storable::Bound =
+        ic_stable_structures::storable::Bound::Bounded {
+            // Explicitly qualify Bound
+            // Max size for Principal text representation (~63 chars) + name + overhead
+            max_size: 128 + 256, // Example: Max 256 chars for name
+            is_fixed_size: false,
+        };
 }
 
 // Define a wrapper type for Vec<CanisterInfo> to implement Storable
@@ -50,25 +57,26 @@ impl BoundedStorable for CanisterInfo {
 struct CanisterInfoVec(Vec<CanisterInfo>);
 
 impl Storable for CanisterInfoVec {
-     fn to_bytes(&self) -> Cow<[u8]> {
+    fn to_bytes(&self) -> Cow<[u8]> {
         let mut bytes = vec![];
         ciborium::ser::into_writer(self, &mut bytes).unwrap();
         Cow::Owned(bytes)
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-         ciborium::de::from_reader(bytes.as_ref()).unwrap_or_default()
+        ciborium::de::from_reader(bytes.as_ref()).unwrap_or_default()
     }
-}
 
-impl BoundedStorable for CanisterInfoVec {
-    // Estimate max size: N canisters * MAX_SIZE_PER_CANISTER_INFO + Vec overhead
-    const MAX_SIZE: u32 = 100 * CanisterInfo::MAX_SIZE + 1024; // Example: Max 100 canisters per user
-    const IS_FIXED_SIZE: bool = false;
+    const BOUND: ic_stable_structures::storable::Bound =
+        ic_stable_structures::storable::Bound::Bounded {
+            // Explicitly qualify Bound
+            // Estimate max size: N canisters * (size of CanisterInfo) + Vec overhead
+            max_size: 100 * (128 + 256) + 1024, // Example: Max 100 canisters per user
+            is_fixed_size: false,
+        };
 }
 
 // --- End New Structs ---
-
 
 // Memory IDs - Assuming existing IDs are 0, 1, 2 in memory.rs
 const USER_CANISTERS_MEMORY_ID: MemoryId = MemoryId::new(3); // Ensure this ID is unique
@@ -95,12 +103,16 @@ type ChunkId = u64;
 // --- Helper functions for new stable map ---
 
 /// A helper method to read the user canisters map.
-pub fn with_user_canisters<R>(f: impl FnOnce(&StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R) -> R {
+pub fn with_user_canisters<R>(
+    f: impl FnOnce(&StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R,
+) -> R {
     USER_CANISTERS.with(|p| f(&p.borrow()))
 }
 
 /// A helper method to mutate the user canisters map.
-pub fn with_user_canisters_mut<R>(f: impl FnOnce(&mut StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R) -> R {
+pub fn with_user_canisters_mut<R>(
+    f: impl FnOnce(&mut StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R,
+) -> R {
     USER_CANISTERS.with(|p| f(&mut p.borrow_mut()))
 }
 
@@ -419,6 +431,23 @@ pub enum GetUsersResponse {
     #[serde(rename = "users")]
     Users(Vec<PublicUser>),
 }
+
+// --- New Canister Management Response Types (Moved from canister_management.rs) ---
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum RegisterCanisterResponse {
+    Ok,
+    NotAuthorized,              // If caller doesn't control the canister_id
+    VerificationFailed(String), // If canister_status call fails
+    AlreadyRegistered,
+    InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum GetUserCanistersResponse {
+    Ok(Vec<CanisterInfo>),
+    NotAuthenticated,
+}
+// --- End New Types ---
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UploadFileRequest {

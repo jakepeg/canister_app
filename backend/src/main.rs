@@ -2,7 +2,7 @@ use backend::api::UploadFileAtomicRequest;
 // use backend::vetkd::{vetkd_encrypted_key, vetkd_public_key};
 use backend::*;
 // Import necessary types from the api module (which re-exports from canister_management)
-use backend::api::{RegisterCanisterResponse, GetUserCanistersResponse};
+// use backend::api::{GetUserCanistersResponse, RegisterCanisterResponse};
 use candid::Principal;
 use ic_cdk::api::caller;
 use ic_cdk_macros::{post_upgrade, pre_upgrade, query, update};
@@ -99,18 +99,18 @@ fn multi_request(input: MultiRequestInput) -> MultiRequestResponse {
 
 #[query]
 fn get_user_templates() -> Vec<Template> {
-    with_state(|s| backend::api::template::get_user_templates(s, caller()))
+    with_state(|s| backend::api::get_user_templates(s, caller()))
 }
 
 #[query]
 fn get_template(name: String) -> Result<Template, GetAliasInfoError> {
-    with_state(|s| backend::api::template::get_template(s, caller(), name))
+    with_state(|s| backend::api::get_template(s, caller(), name))
 }
 
 #[update]
 fn delete_template(name: String) {
     with_state_mut(|s| {
-        backend::api::template::delete_template(s, caller(), name).unwrap_or_else(|err| {
+        backend::api::delete_template(s, caller(), name).unwrap_or_else(|err| {
             ic_cdk::println!("Error deleting template: {:?}", err);
         })
     });

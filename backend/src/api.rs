@@ -31,7 +31,7 @@ pub use multi_request::multi_request;
 pub use rename_file::rename_file;
 pub use request_file::request_file;
 pub use share_file::{get_shared_files, revoke_share, share_file};
-pub use template::{get_template, get_user_templates};
+pub use template::{delete_template, get_template, get_user_templates}; // Added delete_template
 pub use upload_file::upload_file;
 pub use upload_file_atomic::{upload_file_atomic, UploadFileAtomicRequest};
 pub use user_info::set_user_info;
