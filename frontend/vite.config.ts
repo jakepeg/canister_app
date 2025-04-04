@@ -10,9 +10,13 @@ import {
 import path from "path";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
+// Import the new polyfill plugin
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
+
 
 const config: UserConfig = {
-  plugins: [sveltekit(), wasm(), topLevelAwait()],
+  // Add nodePolyfills plugin here
+  plugins: [sveltekit(), wasm(), topLevelAwait(), nodePolyfills()],
   resolve: {
     alias: {
       $lib: path.resolve("./src/frontend/src/lib"),
@@ -21,17 +25,19 @@ const config: UserConfig = {
       ),
     },
   },
-  build: {
-    target: "es2020",
-    rollupOptions: {},
-  },
+  // Remove optimizeDeps polyfill config, let the plugin handle it
   optimizeDeps: {
     esbuildOptions: {
-      // Node.js global to browser globalThis
+      // Node.js global to browser globalThis - Still might be needed depending on dependencies
       define: {
         global: "globalThis",
       },
     },
+  },
+  // Keep single build config
+  build: {
+    target: "es2020",
+    rollupOptions: {}, // Remove the polyfill plugin from here
   },
 };
 

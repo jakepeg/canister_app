@@ -5,18 +5,30 @@ import {
 	type InstallCodeParams
 } from '@dfinity/ic-management';
 import { IDL } from '@dfinity/candid';
-import { get } from 'svelte/store'; // Import get to read store value
-import { authStore, type AuthStateAuthenticated } from '$lib/services/auth'; // To get identity and main actor, import state type
-// Corrected import path assuming declarations are at the root src level and _SERVICE is exported
-import { createAgent } from "@dfinity/utils";
+import { get } from 'svelte/store';
+import { authStore, type AuthStateAuthenticated } from '$lib/services/auth';
+import type { _SERVICE as BackendService } from '../../../../declarations/backend/backend.did'; // Assuming this path is correct relative to the file
+import { type ActorSubclass } from '@dfinity/agent'; // Add ActorSubclass import
+
+// --- Imports for CMC/Ledger Flow ---
+import { CMCCanister, type Cycles, ProcessingError } from '@dfinity/cmc';
+import { LedgerCanister, type BlockHeight, type TimeStamp } from '@dfinity/ledger-icp'; // Corrected import: TimeStamp
+import { AccountIdentifier, SubAccount } from '@dfinity/ledger-icp';
+import { createAgent, principalToSubAccount } from '@dfinity/utils';
+import { poll } from '$lib/utils/poll';
 
 // --- Configuration (using SvelteKit env variables) ---
 const host = import.meta.env.VITE_HOST;
+const dfx_network = import.meta.env.DFX_NETWORK;
 // Ensure cycles are read as BigInt
-const cyclesForNewCanister = BigInt(
-	import.meta.env.VITE_CYCLES_FOR_NEW_CANISTER || '2000000000000' // Default if not set
-);
 const backendWasmPath = '/backend.wasm'; // Assuming Wasm is served here
+
+// --- Constants for Local CMC/Ledger Flow ---
+// Use the canister IDs from your `dfx nns install` output
+const LOCAL_LEDGER_CANISTER_ID = Principal.fromText('ryjl3-tyaaa-aaaaa-aaaba-cai'); // Replace if different
+const LOCAL_CMC_CANISTER_ID = Principal.fromText('rkp4c-7iaaa-aaaaa-aaaca-cai'); // Replace if different
+const DEFAULT_ICP_TRANSFER_FEE = 10000n; // 0.0001 ICP
+const CREATE_CANISTER_MEMO = 1347768404n; // Default memo for create_canister
 
 // --- Result Type ---
 export type CreateCanisterResult =
@@ -44,7 +56,8 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 		return { err: 'Identity not found' }; // Should not happen if authenticated
 	}
 	const principal = identity.getPrincipal();
-	const mainBackendActor = authenticatedState.actor; // Use actor from state
+	// Ensure mainBackendActor is correctly typed if necessary, casting here
+	const mainBackendActor = authenticatedState.actor as ActorSubclass<BackendService>;
 	if (!mainBackendActor) {
 		return { err: 'Main backend actor not initialized' };
 	}
@@ -52,7 +65,7 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 	console.log(`Using identity: ${principal.toText()}`);
 	console.log(`Connecting to IC host: ${host}`);
 
-	// Agent for management canister calls - use the user's identity
+	// Agent for CMC, Ledger, and Management Canister calls
 	const agent = await createAgent({ identity, host });
 
 	// Fetch root key for local development network ONLY
@@ -66,11 +79,91 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 				'Could not fetch root key. Network might not be running or requires authentication.',
 				err
 			);
-			// Don't necessarily fail here for local dev
 		}
 	}
 
-	console.log('Fetching template Wasm module...');
+	// --- Create Canister Actors ---
+	const cmc = CMCCanister.create({ agent, canisterId: LOCAL_CMC_CANISTER_ID });
+	const ledger = LedgerCanister.create({ agent, canisterId: LOCAL_LEDGER_CANISTER_ID });
+	const managementCanister = ICManagementCanister.create({ agent }); // Still needed for installCode
+
+	// --- 1. Calculate ICP Amount (Simulated for Local) ---
+	// For local testing, we often don't need the exact cycle conversion.
+	// We just need enough simulated ICP to cover the transfer fee.
+	// Let's assume the local CMC doesn't strictly enforce cycle amounts based on ICP.
+	// We'll send a nominal amount + fee.
+	const simulatedIcpAmount = 10000000n; // 0.1 ICP (example)
+	const requiredIcpE8s = simulatedIcpAmount + DEFAULT_ICP_TRANSFER_FEE;
+	console.log(`Simulated ICP to transfer (e8s): ${requiredIcpE8s}`);
+
+	// --- 2. Transfer Simulated ICP to Local CMC ---
+	const cmcAccountHex = getCanisterCreationCmcAccountIdentifierHex({ controller: principal });
+
+	let blockHeight: BlockHeight;
+	try {
+		console.log("DFX_NETWORK", dfx_network);
+		console.log(`Transferring ${requiredIcpE8s} e8s to local CMC account ${cmcAccountHex}...`);
+		blockHeight = await ledger.transfer({
+			to: AccountIdentifier.fromHex(cmcAccountHex),
+			amount: requiredIcpE8s,
+			fee: DEFAULT_ICP_TRANSFER_FEE,
+			memo: CREATE_CANISTER_MEMO,
+			createdAt: BigInt(Date.now() * 1_000_000)  , // Use TimeStamp and correct field name
+			fromSubAccount: undefined, // Use default subaccount
+		});
+		console.log(`Simulated ICP Transfer successful, block height: ${blockHeight}`);
+	} catch (err: any) {
+		console.error('Error transferring simulated ICP:', err);
+		return { err: `Error transferring simulated ICP: ${err.message}` };
+	}
+
+	// --- 3. Notify Local CMC to Create Canister ---
+	let newCanisterId: Principal;
+	try {
+		console.log(`Notifying local CMC with block height ${blockHeight}...`);
+		// Define polling validation and exit conditions
+		const validateNotify = (result: Principal | ProcessingError): result is Principal => {
+			if (result instanceof ProcessingError) {
+				console.log('CMC is still processing...');
+				return false; // Continue polling
+			}
+			return true; // Assume any non-ProcessingError result is the Principal
+		};
+		const shouldExitNotify = (error: unknown): boolean => {
+			// Exit immediately if it's not a ProcessingError
+			return !(error instanceof ProcessingError);
+		};
+
+		const result = await poll<Principal | ProcessingError>({
+			fn: () =>
+				cmc.notifyCreateCanister({
+					controller: principal,
+					block_index: blockHeight,
+					settings: [], // Add missing optional property
+					subnet_type: [], // Add missing optional property
+					subnet_selection: [] // Use default subnet selection for local
+				}),
+			validate: validateNotify,
+			shouldExit: shouldExitNotify,
+			timeout: 60000, // 60 seconds timeout
+			interval: 3000, // Poll every 3 seconds
+		});
+
+		// If polling succeeded, the result must be a Principal
+		if (result instanceof ProcessingError) {
+			// Should not happen if validate/shouldExit are correct, but handle defensively
+			throw new Error('Polling finished but CMC still processing.');
+		}
+		newCanisterId = result;
+		console.log(`Local CMC notified successfully, new canister ID: ${newCanisterId.toText()}`);
+
+	} catch (err: any) {
+		console.error('Error notifying local CMC:', err);
+		return { err: `Error notifying local CMC: ${err.message}` };
+	}
+
+	// --- 4. Install Code ---
+	console.log('Fetching template Wasm module for installation...');
 	let templateWasmModule: ArrayBuffer;
 	try {
 		const response = await fetch(backendWasmPath);
@@ -81,48 +174,13 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 		console.log(`Fetched ${templateWasmModule.byteLength} bytes from ${backendWasmPath}`);
 	} catch (err: any) {
 		console.error('Error fetching Wasm file:', err);
+		// Consider trying to clean up (e.g., maybe delete the canister via backend?)
 		return { err: `Error fetching Wasm: ${err.message}` };
 	}
 
-	// Create an actor for the Management Canister
-	const managementCanister = ICManagementCanister.create({ agent });
-	console.log('Management canister actor created.');
-
-	// --- 1. Create Canister ---
-	// Define settings according to the expected Candid types
-	// controllers is Option<Vec<Principal>>, so Some([principal]) becomes [[principal]]
-	// computeAllocation, memoryAllocation, freezingThreshold are Option<Nat>, so None becomes []
-	const canisterSettings: CanisterSettings = {
-		controllers: [principal.toString()], // Provide the principal in an array for Some(principal)
-		computeAllocation: 1n, // Use [] for None (use default)
-		memoryAllocation: 1n, // Use [] for None (use default)
-		freezingThreshold: 1n, // Use [] for None (use default)
-	};
-
-	// createCanister expects settings: Option<CanisterSettings> and amount: Option<Nat>
-	const createCanisterArgs = {
-		settings: canisterSettings, // Correct: Wrap settings in array for Option<CanisterSettings>
-		amount: [cyclesForNewCanister] // Correct: Wrap amount in array for Option<Nat>
-	};
-
-	let newCanisterIdRecord;
-	try {
-		console.log(`Attempting to create canister with ${cyclesForNewCanister} cycles...`);
-		// Corrected method name typo
-		newCanisterIdRecord = await managementCanister.createCanister(createCanisterArgs);
-		console.log(`Canister created successfully: ${newCanisterIdRecord.canister_id.toText()}`);
-	} catch (err: any) {
-		console.error('Error creating canister:', err);
-		return { err: `Error creating canister: ${err.message}` };
-	}
-
-	const newCanisterId = newCanisterIdRecord.canister_id;
-
-	// --- 2. Install Code ---
 	console.log('Encoding initialization arguments...');
-	// Assuming the backend canister's init method takes the creator Principal
 	const initArgTypes = [IDL.Principal];
-	const initArgValues = [principal];
+	const initArgValues = [principal]; // User principal as init arg
 	let encodedInitArgs: ArrayBuffer;
 	try {
 		encodedInitArgs = IDL.encode(initArgTypes, initArgValues);
@@ -135,13 +193,12 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 	const installArgs: InstallCodeParams = {
 		mode: { install: null },
 		canisterId: newCanisterId,
-		wasmModule: new Uint8Array(templateWasmModule), // Corrected parameter name typo
-		arg: new Uint8Array(encodedInitArgs) // Pass ArrayBuffer directly
+		wasmModule: new Uint8Array(templateWasmModule),
+		arg: new Uint8Array(encodedInitArgs)
 	};
 
 	try {
 		console.log(`Attempting to install code on canister ${newCanisterId.toText()}...`);
-		// Corrected method name typo
 		await managementCanister.installCode(installArgs);
 		console.log('Code installed successfully!');
 	} catch (err: any) {
@@ -150,18 +207,19 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 		return { err: `Error installing code: ${err.message}` };
 	}
 
-	// --- 3. Register Canister with Main Backend ---
+	// --- 5. Register Canister with Main Backend ---
 	try {
 		console.log(`Registering canister ${newCanisterId.toText()} with name "${name}"...`);
+		// Ensure mainBackendActor is correctly typed if necessary
 		const registerResult = await mainBackendActor.register_canister(newCanisterId, name);
 		if ('Ok' in registerResult) {
 			console.log('Canister registered successfully with main backend!');
 			return { ok: newCanisterId };
 		} else {
-			// Handle specific registration errors
+			// Handle specific registration errors from backend's Candid definition
 			const errorKey = Object.keys(registerResult)[0];
-			const errorValue = registerResult[errorKey as keyof typeof registerResult];
-			const errorMessage = `Registration failed: ${errorKey}${errorValue ? ` (${errorValue})` : ''}`;
+			const errorValue = (registerResult as any)[errorKey];
+			const errorMessage = `Registration failed: ${errorKey}${errorValue ? ` (${JSON.stringify(errorValue)})` : ''}`;
 			console.error(errorMessage);
 			// Consider if cleanup (delete canister) is needed here
 			return { err: errorMessage };
@@ -171,4 +229,17 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 		// Consider if cleanup (delete canister) is needed here
 		return { err: `Error registering canister: ${err.message}` };
 	}
+}
+
+// Helper function to get canister creation CMC account identifier hex
+// (Adapted from NNS Dapp utils)
+function getCanisterCreationCmcAccountIdentifierHex({ controller }: { controller: Principal }): string {
+	const subAccountBytes = principalToSubAccount(controller);
+	// Explicitly create the SubAccount instance and assert its type to satisfy the compiler.
+	const subAccount = SubAccount.fromBytes(subAccountBytes) as SubAccount;
+	const accountIdentifier = AccountIdentifier.fromPrincipal({
+		principal: LOCAL_CMC_CANISTER_ID, // Use local CMC ID
+		subAccount: subAccount // Pass the created SubAccount instance
+	});
+	return accountIdentifier.toHex();
 }
