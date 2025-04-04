@@ -1,4 +1,8 @@
 export const idlFactory = ({ IDL }) => {
+  const CreateCanisterResponse = IDL.Variant({
+    'Ok' : IDL.Principal,
+    'Err' : IDL.Text,
+  });
   const file_id = IDL.Nat64;
   const share_file_response = IDL.Variant({
     'ok' : IDL.Null,
@@ -133,6 +137,11 @@ export const idlFactory = ({ IDL }) => {
     'unknown_user' : IDL.Null,
   });
   return IDL.Service({
+    'create_new_file_canister' : IDL.Func(
+        [IDL.Text],
+        [CreateCanisterResponse],
+        [],
+      ),
     'delete_file' : IDL.Func([file_id], [share_file_response], []),
     'delete_template' : IDL.Func([IDL.Text], [], []),
     'download_file' : IDL.Func(

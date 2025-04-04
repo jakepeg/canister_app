@@ -173,6 +173,11 @@ type GetUserCanistersResponse = variant {
   Ok : vec CanisterInfo;
   NotAuthenticated;
 };
+
+type CreateCanisterResponse = variant {
+  Ok : principal; // The principal of the newly created canister
+  Err : text; // Error message
+};
 // --- End New Types ---
 
 service docutrack : {
@@ -235,5 +240,6 @@ service docutrack : {
   // --- New Canister Management Methods ---
   register_canister : (canister_id : principal, name : text) -> (RegisterCanisterResponse);
   get_user_canisters : () -> (GetUserCanistersResponse) query;
+  create_new_file_canister : (name : text) -> (CreateCanisterResponse);
   // --- End New Methods ---
 };

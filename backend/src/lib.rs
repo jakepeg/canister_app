@@ -447,6 +447,12 @@ pub enum GetUserCanistersResponse {
     Ok(Vec<CanisterInfo>),
     NotAuthenticated,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum CreateCanisterResponse {
+    Ok(Principal),
+    Err(String),
+}
 // --- End New Types ---
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]

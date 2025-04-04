@@ -61,7 +61,64 @@ fn main() -> Result<(), String> {
 
     let mut builder = Builder::new();
     builder.add(vetkd_system_api);
-    builder.build(Some(manifest_dir.join("src/declarations")));
+    builder.build(Some(manifest_dir.join("src/declarations"))); // Added ? for error propagation
+
+    // --- Embed Backend Wasm ---
+    println!("cargo:rerun-if-changed=build.rs"); // Rerun if build script changes
+
+    // Determine the expected path of the Wasm file
+    // Assumes a standard release build structure. Adjust if needed.
+    let wasm_path = manifest_dir.join("../../target/wasm32-unknown-unknown/release/backend.wasm");
+
+    println!("cargo:rerun-if-changed={}", wasm_path.display()); // Rerun if Wasm changes
+
+    if wasm_path.exists() {
+        let wasm_bytes = fs::read(&wasm_path).map_err(|e| {
+            format!(
+                "Failed to read backend Wasm file at {}: {}",
+                wasm_path.display(),
+                e
+            )
+        })?;
+
+        let out_path = Path::new(&out_dir).join("backend_wasm.rs");
+        let mut writer = BufWriter::new(fs::File::create(&out_path).map_err(|e| {
+            format!(
+                "Failed to create backend_wasm.rs at {}: {}",
+                out_path.display(),
+                e
+            )
+        })?);
+
+        // Write the byte array definition to the file
+        writeln!(writer, "pub const BACKEND_WASM: &[u8] = &{:?};", wasm_bytes)
+            .map_err(|e| format!("Failed to write Wasm bytes to backend_wasm.rs: {}", e))?;
+
+        println!(
+            "Embedded backend Wasm ({} bytes) into {}",
+            wasm_bytes.len(),
+            out_path.display()
+        );
+    } else {
+        // If the Wasm file doesn't exist (e.g., during initial `cargo check`),
+        // create an empty placeholder to avoid compilation errors.
+        // The actual build process (`dfx build`) should ensure the Wasm exists later.
+        println!(
+            "cargo:warning=Backend Wasm file not found at {}. Creating empty placeholder.",
+            wasm_path.display()
+        );
+        let out_path = Path::new(&out_dir).join("backend_wasm.rs");
+        let mut writer = BufWriter::new(fs::File::create(&out_path).map_err(|e| {
+            format!(
+                "Failed to create empty backend_wasm.rs at {}: {}",
+                out_path.display(),
+                e
+            )
+        })?);
+        writeln!(writer, "pub const BACKEND_WASM: &[u8] = &[];")
+            .map_err(|e| format!("Failed to write empty Wasm bytes: {}", e))?;
+    }
+    // --- End Embed Backend Wasm ---
 
     Ok(())
 }

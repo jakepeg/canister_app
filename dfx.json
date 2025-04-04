@@ -15,7 +15,10 @@
       "candid": "./backend/service.did",
       "declarations": {
         "node_compatibility": true
-      }
+      },
+      "assets": [
+        ["backend.wasm", "/backend.wasm"]
+      ]
     },
     "frontend": {
       "build": "pnpm --filter frontend run build",

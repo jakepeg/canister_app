@@ -3,6 +3,8 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface CanisterInfo { 'id' : Principal, 'name' : string }
+export type CreateCanisterResponse = { 'Ok' : Principal } |
+  { 'Err' : string };
 export type GetUserCanistersResponse = { 'Ok' : Array<CanisterInfo> } |
   { 'NotAuthenticated' : null };
 export type RegisterCanisterResponse = { 'Ok' : null } |
@@ -107,6 +109,7 @@ export interface user {
 export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
 export interface _SERVICE {
+  'create_new_file_canister' : ActorMethod<[string], CreateCanisterResponse>,
   'delete_file' : ActorMethod<[file_id], share_file_response>,
   'delete_template' : ActorMethod<[string], undefined>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,

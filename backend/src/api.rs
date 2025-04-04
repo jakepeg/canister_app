@@ -17,7 +17,7 @@ mod upload_file_atomic;
 mod user_info;
 
 // Re-export functions from the new module
-pub use canister_management::{get_user_canisters, register_canister};
+pub use canister_management::{create_new_file_canister, get_user_canisters, register_canister}; // Added create_new_file_canister
 
 use crate::{FileContent, State, UploadFileContinueRequest};
 pub use delete_file::delete_file;
