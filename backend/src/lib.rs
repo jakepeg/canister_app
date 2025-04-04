@@ -6,9 +6,8 @@ use crate::aliases::{AliasGenerator, Randomness};
 use candid::CandidType;
 use candid::Principal;
 use ic_stable_structures::{
-    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    storable::{Bound, Storable}, // Import Bound from storable submodule
-    DefaultMemoryImpl,
+    memory_manager::MemoryId,
+    storable::Storable, // Import Bound from storable submodule
     StableBTreeMap,
 };
 use memory::{get_user_canisters_memory, Memory}; // Assuming get_user_canisters_memory will be added to memory.rs
