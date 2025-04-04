@@ -7,17 +7,24 @@
   import { userStore } from "$lib/services/user";
   import { onMount } from "svelte";
   import "../app.css";
-  import { ModeWatcher } from "mode-watcher";
+  import { ModeWatcher, resetMode, setMode } from "mode-watcher";
   import * as Sidebar from "$lib/components/ui/sidebar";
 
   onMount(async () => {
     authService.init();
-
     // Apply dark mode for non-authenticated users
+    // if ($authStore.state !== "authenticated") {
+    //   setMode("dark");
+    // } else {
+    //   resetMode();
+    // }
+  });
+
+  $effect(() => {
     if ($authStore.state !== "authenticated") {
-      document.documentElement.classList.add("dark");
+      setMode("dark");
     } else {
-      document.documentElement.classList.remove("dark");
+      resetMode();
     }
   });
 
