@@ -239,3 +239,21 @@
     on:shared={() => auth.filesService.reload()}
   />
 {/if}
+
+<style lang="postcss">
+  tbody tr {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  tbody tr:hover {
+    transform: translateX(10px);
+  }
+
+  .md\:hidden > a {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .md\:hidden > a:hover {
+    transform: translateX(10px);
+  }
+</style>
