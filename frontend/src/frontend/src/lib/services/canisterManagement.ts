@@ -1,5 +1,3 @@
-import { Actor, HttpAgent, type Identity, type ActorSubclass } from '@dfinity/agent'; // Import ActorSubclass
-import { AuthClient } from '@dfinity/auth-client'; // Import AuthClient
 import { Principal } from '@dfinity/principal';
 import {
 	ICManagementCanister,
@@ -10,7 +8,6 @@ import { IDL } from '@dfinity/candid';
 import { get } from 'svelte/store'; // Import get to read store value
 import { authStore, type AuthStateAuthenticated } from '$lib/services/auth'; // To get identity and main actor, import state type
 // Corrected import path assuming declarations are at the root src level and _SERVICE is exported
-import type { _SERVICE as BackendService } from '../../../../declarations/backend/backend.did';
 import { createAgent } from "@dfinity/utils";
 
 // --- Configuration (using SvelteKit env variables) ---
