@@ -132,7 +132,7 @@
   />
   {#if dropdownShown}
     <div
-      class="absolute bg-white py-4 z-10 drop-shadow-xl border-silver border-solid border rounded-md w-full max-h-[200px] overflow-auto"
+      class="absolute bg-background py-4 z-10 drop-shadow-xl border-silver border-solid border rounded-md w-full max-h-[200px] overflow-auto"
       on:mousedown|stopPropagation|preventDefault
       on:pointerdown|stopPropagation|preventDefault
     >
