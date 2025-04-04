@@ -40,7 +40,6 @@ arithmetic
 arm
 army
 art
-attack
 attempt
 attention
 attraction
@@ -245,7 +244,6 @@ cushion
 dad
 daughter
 day
-death
 debt
 decision
 deer
@@ -284,7 +282,6 @@ dress
 drink
 driving
 drop
-drug
 drum
 duck
 ducks
@@ -395,7 +392,6 @@ group
 growth
 guide
 guitar
-gun
 hair
 haircut
 hall
@@ -405,7 +401,6 @@ hands
 harbor
 harmony
 hat
-hate
 head
 health
 hearing
@@ -470,7 +465,6 @@ kitten
 kittens
 kitty
 knee
-knife
 knot
 knowledge
 laborer
@@ -501,7 +495,6 @@ linen
 lip
 liquid
 list
-lizards
 loaf
 lock
 locket
@@ -561,7 +554,6 @@ nation
 neck
 need
 needle
-nerve
 nest
 net
 news
@@ -591,7 +583,6 @@ owl
 owner
 page
 pail
-pain
 paint
 pan
 pancake
@@ -618,8 +609,6 @@ pickle
 picture
 pie
 pies
-pig
-pigs
 pin
 pipe
 pizzas
@@ -641,7 +630,6 @@ point
 poison
 police
 polish
-pollution
 popcorn
 porter
 position
@@ -718,7 +706,6 @@ route
 rub
 rule
 run
-sack
 sail
 salt
 sand
@@ -730,7 +717,6 @@ scent
 school
 science
 scissors
-screw
 sea
 seashore
 seat
@@ -739,7 +725,6 @@ seed
 selection
 self
 sense
-servant
 shade
 shake
 shame
@@ -767,7 +752,6 @@ skate
 skin
 skirt
 sky
-slave
 sleep
 sleet
 slip
