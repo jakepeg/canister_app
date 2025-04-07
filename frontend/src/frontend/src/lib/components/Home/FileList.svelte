@@ -33,26 +33,34 @@
               ? nameA.localeCompare(nameB)
               : nameB.localeCompare(nameA);
           } else {
-            const dateA = a.uploadedAt;
-            const dateB = b.uploadedAt;
+            let dateA = 0n;
+            let dateB = 0n;
 
-            if (sortDirection === "asc") {
-              // Ascending: Oldest first
-              if (dateA < dateB) return -1;
-              if (dateA > dateB) return 1;
-              return 0;
-            } else {
-              // Descending: Newest first
-              if (dateB < dateA) return -1; // If B is older than A, A comes first
-              if (dateB > dateA) return 1; // If B is newer than A, A comes after
-              return 0;
+            if ("uploaded" in a.metadata.file_status) {
+              dateA = a.metadata.file_status.uploaded.uploaded_at;
             }
+            if ("uploaded" in b.metadata.file_status) {
+              dateB = b.metadata.file_status.uploaded.uploaded_at;
+            }
+
+            return sortDirection === "asc"
+              ? dateA < dateB
+                ? -1
+                : dateA > dateB
+                  ? 1
+                  : 0
+              : dateA > dateB
+                ? -1
+                : dateA < dateB
+                  ? 1
+                  : 0;
           }
         })
       : [];
 
   // Toggle sort function
   function toggleSort(field: "name" | "uploadedAt") {
+    console.log($filesStore);
     if (sortField === field) {
       // Toggle direction if clicking the same field
       sortDirection = sortDirection === "asc" ? "desc" : "asc";
