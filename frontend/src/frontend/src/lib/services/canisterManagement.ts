@@ -1,4 +1,4 @@
-import { Principal } from '@dfinity/principal';
+	import { Principal } from '@dfinity/principal';
 import {
 	ICManagementCanister,
 	type CanisterSettings,
@@ -12,7 +12,7 @@ import { type ActorSubclass } from '@dfinity/agent'; // Add ActorSubclass import
 
 // --- Imports for CMC/Ledger Flow ---
 import { CMCCanister, type Cycles, ProcessingError } from '@dfinity/cmc';
-import { LedgerCanister, type BlockHeight, type TimeStamp } from '@dfinity/ledger-icp'; // Corrected import: TimeStamp
+import { LedgerCanister, type BlockHeight, type TransferRequest, type TimeStamp } from '@dfinity/ledger-icp'; // Corrected import: TimeStamp
 import { AccountIdentifier, SubAccount } from '@dfinity/ledger-icp';
 import { createAgent, principalToSubAccount } from '@dfinity/utils';
 import { poll } from '$lib/utils/poll';
@@ -28,7 +28,7 @@ const backendWasmPath = '/backend.wasm'; // Assuming Wasm is served here
 const LOCAL_LEDGER_CANISTER_ID = Principal.fromText('ryjl3-tyaaa-aaaaa-aaaba-cai'); // Replace if different
 const LOCAL_CMC_CANISTER_ID = Principal.fromText('rkp4c-7iaaa-aaaaa-aaaca-cai'); // Replace if different
 const DEFAULT_ICP_TRANSFER_FEE = 10000n; // 0.0001 ICP
-const CREATE_CANISTER_MEMO = 1347768404n; // Default memo for create_canister
+const CREATE_CANISTER_MEMO = 1095062083n; // Use standard 'CREA' memo (0x41455243)
 
 // --- Result Type ---
 export type CreateCanisterResult =
@@ -99,6 +99,17 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 	// --- 2. Transfer Simulated ICP to Local CMC ---
 	const cmcAccountHex = getCanisterCreationCmcAccountIdentifierHex({ controller: principal });
 
+	// --- Diagnostic Query ---
+	try {
+		console.log(`Querying local ledger (${LOCAL_LEDGER_CANISTER_ID.toText()}) for transfer fee...`);
+		const fee = await ledger.transactionFee();
+		console.log(`Local ledger transfer fee query successful: ${fee}`);
+	} catch (queryErr: any) {
+		console.error('Error querying local ledger (diagnostic):', queryErr);
+		// Log the error but continue to the transfer attempt to see the original failure point
+	}
+	// --- End Diagnostic Query ---
+
 	let blockHeight: BlockHeight;
 	try {
 		console.log("DFX_NETWORK", dfx_network);
@@ -111,6 +122,7 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 			createdAt: BigInt(Date.now() * 1_000_000)  , // Use TimeStamp and correct field name
 			fromSubAccount: undefined, // Use default subaccount
 		});
+		// If the above await succeeds, the returned BlockHeight (bigint) is assigned
 		console.log(`Simulated ICP Transfer successful, block height: ${blockHeight}`);
 	} catch (err: any) {
 		console.error('Error transferring simulated ICP:', err);
