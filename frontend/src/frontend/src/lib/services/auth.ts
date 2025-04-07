@@ -146,6 +146,7 @@ export class AuthService {
       try {
         await new Promise<void>((resolve, reject) => {
           store.authClient.login({
+            maxTimeToLive: BigInt(7 * 24 * 60 * 60 * 1000 * 1000 * 1000), // 7 days
             identityProvider: this.iiUrl,
             onSuccess: resolve,
             onError: reject,
