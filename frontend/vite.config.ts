@@ -16,13 +16,11 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 const config: UserConfig = {
   // Add nodePolyfills plugin here
-  plugins: [sveltekit(), wasm(), topLevelAwait(), nodePolyfills()],
+  plugins: [wasm(), topLevelAwait(), sveltekit(), nodePolyfills()], // Moved wasm() and topLevelAwait() first
   resolve: {
     alias: {
       $lib: path.resolve("./src/frontend/src/lib"),
-      "ic-vetkd-utils": path.resolve(
-        "./node_modules/ic-vetkd-utils/ic_vetkd_utils.js",
-      ),
+      // Removed alias for ic-vetkd-utils to let Vite handle it
     },
   },
   // Remove optimizeDeps polyfill config, let the plugin handle it
@@ -38,6 +36,10 @@ const config: UserConfig = {
   build: {
     target: "es2020",
     rollupOptions: {}, // Remove the polyfill plugin from here
+  },
+  // Add SSR configuration to process ic-vetkd-utils
+  ssr: {
+    noExternal: ['ic-vetkd-utils'],
   },
 };
 
