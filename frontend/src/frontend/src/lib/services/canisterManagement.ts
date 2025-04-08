@@ -1,4 +1,4 @@
-	import { Principal } from '@dfinity/principal';
+import { Principal } from '@dfinity/principal';
 import {
 	ICManagementCanister,
 	type CanisterSettings,
@@ -28,7 +28,7 @@ const backendWasmPath = '/backend.wasm'; // Assuming Wasm is served here
 const LOCAL_LEDGER_CANISTER_ID = Principal.fromText('ryjl3-tyaaa-aaaaa-aaaba-cai'); // Replace if different
 const LOCAL_CMC_CANISTER_ID = Principal.fromText('rkp4c-7iaaa-aaaaa-aaaca-cai'); // Replace if different
 const DEFAULT_ICP_TRANSFER_FEE = 10000n; // 0.0001 ICP
-const CREATE_CANISTER_MEMO = 1095062083n; // Use standard 'CREA' memo (0x41455243)
+const CREATE_CANISTER_MEMO =  BigInt(0x41455243); // CREA, // Use standard 'CREA' memo (0x41455243)
 
 // --- Result Type ---
 export type CreateCanisterResult =
