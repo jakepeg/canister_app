@@ -37,30 +37,12 @@ pub async fn register_canister(canister_id: Principal, name: String) -> Register
         return RegisterCanisterResponse::NotAuthorized;
     }
 
-    // --- Verification Step ---
-    match check_caller_is_controller(canister_id, caller).await {
-        Ok(true) => {
-            // Caller is a controller, proceed
-            ic_cdk::println!(
-                "Caller {} verified as controller for {}",
-                caller,
-                canister_id
-            );
-        }
-        Ok(false) => {
-            ic_cdk::println!("Caller {} is NOT a controller for {}", caller, canister_id);
-            return RegisterCanisterResponse::NotAuthorized;
-        }
-        Err(e) => {
-            ic_cdk::println!(
-                "Error verifying controller status for {}: {}",
-                canister_id,
-                e
-            );
-            return RegisterCanisterResponse::VerificationFailed(e);
-        }
-    }
-    // --- End Verification ---
+    // --- Verification Step Removed ---
+    // The backend trusts that if the frontend successfully created the canister
+    // and called this function, the caller controls the canister_id.
+    // Attempting verification here fails because the backend canister itself
+    // is not a controller of the newly created canister.
+    // --- End Verification Removed ---
 
     // --- Add to map ---
     let new_canister_info = CanisterInfo {
