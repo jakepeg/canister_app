@@ -1,30 +1,13 @@
 <script>
-  import { authService } from "$lib/services/auth";
-  import LogoIcon from "../icons/LogoIcon.svelte";
   import LinkedInIcon from "../icons/linkedin.svelte";
   import XIcon from "../icons/x-logo.svelte";
   import Badge from "../icons/on-chain.svelte";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
 </script>
 
 <div class="bg-background min-h-screen flex flex-col items-center px-6">
-  <!-- Header -->
-  <!-- <div class="w-full flex justify-between items-center py-6 px-8">
-    <div class="flex items-center gap-2">
-      <img src="/logo.svg" alt="Logo" class="h-10" />CANISTER
-    </div>
-    <button
-      class="gap-2 btn btn-accent flex items-center px-6 py-2 rounded-lg"
-      on:click={() => authService.login()}
-    >
-      <LogoIcon />
-      Login
-    </button>
-  </div> -->
-
   <!-- Main Content -->
   <div class="flex flex-col items-center text-center mt-16 max-w-3xl">
-    <h1 class="text-4xl font-bold">Store, Share & Collect Documents</h1>
+    <h1 class="text-4xl font-bold">Cloud Storage Fully On-Chain</h1>
     <h2 class="text-lg mt-2 text-gray-400">
       Sovereign data management designed for privacy, secured on the blockchain.
     </h2>
@@ -57,14 +40,13 @@
   <!-- New CTA Section -->
   <div class="flex flex-col md:flex-row gap-6 mt-12">
     <a href="/personal" class="btn btn-cta"> Personal Canisters </a>
-    <a href="/business" class="btn btn-cta"> Enterprise Canisters </a>
+    <a href="/enterprise" class="btn btn-cta"> Enterprise Canisters </a>
   </div>
 
   <!-- Demo Notice Section -->
   <div class="mt-12 text-center text-gray-400">
     <h2 class="text-lg">
-      Demo version—do not upload confidential data.<br />
-      Big things are coming<br />
+      This is a Demo version of our MVP, do not upload confidential data.<br />
       Follow us for updates and news on our upcoming launch!
     </h2>
   </div>
@@ -92,19 +74,3 @@
     </a>
   </div>
 </div>
-
-<style>
-  .glow-box {
-    background: rgba(255, 255, 255, 0.05);
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    max-width: 250px;
-    box-shadow: 0 0 15px rgba(0, 162, 255, 0.4);
-    transition: box-shadow 0.3s ease-in-out;
-  }
-
-  .glow-box:hover {
-    box-shadow: 0 0 15px rgba(0, 162, 255, 0.8);
-  }
-</style>

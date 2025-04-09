@@ -63,7 +63,7 @@
     <ModeWatcher />
     <Navbar />
     <div class="flex flex-1 overflow-hidden">
-      <main class="flex-1">
+      <main class="flex-1 overflow-y-auto">
         <div class="max-w-5xl mx-auto px-4">
           {@render children?.()}
         </div>

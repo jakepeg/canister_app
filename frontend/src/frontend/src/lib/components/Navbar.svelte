@@ -52,13 +52,40 @@
       {/if}
 
       {#if $authStore.state === "unauthenticated"}
-        <button
-          class="gap-4 btn btn-accent"
-          on:click={() => authService.login()}
-        >
-          <LogoIcon />
-          Login
-        </button>
+        <div class="flex items-center gap-4">
+          <a
+            href="/personal"
+            class="font-bold transition-colors"
+            class:text-blue-400={$page.url.pathname.startsWith("/personal")}
+            class:text-white={!$page.url.pathname.startsWith("/personal")}
+            class:hover:text-blue-400={!$page.url.pathname.startsWith(
+              "/personal",
+            )}
+          >
+            Personal
+          </a>
+
+          <a
+            href="/enterprise"
+            class="font-bold transition-colors"
+            class:text-blue-400={$page.url.pathname.startsWith("/enterprise")}
+            class:text-white={!$page.url.pathname.startsWith("/enterprise")}
+            class:hover:text-blue-400={!$page.url.pathname.startsWith(
+              "/enterprise",
+            )}
+          >
+            Enterprise
+          </a>
+
+          <!-- Demo button -->
+          <button
+            class="gap-4 btn btn-accent"
+            on:click={() => authService.login()}
+          >
+            <LogoIcon />
+            Demo
+          </button>
+        </div>
       {:else if $authStore.state === "authenticated"}
         <button
           class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
