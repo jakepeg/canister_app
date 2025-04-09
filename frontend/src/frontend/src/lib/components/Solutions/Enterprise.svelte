@@ -6,7 +6,7 @@
 
 <div class="bg-background flex flex-col items-center px-6">
   <!-- Main Content -->
-  <div class="flex flex-col items-center text-center mt-16 max-w-3xl">
+  <div class="flex flex-col items-center text-center mt-8 max-w-3xl">
     <h1 class="text-4xl font-bold">Store, Share & Collect Documents</h1>
     <h2 class="text-lg mt-2 text-gray-400">
       Take control with an Enterprise-Grade Canister, built for trust and

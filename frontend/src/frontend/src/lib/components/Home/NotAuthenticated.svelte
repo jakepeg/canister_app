@@ -6,7 +6,7 @@
 
 <div class="bg-background min-h-screen flex flex-col items-center px-6">
   <!-- Main Content -->
-  <div class="flex flex-col items-center text-center mt-16 max-w-3xl">
+  <div class="flex flex-col items-center text-center mt-8 max-w-3xl">
     <h1 class="text-4xl font-bold">Cloud Storage Fully On-Chain</h1>
     <h2 class="text-lg mt-2 text-gray-400">
       Sovereign data management designed for privacy, secured on the blockchain.
