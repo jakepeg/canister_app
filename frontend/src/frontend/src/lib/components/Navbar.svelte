@@ -26,7 +26,12 @@
   }
 </script>
 
-<nav class="bg-sidebar w-full relative z-20">
+<nav
+  class="w-full relative z-20"
+  class:bg-sidebar={$authStore.state === "authenticated"}
+  class:bg-transparent={$authStore.state === "unauthenticated"}
+  class:backdrop-blur={$authStore.state === "unauthenticated"}
+>
   <div class="flex h-14 md:h-16 items-center px-4 justify-between">
     <!-- Left side with logo -->
     <div class="flex items-center gap-2">
