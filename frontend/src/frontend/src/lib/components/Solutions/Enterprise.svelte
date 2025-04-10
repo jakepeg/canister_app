@@ -39,7 +39,7 @@
       <h3 class="text-xl font-semibold">Scalability</h3>
       <p class="text-gray-300 mt-2">
         Deploy Canisters at scale with custom installations, white-labeled
-        interfaces, and workflow templates tailored to your organization’s
+        interfaces, and workflow templates tailored to your organization's
         needs.
       </p>
     </div>
@@ -47,8 +47,8 @@
     <div class="glow-box">
       <h3 class="text-xl font-semibold">Colaboration</h3>
       <p class="text-gray-300 mt-2">
-        Empower teams with flexible permissions, shared environments, and
-        seamless ERP integrations—built for cross-functional work.
+        Collect and share documents without messy email chains. With smart
+        permissions and ERP integration, your team stays aligned and in control.
       </p>
     </div>
 
