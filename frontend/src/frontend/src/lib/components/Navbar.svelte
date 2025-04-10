@@ -2,17 +2,10 @@
   import { page } from "$app/stores";
   import { authService, authStore } from "$lib/services/auth";
   import { userStore } from "$lib/services/user";
-  import { fade, fly } from "svelte/transition";
-  import IconFile from "./icons/IconFile.svelte";
   import LogoIcon from "./icons/LogoIcon.svelte";
   import LogoutIcon from "./icons/LogoutIcon.svelte";
-  import RequestsIcon from "./icons/RequestsIcon.svelte";
-  import UploadIcon from "./icons/UploadIcon.svelte";
   import { uploadInProgress } from "$lib/services/upload";
   import ModeToggle from "$lib/components/mode-toggle.svelte";
-  import { Button } from "$lib/components/ui/button";
-
-  let showMobileMenu = false;
 
   function logout() {
     if ($uploadInProgress) {
@@ -57,7 +50,7 @@
       {/if}
 
       {#if $authStore.state === "unauthenticated"}
-        <div class="flex items-center gap-4">
+        <div class="hidden md:flex items-center gap-4">
           <a
             href="/personal"
             class="font-bold transition-colors"
@@ -82,7 +75,6 @@
             Enterprise
           </a>
 
-          <!-- Demo button -->
           <button
             class="gap-4 btn btn-accent"
             on:click={() => authService.login()}
@@ -92,27 +84,6 @@
           </button>
         </div>
       {:else if $authStore.state === "authenticated"}
-        <button
-          class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
-          on:click={() => (showMobileMenu = !showMobileMenu)}
-        >
-          <span
-            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
-              ? 'rotate-45 translate-y-[7px]'
-              : 'rotate-0'}"
-          />
-          <span
-            class="h-[2px] bg-accent-100 rounded-full transition-opacity {showMobileMenu
-              ? 'opacity-0'
-              : 'opacity-100'}"
-          />
-          <span
-            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
-              ? '-rotate-45 translate-y-[-7px]'
-              : 'rotate-0'}"
-          />
-        </button>
-
         <div class="hidden md:flex gap-2 lg:gap-8">
           <button on:click={() => logout()} class="btn btn-ghost">
             <LogoutIcon />
@@ -122,55 +93,3 @@
     </div>
   </div>
 </nav>
-
-{#if showMobileMenu}
-  <div
-    class="md:hidden fixed inset-0 bg-black/50"
-    transition:fade|global={{ duration: 200 }}
-  />
-  <div
-    transition:fly|global={{ duration: 300, x: 1000, opacity: 1 }}
-    class="fixed md:hidden inset-0 bg-background-300 z-10 pt-16"
-  >
-    <div class="p-4 flex flex-col gap-4 h-full">
-      <a
-        href="/"
-        class="btn btn-ghost justify-start"
-        class:btn-ghost-active={$page.route.id === "/"}
-        on:click={() => (showMobileMenu = false)}
-      >
-        <IconFile />
-        Files</a
-      >
-      <a
-        href="/upload"
-        class="btn btn-ghost justify-start"
-        class:btn-ghost-active={$page.route.id === "/upload"}
-        on:click={() => (showMobileMenu = false)}
-      >
-        <UploadIcon />
-        Upload</a
-      >
-      <a
-        href="/requests"
-        class="btn btn-ghost justify-start"
-        class:btn-ghost-active={$page.route.id === "/requests"}
-        on:click={() => (showMobileMenu = false)}
-      >
-        <RequestsIcon />
-        Requests</a
-      >
-      <div class="flex-1" />
-      <button
-        on:click={() => {
-          authService.logout();
-          showMobileMenu = false;
-        }}
-        class="btn btn-ghost justify-start"
-      >
-        <LogoutIcon />
-        Logout</button
-      >
-    </div>
-  </div>
-{/if}
