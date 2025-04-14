@@ -81,13 +81,13 @@ export const isAuthenticated = derived(
   (store) => store.state === "authenticated"
 );
 
-function createServices(actor: ActorType) {
+function createServices(actor: ActorType, authClient: AuthClient) {
   const userService = new UserService(actor);
   userService.init();
   const filesService = new FilesService(actor);
   const requestsService = new RequestsService(actor);
 
-  const uploadService = new UploadService(actor);
+  const uploadService = new UploadService(actor, authClient);
 
   return {
     userService,
@@ -98,21 +98,57 @@ function createServices(actor: ActorType) {
 }
 
 export class AuthService {
+  private currentCanisterId: string;
+
   constructor(
-    private canisterId: string,
+    private defaultCanisterId: string,
     private host: string,
     private iiUrl: string
-  ) {}
+  ) {
+    this.currentCanisterId = defaultCanisterId;
+  }
+
+  setCurrentCanister(canisterId: string) {
+    this.currentCanisterId = canisterId;
+    this.refreshActor();
+  }
+
+  private async refreshActor() {
+    const store = get(authStore);
+    if (store.state === 'authenticated' || store.state === 'unauthenticated') {
+      const actor = createActor(this.currentCanisterId, {
+        agentOptions: {
+          host: this.host,
+          identity: store.authClient.getIdentity(),
+        },
+      });
+
+      if (store.state === 'authenticated') {
+        const { userService, filesService, requestsService, uploadService } = createServices(actor, store.authClient);
+        authStore.setLoggedin(
+          actor,
+          store.authClient,
+          userService,
+          filesService,
+          requestsService,
+          uploadService
+        );
+      } else {
+        const uploadService = new UploadService(actor, store.authClient);
+        authStore.setLoggedout(actor, store.authClient, uploadService);
+      }
+    }
+  }
 
   async init() {
     const authClient = await AuthClient.create();
     if (await authClient.isAuthenticated()) {
-      const actor = createActor(this.canisterId, {
+      const actor = createActor(this.currentCanisterId, {
         agentOptions: { host: this.host, identity: authClient.getIdentity() },
       });
 
       const { userService, filesService, requestsService, uploadService } =
-        createServices(actor);
+        createServices(actor, authClient);
 
       authStore.setLoggedin(
         actor,
@@ -123,13 +159,13 @@ export class AuthService {
         uploadService
       );
     } else {
-      const actor = createActor(this.canisterId, {
+      const actor = createActor(this.currentCanisterId, {
         agentOptions: {
           host: this.host,
           identity: authClient.getIdentity(),
         },
       });
-      const uploadService = new UploadService(actor);
+      const uploadService = new UploadService(actor, authClient);
 
       authStore.setLoggedout(actor, authClient, uploadService);
     }
@@ -151,14 +187,14 @@ export class AuthService {
             onError: reject,
           });
         });
-        const actor = createActor(this.canisterId, {
+        const actor = createActor(this.currentCanisterId, {
           agentOptions: {
             host: this.host,
             identity: store.authClient.getIdentity(),
           },
         });
         const { userService, filesService, requestsService, uploadService } =
-          createServices(actor);
+          createServices(actor, store.authClient);
 
         authStore.setLoggedin(
           actor,
@@ -169,13 +205,13 @@ export class AuthService {
           uploadService
         );
       } catch (e) {
-        const actor = createActor(this.canisterId, {
+        const actor = createActor(this.currentCanisterId, {
           agentOptions: {
             host: this.host,
             identity: store.authClient.getIdentity(),
           },
         });
-        const uploadService = new UploadService(actor);
+        const uploadService = new UploadService(actor, store.authClient);
 
         authStore.setLoggedout(actor, store.authClient, uploadService);
       }
@@ -190,13 +226,13 @@ export class AuthService {
       try {
         await store.authClient.logout();
         store.userService.reset();
-        const actor = createActor(this.canisterId, {
+        const actor = createActor(this.currentCanisterId, {
           agentOptions: {
             host: this.host,
             identity: store.authClient.getIdentity(),
           },
         });
-        const uploadService = new UploadService(actor);
+        const uploadService = new UploadService(actor, store.authClient);
         authStore.setLoggedout(actor, store.authClient, uploadService);
       } catch (e) {}
     } else if (store.state === "uninitialized") {

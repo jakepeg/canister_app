@@ -1,9 +1,10 @@
 import crypto from "$lib/crypto";
 // import FileTools from "$lib/file";
-// import type { ActorType } from "$lib/shared/actor";
+import type { ActorType } from "$lib/shared/actor"; // Added import
+import type { AuthClient } from "@dfinity/auth-client"; // Added import
 import type {
-  AuthStateAuthenticated,
-  AuthStateUnauthenticated,
+  AuthStateAuthenticated, // Keep these for context if needed elsewhere, but constructor changes
+  AuthStateUnauthenticated, // Keep these for context if needed elsewhere, but constructor changes
 } from "$lib/services/auth";
 import { enumIs } from "$lib/shared/enums";
 import pLimit from "p-limit";
@@ -28,8 +29,9 @@ export class UploadService {
   aborted = false;
   private vetkdCryptoService: VetkdCryptoService;
 
-  constructor(private auth: AuthStateAuthenticated | AuthStateUnauthenticated) {
-    this.vetkdCryptoService = new VetkdCryptoService(auth.actor);
+  // Changed constructor signature
+  constructor(private actor: ActorType, private authClient: AuthClient) {
+    this.vetkdCryptoService = new VetkdCryptoService(this.actor); // Use this.actor
   }
 
   async uploadFile({
@@ -55,9 +57,14 @@ export class UploadService {
     const userId =
       uploadType.type === "request"
         ? uploadType.fileInfo.user.ic_principal
-        : this.auth.authClient.getIdentity?.().getPrincipal();
+        : this.authClient.getIdentity?.().getPrincipal(); // Use this.authClient
 
-    const userPrincipalBytes = userId.toUint8Array();
+    const userPrincipalBytes = userId?.toUint8Array(); // Add optional chaining check for userId
+
+    if (!userPrincipalBytes) {
+      onError("Could not get user principal to encrypt the file.");
+      return;
+    }
 
     // Redundant, moving to vetkd
     // const userPublicKey =
@@ -116,7 +123,7 @@ export class UploadService {
       if (uploadType.type === "request") {
         fileId = uploadType.fileInfo.file_id;
         console.log("fileId for request: ", fileId);
-        const res = await this.auth.actor.upload_file({
+        const res = await this.actor.upload_file({
           file_id: fileId,
           file_content: firstChunk,
           file_type: dataType,
@@ -141,7 +148,7 @@ export class UploadService {
           "numChunks: ",
           numChunks,
         );
-        fileId = await this.auth.actor.upload_file_atomic({
+        fileId = await this.actor.upload_file_atomic({
           content: firstChunk,
           name: fileName,
           file_type: dataType,
@@ -191,7 +198,7 @@ export class UploadService {
           return;
         }
         const chunk = content.subarray(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-        await this.auth.actor.upload_file_continue({
+        await this.actor.upload_file_continue({
           file_id: fileId,
           contents: chunk,
           chunk_id: BigInt(i),
