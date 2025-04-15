@@ -1,16 +1,21 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { authStore, type AuthStateAuthenticated } from '$lib/services/auth';
-  import { BalanceService, type BalanceState } from '$lib/services/balance';
-  import { writable, type Writable } from 'svelte/store';
+  import { onMount, onDestroy } from "svelte";
+  import { authStore, type AuthStateAuthenticated } from "$lib/services/auth";
+  import { BalanceService, type BalanceState } from "$lib/services/balance";
+  import { writable, type Writable } from "svelte/store";
+  import { AccountIdentifier } from "@dfinity/ledger-icp";
+  import { Principal } from "@dfinity/principal";
 
   let balanceService: BalanceService | null = null;
   // Use a local store to hold the balance state from the service
   const balanceStore: Writable<BalanceState> = writable({
     balance: null,
     loading: false,
-    error: null,
+    error: null
   });
+
+  let principalId: Principal | null = null;
+  let accountId: string | null = null;
 
   let unsubscribeAuth: (() => void) | null = null;
   let unsubscribeBalance: (() => void) | null = null;
@@ -25,14 +30,19 @@
       if (balanceService) {
         balanceService.reset(); // Reset state if auth changes
         balanceService = null;
+        principalId = null;
+        accountId = null;
       }
 
-      if (authState.state === 'authenticated') {
+      if (authState.state === "authenticated") {
         const authenticatedState = authState as AuthStateAuthenticated;
+        principalId = authenticatedState.authClient.getIdentity().getPrincipal();
+        accountId = AccountIdentifier.fromPrincipal({ principal: principalId }).toHex();
+
         balanceService = new BalanceService(authenticatedState.authClient);
 
         // Subscribe to the service's store
-        unsubscribeBalance = balanceService.store.subscribe(state => {
+        unsubscribeBalance = balanceService.store.subscribe((state) => {
           balanceStore.set(state);
         });
 
@@ -42,6 +52,8 @@
       } else {
         // Reset local store if not authenticated
         balanceStore.set({ balance: null, loading: false, error: null });
+        principalId = null;
+        accountId = null;
       }
     });
   });
@@ -68,8 +80,21 @@
   }
 </script>
 
-<div class="p-4 border rounded-md shadow-sm">
-  <h2 class="text-lg font-semibold mb-2">ICP Balance</h2>
+<div class="p-4 border rounded-md shadow-sm space-y-2">
+  <h2 class="text-lg font-semibold mb-2">User Wallet</h2>
+
+  {#if principalId}
+    <div class="text-sm break-all">
+      <span class="font-medium">Principal ID:</span> {principalId.toText()}
+    </div>
+  {/if}
+  {#if accountId}
+    <div class="text-sm break-all">
+      <span class="font-medium">Account ID:</span> {accountId}
+    </div>
+  {/if}
+
+  <h3 class="text-md font-semibold pt-2">ICP Balance</h3>
   {#if $balanceStore.loading}
     <p>Loading balance...</p>
   {:else if $balanceStore.error}
