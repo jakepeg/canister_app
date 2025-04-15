@@ -131,7 +131,7 @@
   }
 
   async function handleUpload() {
-    uploadService = new UploadService(auth.actor, auth.authClient);
+    uploadService = new UploadService(auth);
 
     if (uploadType?.type === "self") {
       uploadType.fileName = fileName;

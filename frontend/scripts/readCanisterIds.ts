@@ -14,7 +14,7 @@ export const host =
 export const iiUrl =
   process.env.II_URL ??
   (network === "local"
-    ? "http://be2us-64aaa-aaaaa-qaabq-cai.localhost:8080/"
+    ? "http://br5f7-7uaaa-aaaaa-qaaca-cai.localhost:8080/"
     : "https://identity.ic0.app");
 
 export const readCanisterIds = ({

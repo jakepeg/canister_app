@@ -81,13 +81,13 @@ export const isAuthenticated = derived(
   (store) => store.state === "authenticated"
 );
 
-function createServices(actor: ActorType, authClient: AuthClient) {
+function createServices(actor: ActorType) {
   const userService = new UserService(actor);
   userService.init();
   const filesService = new FilesService(actor);
   const requestsService = new RequestsService(actor);
 
-  const uploadService = new UploadService(actor, authClient);
+  const uploadService = new UploadService(actor);
 
   return {
     userService,
@@ -99,10 +99,9 @@ function createServices(actor: ActorType, authClient: AuthClient) {
 
 export class AuthService {
   private currentCanisterId: string;
-
   constructor(
     private defaultCanisterId: string,
-    private host: string,
+        private host: string,
     private iiUrl: string
   ) {
     this.currentCanisterId = defaultCanisterId;
@@ -134,7 +133,7 @@ export class AuthService {
           uploadService
         );
       } else {
-        const uploadService = new UploadService(actor, store.authClient);
+        const uploadService = new UploadService(actor);
         authStore.setLoggedout(actor, store.authClient, uploadService);
       }
     }
@@ -148,7 +147,7 @@ export class AuthService {
       });
 
       const { userService, filesService, requestsService, uploadService } =
-        createServices(actor, authClient);
+        createServices(actor);
 
       authStore.setLoggedin(
         actor,
@@ -165,7 +164,7 @@ export class AuthService {
           identity: authClient.getIdentity(),
         },
       });
-      const uploadService = new UploadService(actor, authClient);
+      const uploadService = new UploadService(actor);
 
       authStore.setLoggedout(actor, authClient, uploadService);
     }
@@ -182,6 +181,7 @@ export class AuthService {
       try {
         await new Promise<void>((resolve, reject) => {
           store.authClient.login({
+            maxTimeToLive: BigInt(7 * 24 * 60 * 60 * 1000 * 1000 * 1000), // 7 days
             identityProvider: this.iiUrl,
             onSuccess: resolve,
             onError: reject,
@@ -194,7 +194,7 @@ export class AuthService {
           },
         });
         const { userService, filesService, requestsService, uploadService } =
-          createServices(actor, store.authClient);
+          createServices(actor);
 
         authStore.setLoggedin(
           actor,
@@ -211,7 +211,7 @@ export class AuthService {
             identity: store.authClient.getIdentity(),
           },
         });
-        const uploadService = new UploadService(actor, store.authClient);
+        const uploadService = new UploadService(actor);
 
         authStore.setLoggedout(actor, store.authClient, uploadService);
       }
@@ -232,7 +232,7 @@ export class AuthService {
             identity: store.authClient.getIdentity(),
           },
         });
-        const uploadService = new UploadService(actor, store.authClient);
+        const uploadService = new UploadService(actor);
         authStore.setLoggedout(actor, store.authClient, uploadService);
       } catch (e) {}
     } else if (store.state === "uninitialized") {

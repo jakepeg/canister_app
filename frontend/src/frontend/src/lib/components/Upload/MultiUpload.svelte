@@ -95,7 +95,7 @@
       fileUploads[fileIndex].progress = 0;
       fileUploads = [...fileUploads];
 
-      const uploadService = new UploadService(auth.actor, auth.authClient);
+      const uploadService = new UploadService(auth);
 
       const uploadType: UploadType = {
         type: "request",
