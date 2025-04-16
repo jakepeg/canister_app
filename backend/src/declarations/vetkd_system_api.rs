@@ -160,5 +160,5 @@ impl VetkdSystemApi {
     (VetkdPublicKeyResult,)
   > { ic_cdk::call(self.0, "vetkd_public_key", (arg0,)).await }
 }
-pub const CANISTER_ID : Principal = Principal::from_slice(&[128, 0, 0, 0, 0, 16, 0, 4, 1, 1]); // br5f7-7uaaa-aaaaa-qaaca-cai
+pub const CANISTER_ID : Principal = Principal::from_slice(&[128, 0, 0, 0, 0, 16, 0, 3, 1, 1]); // be2us-64aaa-aaaaa-qaabq-cai
 pub const vetkd_system_api : VetkdSystemApi = VetkdSystemApi(CANISTER_ID);
