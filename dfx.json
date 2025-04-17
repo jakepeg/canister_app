@@ -12,7 +12,6 @@
       "build": "pnpm --filter frontend run build",
       "dependencies": [
         "backend",
-        "internet_identity",
         "vetkd_system_api"
       ],
       "source": [
