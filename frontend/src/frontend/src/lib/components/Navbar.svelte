@@ -10,9 +10,11 @@
   import UploadIcon from "./icons/UploadIcon.svelte";
   import { uploadInProgress } from "$lib/services/upload";
   import ModeToggle from "$lib/components/mode-toggle.svelte";
+  import Balance from "$lib/components/User/Balance.svelte";
   import { Button } from "$lib/components/ui/button";
 
   let showMobileMenu = false;
+  let showBalance = false;
 
   function logout() {
     if ($uploadInProgress) {
@@ -46,9 +48,31 @@
     </div>
 
     <!-- Right side with buttons -->
-    <div class="flex items-center ml-auto">
+    <div class="flex items-center ml-auto gap-4">
       {#if $authStore.state === "authenticated"}
         <ModeToggle />
+        <div class="relative">
+          <button
+            class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10"
+            on:click={() => (showBalance = !showBalance)}
+          >
+            <img
+              src={showBalance ? "/AccountIconClicked.svg" : "/AccountIcon.svg"}
+              alt="Account"
+              class="w-6 h-6"
+            />
+          </button>
+
+          {#if showBalance}
+            <div
+              class="absolute right-0 top-[67px] mt-0"
+              transition:fade={{ duration: 100 }}
+              on:mouseleave={() => (showBalance = false)}
+            >
+              <Balance />
+            </div>
+          {/if}
+        </div>
       {/if}
 
       {#if $authStore.state === "unauthenticated"}
@@ -99,8 +123,7 @@
   <div
     class="md:hidden fixed inset-0 bg-black/50"
     transition:fade|global={{ duration: 200 }}
-  >
-  </div>
+  ></div>
   <div
     transition:fly|global={{ duration: 300, x: 1000, opacity: 1 }}
     class="fixed md:hidden inset-0 bg-background-300 z-10 pt-16"
@@ -133,7 +156,7 @@
         <RequestsIcon />
         Requests</a
       >
-      <div class="flex-1" ></div>
+      <div class="flex-1"></div>
       <button
         on:click={() => {
           authService.logout();
