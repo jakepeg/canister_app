@@ -22,12 +22,10 @@
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
       "remote": {
-        "candid": "internet_identity.did",
         "id": {
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
       },
-      "specified_id": "rdmx6-jaaaa-aaaaa-aaadq-cai",
       "shrink": false,
       "type": "custom",
       "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
@@ -142,20 +140,20 @@
       "packtool": ""
     }
   },
-  "dfx": "0.17.0",
+  "dfx": "0.24.2",
   "networks": {
+    "local": {
+      "bind": "127.0.0.1:8080",
+      "replica": {
+        "subnet_type": "system"
+      },
+      "type": "ephemeral"
+    },
     "staging": {
       "providers": [
         "https://icp0.io"
       ],
       "type": "persistent"
-    },
-    "local": {
-      "bind": "127.0.0.1:8080",
-      "type": "ephemeral",
-      "replica": {
-        "subnet_type": "system"
-      }
     }
   },
   "output_env_file": ".env",
