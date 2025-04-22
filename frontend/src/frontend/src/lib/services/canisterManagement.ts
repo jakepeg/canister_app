@@ -46,33 +46,41 @@ export interface CanisterStatusInfo {
 }
 
 export async function getCanisterStatus(canisterId: Principal, canisterName: string): Promise<CanisterStatusInfo | { err: string }> {
+    console.log(`Fetching status for canister: ${canisterId.toText()}`);
+    
     const authState = get(authStore);
     if (authState.state !== 'authenticated') {
+        console.error('getCanisterStatus: User not authenticated');
         return { err: 'User not authenticated' };
     }
 
     try {
+        console.log('Creating agent for canister status check...');
         const agent = await createAgent({ 
             identity: authState.authClient.getIdentity(), 
             host: host 
         });
 
+        console.log('Creating management canister instance...');
         const managementCanister = ICManagementCanister.create({ agent });
         
+        console.log('Fetching canister status...');
         const result = await managementCanister.canisterStatus(canisterId);
-        
-        const mainBackendActor = authState.actor as ActorSubclass<BackendService>;
-        
-        return {
+        console.log('Canister status result:', result);
+
+        const statusInfo = {
             id: canisterId,
-            name: canisterName,
+			name: canisterName,
             status: result.status,
             memorySize: result.memory_size,
             memoryAllocation: BigInt(150) * BigInt(1024) * BigInt(1024 * 1024),
             cyclesBalance: result.cycles
         };
+        console.log('Returning canister status info:', statusInfo);
+        return statusInfo;
     } catch (err: any) {
-        console.error('Error fetching canister status:', err);
+        console.error('Error in getCanisterStatus:', err);
+        console.error('Error stack:', err.stack);
         return { err: err.message || 'Failed to fetch canister status' };
     }
 }
