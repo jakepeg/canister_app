@@ -39,7 +39,7 @@ export type CreateCanisterResult =
 export interface CanisterStatusInfo {
     id: Principal;
     name: string;
-    status: 'running' | 'stopping' | 'stopped';
+    status: { running: null } | { stopping: null } | { stopped: null };
     memorySize: bigint;
     memoryAllocation: bigint; // Total allocated memory
     cyclesBalance: bigint;
@@ -61,7 +61,6 @@ export async function getCanisterStatus(canisterId: Principal, canisterName: str
         
         const result = await managementCanister.canisterStatus(canisterId);
         
-        // Get the canister name from the main backend
         const mainBackendActor = authState.actor as ActorSubclass<BackendService>;
         
         return {
@@ -69,7 +68,7 @@ export async function getCanisterStatus(canisterId: Principal, canisterName: str
             name: canisterName,
             status: result.status,
             memorySize: result.memory_size,
-            memoryAllocation: BigInt(150) * BigInt(1024) * BigInt(1024 * 1024), // 150GB in bytes
+            memoryAllocation: BigInt(150) * BigInt(1024) * BigInt(1024 * 1024),
             cyclesBalance: result.cycles
         };
     } catch (err: any) {

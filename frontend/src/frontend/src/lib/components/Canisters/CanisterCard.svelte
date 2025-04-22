@@ -30,6 +30,20 @@
 		return `${id.slice(0, 5)}...${id.slice(-7)}`;
 	}
 
+	// Helper function to get status color
+	function getStatusColor(status: CanisterStatusInfo['status']): string {
+		if ('running' in status) return '#25C51C';
+		if ('stopping' in status) return '#FFA500';
+		return '#FF0000'; // stopped
+	}
+
+	// Helper function to get status text
+	function getStatusText(status: CanisterStatusInfo['status']): string {
+		if ('running' in status) return 'Running';
+		if ('stopping' in status) return 'Stopping';
+		return 'Stopped';
+	}
+
 	onMount(async () => {
 		const result = await getCanisterStatus(canisterId, canisterName);
 		if ('err' in result) {
@@ -55,11 +69,8 @@
 			{#if statusInfo}
 				<div
 					class="absolute w-[10px] h-[10px] left-[15px] top-[17px] rounded-full filter blur-[2px]"
-					style:background-color={statusInfo.status === 'running'
-						? '#25C51C'
-						: statusInfo.status === 'stopping'
-						? '#FFA500'
-						: '#FF0000'}
+					style:background-color={getStatusColor(statusInfo.status)}
+					title={getStatusText(statusInfo.status)}
 				/>
 			{/if}
 
