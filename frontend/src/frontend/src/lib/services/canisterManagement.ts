@@ -35,6 +35,49 @@ export type CreateCanisterResult =
 	| { ok: Principal } // Success, returns new canister Principal
 	| { err: string }; // Failure, returns error message
 
+// Add these new types after the existing CreateCanisterResult type
+export interface CanisterStatusInfo {
+    id: Principal;
+    name: string;
+    status: 'running' | 'stopping' | 'stopped';
+    memorySize: bigint;
+    memoryAllocation: bigint; // Total allocated memory
+    cyclesBalance: bigint;
+}
+
+export async function getCanisterStatus(canisterId: Principal, canisterName: string): Promise<CanisterStatusInfo | { err: string }> {
+    const authState = get(authStore);
+    if (authState.state !== 'authenticated') {
+        return { err: 'User not authenticated' };
+    }
+
+    try {
+        const agent = await createAgent({ 
+            identity: authState.authClient.getIdentity(), 
+            host: host 
+        });
+
+        const managementCanister = ICManagementCanister.create({ agent });
+        
+        const result = await managementCanister.canisterStatus(canisterId);
+        
+        // Get the canister name from the main backend
+        const mainBackendActor = authState.actor as ActorSubclass<BackendService>;
+        
+        return {
+            id: canisterId,
+            name: canisterName,
+            status: result.status,
+            memorySize: result.memory_size,
+            memoryAllocation: BigInt(150) * BigInt(1024) * BigInt(1024 * 1024), // 150GB in bytes
+            cyclesBalance: result.cycles
+        };
+    } catch (err: any) {
+        console.error('Error fetching canister status:', err);
+        return { err: err.message || 'Failed to fetch canister status' };
+    }
+}
+
 // --- Main Creation and Registration Logic ---
 export async function createAndRegisterCanister(name: string): Promise<CreateCanisterResult> {
 	const authState = get(authStore); // Get the current store value

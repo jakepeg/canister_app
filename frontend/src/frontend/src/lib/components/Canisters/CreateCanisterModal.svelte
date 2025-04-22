@@ -11,6 +11,7 @@
 	export let open = false; // Control modal visibility from parent
 
 	let canisterName = '';
+	let canisterSize = 10; // Default size in GB
 	let isLoading = false;
 	let error = '';
 
@@ -29,11 +30,15 @@
 			error = 'Canister name cannot be empty.';
 			return;
 		}
+		if (canisterSize <= 0) {
+			error = 'Canister size must be greater than 0 GB.';
+			return;
+		}
 		isLoading = true;
 		error = '';
 
 		try {
-			console.log(`Attempting to create and register canister: ${canisterName}`);
+			console.log(`Attempting to create and register canister: ${canisterName} with size: ${canisterSize}GB`);
 			const result = await createAndRegisterCanister(canisterName.trim());
 
 			if ('ok' in result) {
@@ -109,16 +114,17 @@
 					/>
 				</div>
 
-				<!-- Size Display -->
+				<!-- Size Input -->
 				<div>
-					<!-- Label: Style: style_4O2OYN - Inder, 15px, White -->
 					<Label class="block text-sm font-inder mb-1">Size (GB)</Label>
-					<!-- Display Field: Based on Rectangle 94 (289:151) -->
-					<div
-						class="bg-transparent border border-[#0B8CE9] rounded-[9px] px-3 py-2 font-inder text-base"
-					>
-						500gb <!-- Static value as per spec -->
-					</div>
+					<Input
+						type="number"
+						bind:value={canisterSize}
+						min="1"
+						placeholder="Enter size in GB"
+						class="bg-transparent border border-[#0B8CE9] rounded-[9px] placeholder:font-inder placeholder:text-base focus:ring-1 focus:ring-[#0B8CE9]"
+						disabled={isLoading}
+					/>
 				</div>
 
 				<!-- Setup Cost Display -->
