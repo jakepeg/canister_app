@@ -61,15 +61,27 @@ export async function getCanisterStatus(canisterId: Principal, canisterName: str
             host: host 
         });
 
+        // Fetch root key for local development network
+        if (host.includes('localhost') || host.includes('127.0.0.1')) {
+            try {
+                console.log('Fetching root key for local replica...');
+                await agent.fetchRootKey();
+                console.log('Root key fetched successfully.');
+            } catch (err: any) {
+                console.warn('Could not fetch root key:', err);
+                return { err: 'Failed to fetch root key for local development' };
+            }
+        }
+
         console.log('Creating management canister instance...');
         const managementCanister = ICManagementCanister.create({ agent });
         
         console.log('Fetching canister status...');
         const result = await managementCanister.canisterStatus(canisterId);
         console.log('Canister status result:', result);
-
+        
         const statusInfo = {
-            id: canisterId,
+			id: canisterId,
 			name: canisterName,
             status: result.status,
             memorySize: result.memory_size,
