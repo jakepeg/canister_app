@@ -76,7 +76,8 @@
 					class="absolute w-[10px] h-[10px] left-[15px] top-[17px] rounded-full filter blur-[2px]"
 					style:background-color={getStatusColor(statusInfo.status)}
 					title={getStatusText(statusInfo.status)}
-				/>
+				>
+				</div>
 			{/if}
 
 			<!-- Dropdown Menu -->
@@ -114,7 +115,8 @@
 							<div
 								class="absolute left-0 top-0 h-full bg-[#0B8CE9] rounded-full"
 								style:width={`${(Number(statusInfo.memorySize) / Number(statusInfo.memoryAllocation)) * 100}%`}
-							/>
+							>
+							</div>
 						</div>
 						<div class="text-[11px] leading-[14px] text-white">
 							{formatGB(statusInfo.memorySize)} / {formatGB(statusInfo.memoryAllocation)} GB
