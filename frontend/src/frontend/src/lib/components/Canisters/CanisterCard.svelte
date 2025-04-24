@@ -5,10 +5,14 @@
 	import { getCanisterStatus, type CanisterStatusInfo } from '$lib/services/canisterManagement';
 	import * as Card from '$lib/components/ui/card';
 	import { MoreVertical } from 'lucide-svelte';
+	import CanisterOptionsMenu from './CanisterOptionsMenu.svelte';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
+	import { buttonVariants } from "$lib/components/ui/button";
 
 	export let canisterId: Principal;
     export let canisterName: string;
 	export let onClick: () => void;
+	let menuOpen = false;
 
 	let statusInfo: CanisterStatusInfo | null = null;
 	let error: string | null = null;
@@ -44,6 +48,7 @@
 		return 'Stopped';
 	}
 
+
 	onMount(async () => {
 		const result = await getCanisterStatus(canisterId, canisterName);
 		if ('err' in result) {
@@ -59,7 +64,7 @@
 	tabindex="0"
 	on:click={onClick}
 	on:keydown={(e) => e.key === 'Enter' && onClick()}
-	class="w-[172px] h-[185px] relative"
+	class="relative"
 >
 	<Card.Root
 		class="w-full h-full border border-[#1F1F1F] shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] transition-all hover:scale-[1.02] cursor-pointer"
@@ -74,16 +79,16 @@
 				/>
 			{/if}
 
-			<!-- More Options -->
-			<button
-				class="absolute right-3 top-3"
-				on:click|stopPropagation={(e) => {
-					// Handle options menu
-					console.log('Options clicked');
-				}}
-			>
-				<MoreVertical class="w-3 h-[13px] text-white/75" />
-			</button>
+			<!-- Dropdown Menu -->
+			<DropdownMenu.Root bind:open={menuOpen}>
+				<DropdownMenu.Trigger on:click={(e: Event) => (e.stopPropagation)} class="absolute right-3 top-3 {buttonVariants({ variant: "outline", size: "icon" })}">  
+					<MoreVertical class="w-3 h-[13px] text-white/75" />
+				</DropdownMenu.Trigger>
+				<!-- The content component is rendered here -->
+				<CanisterOptionsMenu />
+			</DropdownMenu.Root>
+
+			
 
 			<!-- Canister Info -->
 			<div class="mt-8 space-y-4">
