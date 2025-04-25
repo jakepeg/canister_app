@@ -11,7 +11,7 @@ import type { _SERVICE as BackendService } from '../../../../declarations/backen
 import { type ActorSubclass } from '@dfinity/agent'; // Add ActorSubclass import
 
 // --- Imports for CMC/Ledger Flow ---
-import { CMCCanister, type Cycles, ProcessingError } from '@dfinity/cmc';
+import { CMCCanister, type Cycles, ProcessingError, type NotifyCreateCanisterArg } from '@dfinity/cmc';
 import { LedgerCanister, type BlockHeight, type TransferRequest, type TimeStamp } from '@dfinity/ledger-icp'; // Corrected import: TimeStamp
 import { AccountIdentifier, SubAccount } from '@dfinity/ledger-icp';
 import { createAgent, principalToSubAccount } from '@dfinity/utils';
@@ -98,7 +98,9 @@ export async function getCanisterStatus(canisterId: Principal, canisterName: str
 }
 
 // --- Main Creation and Registration Logic ---
-export async function createAndRegisterCanister(name: string): Promise<CreateCanisterResult> {
+export async function createAndRegisterCanister(name: string, sizeGB: number): Promise<CreateCanisterResult> {
+	const memoryAllocation = BigInt(sizeGB) * BigInt(1024) * BigInt(1024 * 1024); // Convert GB to bytes
+
 	const authState = get(authStore); // Get the current store value
 	if (authState.state !== 'authenticated') {
 		return { err: 'User not authenticated' };
@@ -208,12 +210,25 @@ export async function createAndRegisterCanister(name: string): Promise<CreateCan
 			return !(error instanceof ProcessingError);
 		};
 
+		const settings = {
+			memory_allocation: [memoryAllocation] as [bigint],
+			compute_allocation: [BigInt(0)] as [bigint],
+			freezing_threshold: [BigInt(2_592_000)] as [bigint],
+			reserved_cycles_limit: [BigInt(5_000_000_000_000)] as [bigint],
+			controllers: [[principal]] as [Principal[]],
+			wasm_memory_threshold: [BigInt(0)] as [bigint],
+			wasm_memory_limit: [] as [],
+			log_visibility: [] as []
+		};
+
+		console.log("Settings: ", settings);
+
 		const result = await poll<Principal | ProcessingError>({
 			fn: () =>
 				cmc.notifyCreateCanister({
 					controller: principal,
 					block_index: blockHeight,
-					settings: [], // Add missing optional property
+					settings: [settings], // Add missing optional property
 					subnet_type: [], // Add missing optional property
 					subnet_selection: [] // Use default subnet selection for local
 				}),

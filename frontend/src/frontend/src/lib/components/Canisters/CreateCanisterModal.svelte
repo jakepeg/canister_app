@@ -39,7 +39,7 @@
 
 		try {
 			console.log(`Attempting to create and register canister: ${canisterName} with size: ${canisterSize}GB`);
-			const result = await createAndRegisterCanister(canisterName.trim());
+			const result = await createAndRegisterCanister(canisterName.trim(), canisterSize);
 
 			if ('ok' in result) {
 				console.log(`Canister ${result.ok.toText()} created and registered successfully!`);
