@@ -26,6 +26,11 @@
 		goto(`/canister/${canisterId}/files`);
 	}
 
+	function handleCanisterUpdated() {
+		// Notify parent to refresh the canister list
+		dispatch('refreshCanisters');
+	}
+
 	// Mock data for demonstration if needed (can be removed if parent passes data)
 	// $: if (!canisters || canisters.length === 0) {
 	//  canisters = [
@@ -57,6 +62,7 @@
 					canisterId={Principal.fromText(canister.id)}
 					canisterName={canister.name}
 					onClick={() => navigateToCanisterFiles(canister.id)}
+					onCanisterUpdated={handleCanisterUpdated}
 				/>
 			{/each}
 		</div>

@@ -189,6 +189,16 @@ async fn register_canister(canister_id: Principal, name: String) -> RegisterCani
     backend::api::register_canister(canister_id, name).await
 }
 
+#[update]
+async fn rename_canister(canister_id: Principal, new_name: String) -> RenameCanisterResponse {
+    backend::api::rename_canister(canister_id, new_name).await
+}
+
+#[update]
+async fn delete_canister(canister_id: Principal) -> DeleteCanisterResponse {
+    backend::api::delete_canister_internal(canister_id).await
+}
+
 // --- End New Endpoints ---
 
 #[pre_upgrade]

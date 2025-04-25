@@ -332,3 +332,71 @@ function getCanisterCreationCmcAccountIdentifierHex({ controller }: { controller
 	});
 	return accountIdentifier.toHex();
 }
+
+export async function renameCanister(canisterId: Principal, newName: string): Promise<{ ok: true } | { err: string }> {
+    console.log(`Attempting to rename canister ${canisterId.toText()} to "${newName}"`);
+    const authState = get(authStore);
+    if (authState.state !== 'authenticated') {
+        return { err: 'User not authenticated' };
+    }
+
+    try {
+        const mainBackendActor = authState.actor as ActorSubclass<BackendService>;
+        const result = await mainBackendActor.rename_canister(canisterId, newName);
+        
+        if ('Ok' in result) {
+            return { ok: true };
+        } else {
+            // Handle specific error cases
+            const errorType = Object.keys(result)[0];
+            switch (errorType) {
+                case 'NotAuthorized':
+                    return { err: 'Not authorized to rename this canister' };
+                case 'CanisterNotFound':
+                    return { err: 'Canister not found' };
+                case 'InternalError':
+                    return { err: `Internal error: ${(result as any).InternalError}` };
+                default:
+                    return { err: `Unknown error: ${errorType}` };
+            }
+        }
+    } catch (err: any) {
+        console.error('Error renaming canister:', err);
+        return { err: err.message || 'Failed to rename canister' };
+    }
+}
+
+export async function deleteCanister(canisterId: Principal): Promise<{ ok: true } | { err: string }> {
+    console.log(`Attempting to delete canister ${canisterId.toText()}`);
+    const authState = get(authStore);
+    if (authState.state !== 'authenticated') {
+        return { err: 'User not authenticated' };
+    }
+
+    try {
+        const mainBackendActor = authState.actor as ActorSubclass<BackendService>;
+        const result = await mainBackendActor.delete_canister(canisterId);
+        
+        if ('Ok' in result) {
+            return { ok: true };
+        } else {
+            // Handle specific error cases
+            const errorType = Object.keys(result)[0];
+            switch (errorType) {
+                case 'NotAuthorized':
+                    return { err: 'Not authorized to delete this canister' };
+                case 'CanisterNotFound':
+                    return { err: 'Canister not found' };
+                case 'DeletionFailed':
+                    return { err: `Deletion failed: ${(result as any).DeletionFailed}` };
+                case 'InternalError':
+                    return { err: `Internal error: ${(result as any).InternalError}` };
+                default:
+                    return { err: `Unknown error: ${errorType}` };
+            }
+        }
+    } catch (err: any) {
+        console.error('Error deleting canister:', err);
+        return { err: err.message || 'Failed to delete canister' };
+    }
+}

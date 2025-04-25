@@ -446,6 +446,23 @@ pub enum GetUserCanistersResponse {
     Ok(Vec<CanisterInfo>),
     NotAuthenticated,
 }
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum RenameCanisterResponse {
+    Ok,
+    NotAuthorized,
+    CanisterNotFound,
+    InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum DeleteCanisterResponse {
+    Ok,
+    NotAuthorized,
+    CanisterNotFound,
+    DeletionFailed(String),
+    InternalError(String),
+}
 // --- End New Types ---
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]

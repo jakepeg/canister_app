@@ -1,16 +1,13 @@
-use crate::{with_user_canisters, with_user_canisters_mut, CanisterInfo, CanisterInfoVec};
-use candid::{CandidType, Principal}; // Removed Nat
-use ic_cdk::api::management_canister::main::{
-    canister_status,
-    CanisterIdRecord, // Removed CanisterSettings as ManagementCanisterSettings, CanisterStatusResponse
-};
-use ic_cdk_macros::{query, update};
-use serde::{Deserialize, Serialize};
-// Removed RegisterCanisterResponse and GetUserCanistersResponse enum definitions from here. They will be moved to lib.rs.
-use crate::{GetUserCanistersResponse, RegisterCanisterResponse}; // Import the types from lib.rs
+use crate::{with_user_canisters, with_user_canisters_mut, CanisterInfo};
+use candid::Principal;
+use ic_cdk::api::management_canister::main::{canister_status, stop_canister, CanisterIdRecord};
 
-// Placeholder for get_user_canisters
-// Removed #[query] macro
+// Import the response types from lib.rs
+use crate::{
+    DeleteCanisterResponse, GetUserCanistersResponse, RegisterCanisterResponse,
+    RenameCanisterResponse,
+};
+
 pub fn get_user_canisters() -> GetUserCanistersResponse {
     // Added pub
     let caller = ic_cdk::caller();
@@ -27,8 +24,6 @@ pub fn get_user_canisters() -> GetUserCanistersResponse {
     GetUserCanistersResponse::Ok(canisters)
 }
 
-// Placeholder for register_canister
-// Removed #[update] macro
 pub async fn register_canister(canister_id: Principal, name: String) -> RegisterCanisterResponse {
     // Added pub
     let caller = ic_cdk::caller();
@@ -66,6 +61,80 @@ pub async fn register_canister(canister_id: Principal, name: String) -> Register
     match result {
         Ok(_) => RegisterCanisterResponse::Ok,
         Err(e) => e, // Return AlreadyRegistered error
+    }
+}
+
+pub async fn rename_canister(canister_id: Principal, new_name: String) -> RenameCanisterResponse {
+    let caller = ic_cdk::caller();
+    if caller == Principal::anonymous() {
+        return RenameCanisterResponse::NotAuthorized;
+    }
+
+    with_user_canisters_mut(|map| {
+        if let Some(mut canister_list) = map.get(&caller).cloned() {
+            if let Some(canister) = canister_list.0.iter_mut().find(|c| c.id == canister_id) {
+                canister.name = new_name;
+                map.insert(caller, canister_list);
+                RenameCanisterResponse::Ok
+            } else {
+                RenameCanisterResponse::CanisterNotFound
+            }
+        } else {
+            RenameCanisterResponse::CanisterNotFound
+        }
+    })
+}
+
+pub async fn delete_canister_internal(canister_id: Principal) -> DeleteCanisterResponse {
+    let caller = ic_cdk::caller();
+    if caller == Principal::anonymous() {
+        return DeleteCanisterResponse::NotAuthorized;
+    }
+
+    // First verify the canister exists in user's list
+    let canister_exists = with_user_canisters(|map| {
+        map.get(&caller)
+            .map(|list| list.0.iter().any(|c| c.id == canister_id))
+            .unwrap_or(false)
+    });
+
+    if !canister_exists {
+        return DeleteCanisterResponse::CanisterNotFound;
+    }
+
+    // Stop the canister first
+    match stop_canister(&CanisterIdRecord { canister_id }).await {
+        Ok(_) => (),
+        Err((_, msg)) => {
+            return DeleteCanisterResponse::DeletionFailed(format!(
+                "Failed to stop canister: {}",
+                msg
+            ))
+        }
+    }
+
+    // Delete the canister using the IC management canister
+    match ic_cdk::api::management_canister::main::delete_canister(&CanisterIdRecord { canister_id })
+        .await
+    {
+        Ok(_) => {
+            // Remove from user's list
+            let result = with_user_canisters_mut(|map| {
+                if let Some(mut canister_list) = map.get(&caller).map(|list| list.clone()) {
+                    canister_list.0.retain(|c| c.id != canister_id);
+                    map.insert(caller, canister_list);
+                    Ok(())
+                } else {
+                    Err("Canister list not found")
+                }
+            });
+
+            match result {
+                Ok(_) => DeleteCanisterResponse::Ok,
+                Err(msg) => DeleteCanisterResponse::InternalError(msg.to_string()),
+            }
+        }
+        Err((_, msg)) => DeleteCanisterResponse::DeletionFailed(msg),
     }
 }
 

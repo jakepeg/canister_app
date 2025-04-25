@@ -173,6 +173,21 @@ type GetUserCanistersResponse = variant {
   Ok : vec CanisterInfo;
   NotAuthenticated;
 };
+
+type RenameCanisterResponse = variant {
+  Ok;
+  NotAuthorized;
+  CanisterNotFound;
+  InternalError : text;
+};
+
+type DeleteCanisterResponse = variant {
+  Ok;
+  NotAuthorized;
+  CanisterNotFound;
+  DeletionFailed : text;
+  InternalError : text;
+};
 // --- End New Types ---
 
 service docutrack : {
@@ -235,5 +250,7 @@ service docutrack : {
   // --- New Canister Management Methods ---
   register_canister : (canister_id : principal, name : text) -> (RegisterCanisterResponse);
   get_user_canisters : () -> (GetUserCanistersResponse) query;
+  rename_canister : (principal, text) -> (RenameCanisterResponse);
+  delete_canister : (principal) -> (DeleteCanisterResponse);
   // --- End New Methods ---
 };
