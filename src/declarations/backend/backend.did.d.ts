@@ -3,12 +3,21 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface CanisterInfo { 'id' : Principal, 'name' : string }
+export type DeleteCanisterResponse = { 'Ok' : null } |
+  { 'CanisterNotFound' : null } |
+  { 'DeletionFailed' : string } |
+  { 'NotAuthorized' : null } |
+  { 'InternalError' : string };
 export type GetUserCanistersResponse = { 'Ok' : Array<CanisterInfo> } |
   { 'NotAuthenticated' : null };
 export type RegisterCanisterResponse = { 'Ok' : null } |
   { 'AlreadyRegistered' : null } |
   { 'NotAuthorized' : null } |
   { 'VerificationFailed' : string } |
+  { 'InternalError' : string };
+export type RenameCanisterResponse = { 'Ok' : null } |
+  { 'CanisterNotFound' : null } |
+  { 'NotAuthorized' : null } |
   { 'InternalError' : string };
 export type VetkdEncryptedKeyResponse = { 'Ok' : Uint8Array | number[] } |
   { 'Err' : string };
@@ -107,6 +116,7 @@ export interface user {
 export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
 export interface _SERVICE {
+  'delete_canister' : ActorMethod<[Principal], DeleteCanisterResponse>,
   'delete_file' : ActorMethod<[file_id], share_file_response>,
   'delete_template' : ActorMethod<[string], undefined>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
@@ -135,6 +145,7 @@ export interface _SERVICE {
     [Principal, string],
     RegisterCanisterResponse
   >,
+  'rename_canister' : ActorMethod<[Principal, string], RenameCanisterResponse>,
   'rename_file' : ActorMethod<[file_id, string], share_file_response>,
   'request_file' : ActorMethod<[string], string>,
   'revoke_share' : ActorMethod<[Principal, file_id], share_file_response>,
@@ -156,4 +167,4 @@ export interface _SERVICE {
   'who_am_i' : ActorMethod<[], who_am_i_response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

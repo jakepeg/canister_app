@@ -7,19 +7,7 @@ export interface AddWasmRequest {
   'wasm' : [] | [SnsWasm],
 }
 export interface AddWasmResponse { 'result' : [] | [Result] }
-export interface AirdropDistribution {
-  'airdrop_neurons' : Array<NeuronDistribution>,
-}
 export interface Canister { 'id' : [] | [Principal] }
-export interface CfNeuron {
-  'has_created_neuron_recipes' : [] | [boolean],
-  'nns_neuron_id' : bigint,
-  'amount_icp_e8s' : bigint,
-}
-export interface CfParticipant {
-  'hotkey_principal' : string,
-  'cf_neurons' : Array<CfNeuron>,
-}
 export interface Countries { 'iso_codes' : Array<string> }
 export interface DappCanisters { 'canisters' : Array<Canister> }
 export interface DappCanistersTransferResult {
@@ -49,7 +37,6 @@ export interface DeveloperDistribution {
 export interface FractionalDeveloperVotingPower {
   'treasury_distribution' : [] | [TreasuryDistribution],
   'developer_distribution' : [] | [DeveloperDistribution],
-  'airdrop_distribution' : [] | [AirdropDistribution],
   'swap_distribution' : [] | [SwapDistribution],
 }
 export interface GetAllowedPrincipalsResponse {
@@ -70,7 +57,17 @@ export interface GetNextSnsVersionRequest {
 export interface GetNextSnsVersionResponse {
   'next_version' : [] | [SnsVersion],
 }
+export interface GetProposalIdThatAddedWasmRequest {
+  'hash' : Uint8Array | number[],
+}
+export interface GetProposalIdThatAddedWasmResponse {
+  'proposal_id' : [] | [bigint],
+}
 export interface GetSnsSubnetIdsResponse { 'sns_subnet_ids' : Array<Principal> }
+export interface GetWasmMetadataRequest {
+  'hash' : [] | [Uint8Array | number[]],
+}
+export interface GetWasmMetadataResponse { 'result' : [] | [Result_1] }
 export interface GetWasmRequest { 'hash' : Uint8Array | number[] }
 export interface GetWasmResponse { 'wasm' : [] | [SnsWasm] }
 export interface IdealMatchedParticipationFunction {
@@ -104,6 +101,11 @@ export interface ListUpgradeStepsRequest {
   'sns_governance_canister_id' : [] | [Principal],
 }
 export interface ListUpgradeStepsResponse { 'steps' : Array<ListUpgradeStep> }
+export interface MetadataSection {
+  'contents' : [] | [Uint8Array | number[]],
+  'name' : [] | [string],
+  'visibility' : [] | [string],
+}
 export interface NeuronBasketConstructionParameters {
   'dissolve_delay_interval_seconds' : bigint,
   'count' : bigint,
@@ -115,9 +117,6 @@ export interface NeuronDistribution {
   'stake_e8s' : bigint,
   'vesting_period_seconds' : [] | [bigint],
 }
-export interface NeuronsFundParticipants {
-  'participants' : Array<CfParticipant>,
-}
 export interface NeuronsFundParticipationConstraints {
   'coefficient_intervals' : Array<LinearScalingCoefficient>,
   'max_neurons_fund_participation_icp_e8s' : [] | [bigint],
@@ -126,6 +125,7 @@ export interface NeuronsFundParticipationConstraints {
     IdealMatchedParticipationFunction
   ],
 }
+export interface Ok { 'sections' : Array<MetadataSection> }
 export interface PrettySnsVersion {
   'archive_wasm_hash' : string,
   'root_wasm_hash' : string,
@@ -136,6 +136,8 @@ export interface PrettySnsVersion {
 }
 export type Result = { 'Error' : SnsWasmError } |
   { 'Hash' : Uint8Array | number[] };
+export type Result_1 = { 'Ok' : Ok } |
+  { 'Error' : SnsWasmError };
 export interface SnsCanisterIds {
   'root' : [] | [Principal],
   'swap' : [] | [Principal],
@@ -175,7 +177,6 @@ export interface SnsInitPayload {
   'neurons_fund_participation_constraints' : [] | [
     NeuronsFundParticipationConstraints
   ],
-  'neurons_fund_participants' : [] | [NeuronsFundParticipants],
   'max_age_bonus_percentage' : [] | [bigint],
   'initial_token_distribution' : [] | [InitialTokenDistribution],
   'reward_rate_transition_duration_seconds' : [] | [bigint],
@@ -202,6 +203,7 @@ export interface SnsVersion {
 }
 export interface SnsWasm {
   'wasm' : Uint8Array | number[],
+  'proposal_id' : [] | [bigint],
   'canister_type' : number,
 }
 export interface SnsWasmCanisterInitPayload {
@@ -245,8 +247,16 @@ export interface _SERVICE {
     [GetNextSnsVersionRequest],
     GetNextSnsVersionResponse
   >,
+  'get_proposal_id_that_added_wasm' : ActorMethod<
+    [GetProposalIdThatAddedWasmRequest],
+    GetProposalIdThatAddedWasmResponse
+  >,
   'get_sns_subnet_ids' : ActorMethod<[{}], GetSnsSubnetIdsResponse>,
   'get_wasm' : ActorMethod<[GetWasmRequest], GetWasmResponse>,
+  'get_wasm_metadata' : ActorMethod<
+    [GetWasmMetadataRequest],
+    GetWasmMetadataResponse
+  >,
   'insert_upgrade_path_entries' : ActorMethod<
     [InsertUpgradePathEntriesRequest],
     InsertUpgradePathEntriesResponse
@@ -266,4 +276,4 @@ export interface _SERVICE {
   >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

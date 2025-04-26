@@ -47,4 +47,4 @@ export declare const createActor: (
  * Intialized Actor using default settings, ready to talk to a canister using its candid interface
  * @constructs {@link ActorSubClass}
  */
-export declare const nns-governance: ActorSubclass<_SERVICE>;
+export declare const nns_governance: ActorSubclass<_SERVICE>;

@@ -10,8 +10,7 @@ export { idlFactory } from "./nns-ledger.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_NNS-LEDGER ||
-  process.env.NNS-LEDGER_CANISTER_ID;
+  process.env.CANISTER_ID_NNS_LEDGER;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -40,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const nns-ledger = canisterId ? createActor(canisterId) : undefined;
+export const nns_ledger = canisterId ? createActor(canisterId) : undefined;

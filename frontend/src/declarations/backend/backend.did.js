@@ -1,4 +1,11 @@
 export const idlFactory = ({ IDL }) => {
+  const DeleteCanisterResponse = IDL.Variant({
+    'Ok' : IDL.Null,
+    'CanisterNotFound' : IDL.Null,
+    'DeletionFailed' : IDL.Text,
+    'NotAuthorized' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const file_id = IDL.Nat64;
   const share_file_response = IDL.Variant({
     'ok' : IDL.Null,
@@ -91,6 +98,12 @@ export const idlFactory = ({ IDL }) => {
     'VerificationFailed' : IDL.Text,
     'InternalError' : IDL.Text,
   });
+  const RenameCanisterResponse = IDL.Variant({
+    'Ok' : IDL.Null,
+    'CanisterNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const set_user_response = IDL.Variant({
     'ok' : IDL.Null,
     'username_exists' : IDL.Null,
@@ -133,6 +146,7 @@ export const idlFactory = ({ IDL }) => {
     'unknown_user' : IDL.Null,
   });
   return IDL.Service({
+    'delete_canister' : IDL.Func([IDL.Principal], [DeleteCanisterResponse], []),
     'delete_file' : IDL.Func([file_id], [share_file_response], []),
     'delete_template' : IDL.Func([IDL.Text], [], []),
     'download_file' : IDL.Func(
@@ -181,6 +195,11 @@ export const idlFactory = ({ IDL }) => {
     'register_canister' : IDL.Func(
         [IDL.Principal, IDL.Text],
         [RegisterCanisterResponse],
+        [],
+      ),
+    'rename_canister' : IDL.Func(
+        [IDL.Principal, IDL.Text],
+        [RenameCanisterResponse],
         [],
       ),
     'rename_file' : IDL.Func([file_id, IDL.Text], [share_file_response], []),

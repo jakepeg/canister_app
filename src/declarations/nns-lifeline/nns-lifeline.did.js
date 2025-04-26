@@ -1,36 +1,35 @@
 export const idlFactory = ({ IDL }) => {
-  const CanisterStatusType = IDL.Variant({
-    'stopped' : IDL.Null,
-    'stopping' : IDL.Null,
-    'running' : IDL.Null,
+  const HardResetRootToVersionPayload = IDL.Record({
+    'wasm_module' : IDL.Vec(IDL.Nat8),
+    'init_arg' : IDL.Vec(IDL.Nat8),
   });
-  const DefiniteCanisterSettings = IDL.Record({
-    'controllers' : IDL.Vec(IDL.Principal),
+  const UpgradeRootProposalPayload = IDL.Record({
+    'wasm_module' : IDL.Vec(IDL.Nat8),
+    'module_arg' : IDL.Vec(IDL.Nat8),
+    'stop_upgrade_start' : IDL.Bool,
   });
-  const CanisterStatusResult = IDL.Record({
-    'status' : CanisterStatusType,
-    'memory_size' : IDL.Nat,
-    'cycles' : IDL.Nat,
-    'settings' : DefiniteCanisterSettings,
-    'module_hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  const LogVisibility = IDL.Variant({
+    'controllers' : IDL.Null,
+    'public' : IDL.Null,
+  });
+  const CanisterSettings = IDL.Record({
+    'freezing_threshold' : IDL.Opt(IDL.Nat),
+    'wasm_memory_threshold' : IDL.Opt(IDL.Nat),
+    'controllers' : IDL.Opt(IDL.Vec(IDL.Principal)),
+    'reserved_cycles_limit' : IDL.Opt(IDL.Nat),
+    'log_visibility' : IDL.Opt(LogVisibility),
+    'wasm_memory_limit' : IDL.Opt(IDL.Nat),
+    'memory_allocation' : IDL.Opt(IDL.Nat),
+    'compute_allocation' : IDL.Opt(IDL.Nat),
   });
   return IDL.Service({
-    'canister_status' : IDL.Func(
-        [IDL.Record({ 'canister_id' : IDL.Principal })],
-        [CanisterStatusResult],
-        [],
-      ),
-    'upgrade_root' : IDL.Func(
-        [
-          IDL.Record({
-            'wasm_module' : IDL.Vec(IDL.Nat8),
-            'module_arg' : IDL.Vec(IDL.Nat8),
-            'stop_upgrade_start' : IDL.Bool,
-          }),
-        ],
+    'hard_reset_root_to_version' : IDL.Func(
+        [HardResetRootToVersionPayload],
         [],
         [],
       ),
+    'upgrade_root' : IDL.Func([UpgradeRootProposalPayload], [], []),
+    'upgrade_root_settings' : IDL.Func([CanisterSettings], [], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

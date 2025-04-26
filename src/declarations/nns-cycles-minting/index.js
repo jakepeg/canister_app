@@ -10,8 +10,7 @@ export { idlFactory } from "./nns-cycles-minting.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_NNS-CYCLES-MINTING ||
-  process.env.NNS-CYCLES-MINTING_CANISTER_ID;
+  process.env.CANISTER_ID_NNS_CYCLES_MINTING;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -40,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const nns-cycles-minting = canisterId ? createActor(canisterId) : undefined;
+export const nns_cycles_minting = canisterId ? createActor(canisterId) : undefined;

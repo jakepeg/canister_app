@@ -5,11 +5,12 @@ import type { IDL } from '@dfinity/candid';
 export type AccountIdentifier = string;
 export type BlockIndex = bigint;
 export interface CanisterSettings {
-  'controller' : [] | [Principal],
   'freezing_threshold' : [] | [bigint],
+  'wasm_memory_threshold' : [] | [bigint],
   'controllers' : [] | [Array<Principal>],
   'reserved_cycles_limit' : [] | [bigint],
   'log_visibility' : [] | [log_visibility],
+  'wasm_memory_limit' : [] | [bigint],
   'memory_allocation' : [] | [bigint],
   'compute_allocation' : [] | [bigint],
 }
@@ -20,8 +21,7 @@ export interface CreateCanisterArg {
 }
 export type CreateCanisterError = {
     'Refunded' : { 'create_error' : string, 'refund_amount' : bigint }
-  } |
-  { 'RefundFailed' : { 'create_error' : string, 'refund_error' : string } };
+  };
 export type CreateCanisterResult = { 'Ok' : Principal } |
   { 'Err' : CreateCanisterError };
 export type Cycles = bigint;
@@ -94,6 +94,7 @@ export type log_visibility = { 'controllers' : null } |
 export interface _SERVICE {
   'create_canister' : ActorMethod<[CreateCanisterArg], CreateCanisterResult>,
   'get_build_metadata' : ActorMethod<[], string>,
+  'get_default_subnets' : ActorMethod<[], Array<Principal>>,
   'get_icp_xdr_conversion_rate' : ActorMethod<[], IcpXdrConversionRateResponse>,
   'get_principals_authorized_to_create_canisters_to_subnets' : ActorMethod<
     [],
@@ -111,4 +112,4 @@ export interface _SERVICE {
   'notify_top_up' : ActorMethod<[NotifyTopUpArg], NotifyTopUpResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

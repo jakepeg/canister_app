@@ -10,8 +10,7 @@ export { idlFactory } from "./nns-lifeline.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_NNS-LIFELINE ||
-  process.env.NNS-LIFELINE_CANISTER_ID;
+  process.env.CANISTER_ID_NNS_LIFELINE;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -40,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const nns-lifeline = canisterId ? createActor(canisterId) : undefined;
+export const nns_lifeline = canisterId ? createActor(canisterId) : undefined;

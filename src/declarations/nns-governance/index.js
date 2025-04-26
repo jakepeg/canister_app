@@ -10,8 +10,7 @@ export { idlFactory } from "./nns-governance.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_NNS-GOVERNANCE ||
-  process.env.NNS-GOVERNANCE_CANISTER_ID;
+  process.env.CANISTER_ID_NNS_GOVERNANCE;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -40,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const nns-governance = canisterId ? createActor(canisterId) : undefined;
+export const nns_governance = canisterId ? createActor(canisterId) : undefined;

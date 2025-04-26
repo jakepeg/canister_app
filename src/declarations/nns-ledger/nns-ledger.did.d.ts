@@ -42,6 +42,7 @@ export interface ArchiveOptions {
   'num_blocks_to_archive' : bigint,
   'max_transactions_per_response' : [] | [bigint],
   'trigger_threshold' : bigint,
+  'more_controller_ids' : [] | [Array<Principal>],
   'max_message_size_bytes' : [] | [bigint],
   'cycles_for_archive_creation' : [] | [bigint],
   'node_max_memory_size_bytes' : [] | [bigint],
@@ -88,8 +89,6 @@ export interface InitArgs {
   'token_symbol' : [] | [string],
   'transfer_fee' : [] | [Tokens],
   'minting_account' : TextAccountIdentifier,
-  'maximum_number_of_accounts' : [] | [bigint],
-  'accounts_overflow_trim_quantity' : [] | [bigint],
   'transaction_window' : [] | [Duration],
   'max_message_size_bytes' : [] | [bigint],
   'icrc1_minting_account' : [] | [Account],
@@ -221,7 +220,6 @@ export type TransferFromResult = { 'Ok' : Icrc1BlockIndex } |
 export type TransferResult = { 'Ok' : BlockIndex } |
   { 'Err' : TransferError };
 export interface UpgradeArgs {
-  'maximum_number_of_accounts' : [] | [bigint],
   'icrc1_minting_account' : [] | [Account],
   'feature_flags' : [] | [FeatureFlags],
 }
@@ -229,12 +227,54 @@ export type Value = { 'Int' : bigint } |
   { 'Nat' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
+export interface icrc21_consent_info {
+  'metadata' : icrc21_consent_message_metadata,
+  'consent_message' : icrc21_consent_message,
+}
+export type icrc21_consent_message = {
+    'LineDisplayMessage' : { 'pages' : Array<{ 'lines' : Array<string> }> }
+  } |
+  { 'GenericDisplayMessage' : string };
+export interface icrc21_consent_message_metadata {
+  'utc_offset_minutes' : [] | [number],
+  'language' : string,
+}
+export interface icrc21_consent_message_request {
+  'arg' : Uint8Array | number[],
+  'method' : string,
+  'user_preferences' : icrc21_consent_message_spec,
+}
+export type icrc21_consent_message_response = { 'Ok' : icrc21_consent_info } |
+  { 'Err' : icrc21_error };
+export interface icrc21_consent_message_spec {
+  'metadata' : icrc21_consent_message_metadata,
+  'device_spec' : [] | [
+    { 'GenericDisplay' : null } |
+      {
+        'LineDisplay' : {
+          'characters_per_line' : number,
+          'lines_per_page' : number,
+        }
+      }
+  ],
+}
+export type icrc21_error = {
+    'GenericError' : { 'description' : string, 'error_code' : bigint }
+  } |
+  { 'InsufficientPayment' : icrc21_error_info } |
+  { 'UnsupportedCanisterCall' : icrc21_error_info } |
+  { 'ConsentMessageUnavailable' : icrc21_error_info };
+export interface icrc21_error_info { 'description' : string }
 export interface _SERVICE {
   'account_balance' : ActorMethod<[AccountBalanceArgs], Tokens>,
   'account_balance_dfx' : ActorMethod<[AccountBalanceArgsDfx], Tokens>,
   'account_identifier' : ActorMethod<[Account], AccountIdentifier>,
   'archives' : ActorMethod<[], Archives>,
   'decimals' : ActorMethod<[], { 'decimals' : number }>,
+  'icrc10_supported_standards' : ActorMethod<
+    [],
+    Array<{ 'url' : string, 'name' : string }>
+  >,
   'icrc1_balance_of' : ActorMethod<[Account], Icrc1Tokens>,
   'icrc1_decimals' : ActorMethod<[], number>,
   'icrc1_fee' : ActorMethod<[], Icrc1Tokens>,
@@ -248,9 +288,14 @@ export interface _SERVICE {
   'icrc1_symbol' : ActorMethod<[], string>,
   'icrc1_total_supply' : ActorMethod<[], Icrc1Tokens>,
   'icrc1_transfer' : ActorMethod<[TransferArg], Icrc1TransferResult>,
+  'icrc21_canister_call_consent_message' : ActorMethod<
+    [icrc21_consent_message_request],
+    icrc21_consent_message_response
+  >,
   'icrc2_allowance' : ActorMethod<[AllowanceArgs], Allowance>,
   'icrc2_approve' : ActorMethod<[ApproveArgs], ApproveResult>,
   'icrc2_transfer_from' : ActorMethod<[TransferFromArgs], TransferFromResult>,
+  'is_ledger_ready' : ActorMethod<[], boolean>,
   'name' : ActorMethod<[], { 'name' : string }>,
   'query_blocks' : ActorMethod<[GetBlocksArgs], QueryBlocksResponse>,
   'query_encoded_blocks' : ActorMethod<
@@ -263,4 +308,4 @@ export interface _SERVICE {
   'transfer_fee' : ActorMethod<[TransferFeeArg], TransferFee>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -6,6 +6,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SnsWasm = IDL.Record({
     'wasm' : IDL.Vec(IDL.Nat8),
+    'proposal_id' : IDL.Opt(IDL.Nat64),
     'canister_type' : IDL.Int32,
   });
   const AddWasmRequest = IDL.Record({
@@ -42,18 +43,6 @@ export const idlFactory = ({ IDL }) => {
       IdealMatchedParticipationFunction
     ),
   });
-  const CfNeuron = IDL.Record({
-    'has_created_neuron_recipes' : IDL.Opt(IDL.Bool),
-    'nns_neuron_id' : IDL.Nat64,
-    'amount_icp_e8s' : IDL.Nat64,
-  });
-  const CfParticipant = IDL.Record({
-    'hotkey_principal' : IDL.Text,
-    'cf_neurons' : IDL.Vec(CfNeuron),
-  });
-  const NeuronsFundParticipants = IDL.Record({
-    'participants' : IDL.Vec(CfParticipant),
-  });
   const TreasuryDistribution = IDL.Record({ 'total_e8s' : IDL.Nat64 });
   const NeuronDistribution = IDL.Record({
     'controller' : IDL.Opt(IDL.Principal),
@@ -65,9 +54,6 @@ export const idlFactory = ({ IDL }) => {
   const DeveloperDistribution = IDL.Record({
     'developer_neurons' : IDL.Vec(NeuronDistribution),
   });
-  const AirdropDistribution = IDL.Record({
-    'airdrop_neurons' : IDL.Vec(NeuronDistribution),
-  });
   const SwapDistribution = IDL.Record({
     'total_e8s' : IDL.Nat64,
     'initial_swap_amount_e8s' : IDL.Nat64,
@@ -75,7 +61,6 @@ export const idlFactory = ({ IDL }) => {
   const FractionalDeveloperVotingPower = IDL.Record({
     'treasury_distribution' : IDL.Opt(TreasuryDistribution),
     'developer_distribution' : IDL.Opt(DeveloperDistribution),
-    'airdrop_distribution' : IDL.Opt(AirdropDistribution),
     'swap_distribution' : IDL.Opt(SwapDistribution),
   });
   const InitialTokenDistribution = IDL.Variant({
@@ -114,7 +99,6 @@ export const idlFactory = ({ IDL }) => {
     'neurons_fund_participation_constraints' : IDL.Opt(
       NeuronsFundParticipationConstraints
     ),
-    'neurons_fund_participants' : IDL.Opt(NeuronsFundParticipants),
     'max_age_bonus_percentage' : IDL.Opt(IDL.Nat64),
     'initial_token_distribution' : IDL.Opt(InitialTokenDistribution),
     'reward_rate_transition_duration_seconds' : IDL.Opt(IDL.Nat64),
@@ -185,11 +169,28 @@ export const idlFactory = ({ IDL }) => {
   const GetNextSnsVersionResponse = IDL.Record({
     'next_version' : IDL.Opt(SnsVersion),
   });
+  const GetProposalIdThatAddedWasmRequest = IDL.Record({
+    'hash' : IDL.Vec(IDL.Nat8),
+  });
+  const GetProposalIdThatAddedWasmResponse = IDL.Record({
+    'proposal_id' : IDL.Opt(IDL.Nat64),
+  });
   const GetSnsSubnetIdsResponse = IDL.Record({
     'sns_subnet_ids' : IDL.Vec(IDL.Principal),
   });
   const GetWasmRequest = IDL.Record({ 'hash' : IDL.Vec(IDL.Nat8) });
   const GetWasmResponse = IDL.Record({ 'wasm' : IDL.Opt(SnsWasm) });
+  const GetWasmMetadataRequest = IDL.Record({
+    'hash' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const MetadataSection = IDL.Record({
+    'contents' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+    'name' : IDL.Opt(IDL.Text),
+    'visibility' : IDL.Opt(IDL.Text),
+  });
+  const Ok = IDL.Record({ 'sections' : IDL.Vec(MetadataSection) });
+  const Result_1 = IDL.Variant({ 'Ok' : Ok, 'Error' : SnsWasmError });
+  const GetWasmMetadataResponse = IDL.Record({ 'result' : IDL.Opt(Result_1) });
   const SnsUpgrade = IDL.Record({
     'next_version' : IDL.Opt(SnsVersion),
     'current_version' : IDL.Opt(SnsVersion),
@@ -269,12 +270,22 @@ export const idlFactory = ({ IDL }) => {
         [GetNextSnsVersionResponse],
         ['query'],
       ),
+    'get_proposal_id_that_added_wasm' : IDL.Func(
+        [GetProposalIdThatAddedWasmRequest],
+        [GetProposalIdThatAddedWasmResponse],
+        ['query'],
+      ),
     'get_sns_subnet_ids' : IDL.Func(
         [IDL.Record({})],
         [GetSnsSubnetIdsResponse],
         ['query'],
       ),
     'get_wasm' : IDL.Func([GetWasmRequest], [GetWasmResponse], ['query']),
+    'get_wasm_metadata' : IDL.Func(
+        [GetWasmMetadataRequest],
+        [GetWasmMetadataResponse],
+        ['query'],
+      ),
     'insert_upgrade_path_entries' : IDL.Func(
         [InsertUpgradePathEntriesRequest],
         [InsertUpgradePathEntriesResponse],

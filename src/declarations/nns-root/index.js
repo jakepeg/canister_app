@@ -10,8 +10,7 @@ export { idlFactory } from "./nns-root.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_NNS-ROOT ||
-  process.env.NNS-ROOT_CANISTER_ID;
+  process.env.CANISTER_ID_NNS_ROOT;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -40,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const nns-root = canisterId ? createActor(canisterId) : undefined;
+export const nns_root = canisterId ? createActor(canisterId) : undefined;

@@ -6,7 +6,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const FeatureFlags = IDL.Record({ 'icrc2' : IDL.Bool });
   const UpgradeArgs = IDL.Record({
-    'maximum_number_of_accounts' : IDL.Opt(IDL.Nat64),
     'icrc1_minting_account' : IDL.Opt(Account),
     'feature_flags' : IDL.Opt(FeatureFlags),
   });
@@ -17,6 +16,7 @@ export const idlFactory = ({ IDL }) => {
     'num_blocks_to_archive' : IDL.Nat64,
     'max_transactions_per_response' : IDL.Opt(IDL.Nat64),
     'trigger_threshold' : IDL.Nat64,
+    'more_controller_ids' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'max_message_size_bytes' : IDL.Opt(IDL.Nat64),
     'cycles_for_archive_creation' : IDL.Opt(IDL.Nat64),
     'node_max_memory_size_bytes' : IDL.Opt(IDL.Nat64),
@@ -27,8 +27,6 @@ export const idlFactory = ({ IDL }) => {
     'token_symbol' : IDL.Opt(IDL.Text),
     'transfer_fee' : IDL.Opt(Tokens),
     'minting_account' : TextAccountIdentifier,
-    'maximum_number_of_accounts' : IDL.Opt(IDL.Nat64),
-    'accounts_overflow_trim_quantity' : IDL.Opt(IDL.Nat64),
     'transaction_window' : IDL.Opt(Duration),
     'max_message_size_bytes' : IDL.Opt(IDL.Nat64),
     'icrc1_minting_account' : IDL.Opt(Account),
@@ -81,6 +79,51 @@ export const idlFactory = ({ IDL }) => {
   const Icrc1TransferResult = IDL.Variant({
     'Ok' : Icrc1BlockIndex,
     'Err' : Icrc1TransferError,
+  });
+  const icrc21_consent_message_metadata = IDL.Record({
+    'utc_offset_minutes' : IDL.Opt(IDL.Int16),
+    'language' : IDL.Text,
+  });
+  const icrc21_consent_message_spec = IDL.Record({
+    'metadata' : icrc21_consent_message_metadata,
+    'device_spec' : IDL.Opt(
+      IDL.Variant({
+        'GenericDisplay' : IDL.Null,
+        'LineDisplay' : IDL.Record({
+          'characters_per_line' : IDL.Nat16,
+          'lines_per_page' : IDL.Nat16,
+        }),
+      })
+    ),
+  });
+  const icrc21_consent_message_request = IDL.Record({
+    'arg' : IDL.Vec(IDL.Nat8),
+    'method' : IDL.Text,
+    'user_preferences' : icrc21_consent_message_spec,
+  });
+  const icrc21_consent_message = IDL.Variant({
+    'LineDisplayMessage' : IDL.Record({
+      'pages' : IDL.Vec(IDL.Record({ 'lines' : IDL.Vec(IDL.Text) })),
+    }),
+    'GenericDisplayMessage' : IDL.Text,
+  });
+  const icrc21_consent_info = IDL.Record({
+    'metadata' : icrc21_consent_message_metadata,
+    'consent_message' : icrc21_consent_message,
+  });
+  const icrc21_error_info = IDL.Record({ 'description' : IDL.Text });
+  const icrc21_error = IDL.Variant({
+    'GenericError' : IDL.Record({
+      'description' : IDL.Text,
+      'error_code' : IDL.Nat,
+    }),
+    'InsufficientPayment' : icrc21_error_info,
+    'UnsupportedCanisterCall' : icrc21_error_info,
+    'ConsentMessageUnavailable' : icrc21_error_info,
+  });
+  const icrc21_consent_message_response = IDL.Variant({
+    'Ok' : icrc21_consent_info,
+    'Err' : icrc21_error,
   });
   const AllowanceArgs = IDL.Record({
     'account' : Account,
@@ -283,6 +326,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Record({ 'decimals' : IDL.Nat32 })],
         ['query'],
       ),
+    'icrc10_supported_standards' : IDL.Func(
+        [],
+        [IDL.Vec(IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text }))],
+        ['query'],
+      ),
     'icrc1_balance_of' : IDL.Func([Account], [Icrc1Tokens], ['query']),
     'icrc1_decimals' : IDL.Func([], [IDL.Nat8], ['query']),
     'icrc1_fee' : IDL.Func([], [Icrc1Tokens], ['query']),
@@ -301,6 +349,11 @@ export const idlFactory = ({ IDL }) => {
     'icrc1_symbol' : IDL.Func([], [IDL.Text], ['query']),
     'icrc1_total_supply' : IDL.Func([], [Icrc1Tokens], ['query']),
     'icrc1_transfer' : IDL.Func([TransferArg], [Icrc1TransferResult], []),
+    'icrc21_canister_call_consent_message' : IDL.Func(
+        [icrc21_consent_message_request],
+        [icrc21_consent_message_response],
+        [],
+      ),
     'icrc2_allowance' : IDL.Func([AllowanceArgs], [Allowance], ['query']),
     'icrc2_approve' : IDL.Func([ApproveArgs], [ApproveResult], []),
     'icrc2_transfer_from' : IDL.Func(
@@ -308,6 +361,7 @@ export const idlFactory = ({ IDL }) => {
         [TransferFromResult],
         [],
       ),
+    'is_ledger_ready' : IDL.Func([], [IDL.Bool], ['query']),
     'name' : IDL.Func([], [IDL.Record({ 'name' : IDL.Text })], ['query']),
     'query_blocks' : IDL.Func(
         [GetBlocksArgs],
@@ -333,7 +387,6 @@ export const init = ({ IDL }) => {
   });
   const FeatureFlags = IDL.Record({ 'icrc2' : IDL.Bool });
   const UpgradeArgs = IDL.Record({
-    'maximum_number_of_accounts' : IDL.Opt(IDL.Nat64),
     'icrc1_minting_account' : IDL.Opt(Account),
     'feature_flags' : IDL.Opt(FeatureFlags),
   });
@@ -344,6 +397,7 @@ export const init = ({ IDL }) => {
     'num_blocks_to_archive' : IDL.Nat64,
     'max_transactions_per_response' : IDL.Opt(IDL.Nat64),
     'trigger_threshold' : IDL.Nat64,
+    'more_controller_ids' : IDL.Opt(IDL.Vec(IDL.Principal)),
     'max_message_size_bytes' : IDL.Opt(IDL.Nat64),
     'cycles_for_archive_creation' : IDL.Opt(IDL.Nat64),
     'node_max_memory_size_bytes' : IDL.Opt(IDL.Nat64),
@@ -354,8 +408,6 @@ export const init = ({ IDL }) => {
     'token_symbol' : IDL.Opt(IDL.Text),
     'transfer_fee' : IDL.Opt(Tokens),
     'minting_account' : TextAccountIdentifier,
-    'maximum_number_of_accounts' : IDL.Opt(IDL.Nat64),
-    'accounts_overflow_trim_quantity' : IDL.Opt(IDL.Nat64),
     'transaction_window' : IDL.Opt(Duration),
     'max_message_size_bytes' : IDL.Opt(IDL.Nat64),
     'icrc1_minting_account' : IDL.Opt(Account),
