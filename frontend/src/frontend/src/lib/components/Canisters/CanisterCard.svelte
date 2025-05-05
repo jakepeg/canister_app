@@ -72,7 +72,7 @@
   onMount(refreshStatus);
 </script>
 
-<div class="w-[172px] h-[185px] relative">
+<div class="relative">
   <Card.Root
     class="w-full h-full border border-[#1F1F1F] shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] transition-all hover:scale-[1.02] cursor-pointer"
   >
