@@ -75,6 +75,16 @@
             Enterprise
           </a>
 
+          <a
+            href="/faq"
+            class="font-bold transition-colors"
+            class:text-blue-400={$page.url.pathname.startsWith("/faq")}
+            class:text-white={!$page.url.pathname.startsWith("/faq")}
+            class:hover:text-blue-400={!$page.url.pathname.startsWith("/faq")}
+          >
+            FAQ
+          </a>
+
           <button
             class="gap-4 btn btn-accent"
             on:click={() => authService.login()}
