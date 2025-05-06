@@ -1,6 +1,5 @@
 <!-- frontend/src/frontend/src/lib/components/Canisters/CanisterList.svelte -->
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { goto } from "$app/navigation";
   import Button from "$lib/components/ui/button/button.svelte"; // Corrected path
   import CanisterCard from "./CanisterCard.svelte";
@@ -13,12 +12,22 @@
     iconUrl?: string; // Optional icon URL
   };
 
-  export let canisters: CanisterInfo[] = [];
+  // Svelte 5 Props
+  type Props = {
+    canisters: CanisterInfo[];
+    onOpenCreateModal?: () => void; // Callback from parent (+page.svelte)
+    onRefreshCanisters?: () => void; // Callback from parent (+page.svelte)
+  };
+  let {
+    canisters = [],
+    onOpenCreateModal,
+    onRefreshCanisters,
+  }: Props = $props();
 
-  const dispatch = createEventDispatcher();
-
-  function openCreateModal() {
-    dispatch("openCreateModal");
+  function handleOpenCreateModal() {
+    if (onOpenCreateModal) {
+      onOpenCreateModal();
+    }
   }
 
   function navigateToCanisterFiles(canisterId: string) {
@@ -26,9 +35,14 @@
     goto(`/canister/${canisterId}/files`);
   }
 
-  function handleCanisterUpdated() {
-    // Notify parent to refresh the canister list
-    dispatch("refreshCanisters");
+  function handleCanisterCardUpdate() {
+    // This is called when a CanisterCard signals an update (rename/delete)
+    console.log(
+      "CanisterList: Card signaled update. Calling onRefreshCanisters.",
+    );
+    if (onRefreshCanisters) {
+      onRefreshCanisters(); // Call the callback passed from +page.svelte
+    }
   }
 
   // Mock data for demonstration if needed (can be removed if parent passes data)
@@ -46,7 +60,7 @@
     <!-- Header: Style: style_ESKRTZ - Inder, 20px, White -->
     <h1 class="font-inder text-xl">My Canisters</h1>
     <!-- New Canister Button: Style: style_GUBF0I - Inder, 17px, White, white stroke, 6px border-radius -->
-    <Button onclick={openCreateModal}>New Canister</Button>
+    <Button onclick={handleOpenCreateModal}>New Canister</Button>
   </div>
 
   {#if canisters.length > 0}
@@ -59,7 +73,7 @@
           canisterId={Principal.fromText(canister.id)}
           canisterName={canister.name}
           onClick={() => navigateToCanisterFiles(canister.id)}
-          onCanisterUpdated={handleCanisterUpdated}
+          onUpdate={handleCanisterCardUpdate}
         />
       {/each}
     </div>

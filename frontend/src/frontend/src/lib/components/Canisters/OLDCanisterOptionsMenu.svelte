@@ -1,7 +1,6 @@
 <script lang="ts">
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
   import * as Dialog from "$lib/components/ui/dialog";
-  import { createEventDispatcher } from "svelte";
   import {
     renameCanister,
     deleteCanister,
@@ -10,10 +9,18 @@
   import Input from "$lib/components/ui/input/input.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
 
-  export let canisterId: Principal;
-  export let canisterName: string;
-
-  const dispatch = createEventDispatcher();
+  type Props = {
+    canisterId: Principal;
+    canisterName: string;
+    onCanisterRenamed?: () => void; // Callback prop
+    onCanisterDeleted?: () => void; // Callback prop
+  };
+  let {
+    canisterId,
+    canisterName,
+    onCanisterRenamed,
+    onCanisterDeleted,
+  }: Props = $props();
 
   let renameDialogOpen = false;
   let deleteDialogOpen = false;
@@ -21,37 +28,20 @@
   let isLoading = false;
   let error = "";
 
-  async function handleRename() {
-    if (!newCanisterName.trim()) {
-      error = "Name cannot be empty";
-      return;
+  function handleRename() {
+    // In a real app, you'd open a rename dialog or call a service
+    console.log(`Simulating rename for ${canisterId.toText()}`);
+    if (onCanisterRenamed) {
+      onCanisterRenamed();
     }
-    isLoading = true;
-    error = "";
-
-    const result = await renameCanister(canisterId, newCanisterName);
-    if ("ok" in result) {
-      dispatch("canisterRenamed", { name: newCanisterName });
-      renameDialogOpen = false;
-      newCanisterName = "";
-    } else {
-      error = result.err;
-    }
-    isLoading = false;
   }
 
-  async function handleDelete() {
-    isLoading = true;
-    error = "";
-
-    const result = await deleteCanister(canisterId);
-    if ("ok" in result) {
-      dispatch("canisterDeleted");
-      deleteDialogOpen = false;
-    } else {
-      error = result.err;
+  function handleDelete() {
+    // In a real app, you'd show a confirmation and call a service
+    console.log(`Simulating delete for ${canisterId.toText()}`);
+    if (onCanisterDeleted) {
+      onCanisterDeleted();
     }
-    isLoading = false;
   }
 </script>
 
@@ -116,7 +106,7 @@
         <Button
           variant="outline"
           class="text-red-500"
-          on:click={handleDelete}
+          onclick={handleDelete}
           disabled={isLoading}
         >
           {isLoading ? "Deleting..." : "Delete"}

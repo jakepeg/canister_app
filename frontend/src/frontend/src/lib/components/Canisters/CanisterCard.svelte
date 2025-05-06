@@ -17,10 +17,19 @@
     deleteCanister,
   } from "$lib/services/canisterManagement";
 
-  export let canisterId: Principal;
-  export let canisterName: string;
-  export let onClick: () => void;
-  export let onCanisterUpdated: () => void;
+  // Svelte 5 Props
+  type Props = {
+    canisterId: Principal;
+    canisterName: string; // Initial name, statusInfo.name will be the source of truth after fetch
+    onClick: () => void;
+    onUpdate?: () => void; // Callback to notify parent (CanisterList) of changes
+  };
+  let {
+    canisterId,
+    canisterName: initialCanisterName,
+    onClick,
+    onUpdate,
+  }: Props = $props();
 
   let statusInfo: CanisterStatusInfo | null = null;
   let error: string | null = null;
@@ -65,9 +74,11 @@
   }
 
   async function refreshStatus() {
-    const result = await getCanisterStatus(canisterId, canisterName);
+    error = null; // Reset error on refresh
+    const result = await getCanisterStatus(canisterId, initialCanisterName);
     if ("err" in result) {
       error = result.err;
+      statusInfo = null; // Clear status info on error
     } else {
       statusInfo = result;
     }
@@ -83,7 +94,7 @@
 
     const result = await renameCanister(canisterId, newCanisterName);
     if ("ok" in result) {
-      canisterName = newCanisterName;
+      initialCanisterName = newCanisterName;
       refreshStatus();
       onCanisterUpdated();
       renameDialogOpen = false;
@@ -156,8 +167,8 @@
     >
       <Dialog.Title class="text-lg mb-4">Delete Canister</Dialog.Title>
       <p class="mb-4">
-        Are you sure you want to delete "{statusInfo?.name || canisterName}"?
-        This action cannot be undone.
+        Are you sure you want to delete "{statusInfo?.name ||
+          initialCanisterName}"? This action cannot be undone.
       </p>
       {#if dialogError}
         <p class="text-red-500 text-sm mb-4">{dialogError}</p>
