@@ -83,10 +83,12 @@
 
     const result = await renameCanister(canisterId, newCanisterName);
     if ("ok" in result) {
+      canisterName = newCanisterName;
       refreshStatus();
       onCanisterUpdated();
       renameDialogOpen = false;
       newCanisterName = "";
+      console.log("canister name: ", statusInfo?.name);
     } else {
       dialogError = result.err;
     }
@@ -208,7 +210,7 @@
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
               onclick={() => {
-                menuOpen = false;
+                menuOpen = true;
                 console.log("Start/Stop clicked");
               }}
             >
@@ -218,7 +220,7 @@
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
               onclick={() => {
-                menuOpen = false;
+                menuOpen = true;
                 console.log("Topup Cycles clicked");
               }}
             >
@@ -228,7 +230,9 @@
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
               onclick={() => {
-                menuOpen = false;
+                menuOpen = true;
+                console.log("Rename clicked");
+
                 renameDialogOpen = true;
               }}
             >
