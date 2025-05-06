@@ -185,7 +185,7 @@
 
 <div class="relative">
   <Card.Root
-    class="w-full h-full border border-[#1F1F1F] shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] transition-all hover:scale-[1.02] cursor-pointer"
+    class="w-full h-full border border-[#1F1F1F] shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] cursor-pointer"
   >
     <Card.Content class="p-4 relative">
       <!-- Status Indicator -->
@@ -221,16 +221,15 @@
         Rename
       </Button>
 
-      <!-- More Options -->
-      <!-- <div class="absolute right-3 top-3">
+      <!-- Options dropdown -->
+      <div class="absolute right-3 top-3">
         <DropdownMenu.Root bind:open={menuOpen}>
-          <DropdownMenu.Trigger>
-            <MoreVertical class="w-3 h-[13px] text-white/75" />
+          <DropdownMenu.Trigger class="focus:outline-none">
+            <MoreVertical class="w-3 h-[13px] text-white/75 cursor-pointer" />
           </DropdownMenu.Trigger>
           <DropdownMenu.Content
-            class="w-[134px] bg-[#1F1F1F] border border-[#0B8CE9] rounded-[11px] p-1 z-50"
+            class="w-[134px] bg-[#1F1F1F] border border-[#0B8CE9] rounded-[11px] p-1 z-40 absolute right-0"
             sideOffset={5}
-            align="end"
           >
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
@@ -239,7 +238,7 @@
                 console.log("Start/Stop clicked");
               }}
             >
-              Start/Stop
+              <span>Start/Stop</span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
@@ -249,7 +248,7 @@
                 console.log("Topup Cycles clicked");
               }}
             >
-              Topup Cycles
+              <span>Topup Cycles</span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
@@ -257,9 +256,11 @@
               onclick={() => {
                 menuOpen = true;
                 console.log("Rename clicked");
+
+                renameDialogOpen = true;
               }}
             >
-              Rename
+              <span>Rename</span>
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator class="h-px bg-[#0B8CE9] my-1" />
@@ -268,15 +269,15 @@
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-red-500 font-inder"
               onclick={() => {
                 menuOpen = false;
-                console.log("Delete clicked");
                 deleteDialogOpen = true;
               }}
             >
-              Delete
+              <span>Delete</span>
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Root>
-      </div> -->
+      </div>
+      -->
 
       <!-- Card content (clickable) -->
       <div
