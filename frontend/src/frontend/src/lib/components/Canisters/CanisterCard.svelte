@@ -196,30 +196,6 @@
           title={getStatusText(statusInfo.status)}
         ></div>
       {/if}
-      <Button
-        onclick={() => {
-          menuOpen = true;
-          console.log("Start/Stop clicked");
-        }}
-      >
-        Start/Stop
-      </Button>
-      <Button
-        onclick={() => {
-          menuOpen = true;
-          console.log("Topup Cycles clicked");
-        }}
-      >
-        Topup Cycles
-      </Button>
-      <Button
-        onclick={() => {
-          renameDialogOpen = true;
-          console.log("Rename clicked");
-        }}
-      >
-        Rename
-      </Button>
 
       <!-- Options dropdown -->
       <div class="absolute right-3 top-3">
@@ -277,7 +253,6 @@
           </DropdownMenu.Content>
         </DropdownMenu.Root>
       </div>
-      -->
 
       <!-- Card content (clickable) -->
       <div
