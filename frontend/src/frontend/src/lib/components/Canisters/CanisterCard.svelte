@@ -9,7 +9,13 @@
   import * as Card from "$lib/components/ui/card";
   import { MoreVertical } from "lucide-svelte";
   import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
-  import CanisterOptionsMenu from "./CanisterOptionsMenu.svelte";
+  import * as Dialog from "$lib/components/ui/dialog";
+  import Input from "$lib/components/ui/input/input.svelte";
+  import Button from "$lib/components/ui/button/button.svelte";
+  import {
+    renameCanister,
+    deleteCanister,
+  } from "$lib/services/canisterManagement";
 
   export let canisterId: Principal;
   export let canisterName: string;
@@ -19,6 +25,13 @@
   let statusInfo: CanisterStatusInfo | null = null;
   let error: string | null = null;
   let menuOpen = false;
+
+  // Dialog state
+  let renameDialogOpen = false;
+  let deleteDialogOpen = false;
+  let newCanisterName = "";
+  let isLoading = false;
+  let dialogError = "";
 
   // Helper function to get status color
   function getStatusColor(status: CanisterStatusInfo["status"]): string {
@@ -60,17 +73,117 @@
     }
   }
 
-  function handleCanisterRenamed() {
-    refreshStatus();
-    onCanisterUpdated();
+  async function handleRename() {
+    if (!newCanisterName.trim()) {
+      dialogError = "Name cannot be empty";
+      return;
+    }
+    isLoading = true;
+    dialogError = "";
+
+    const result = await renameCanister(canisterId, newCanisterName);
+    if ("ok" in result) {
+      refreshStatus();
+      onCanisterUpdated();
+      renameDialogOpen = false;
+      newCanisterName = "";
+    } else {
+      dialogError = result.err;
+    }
+    isLoading = false;
   }
 
-  function handleCanisterDeleted() {
-    onCanisterUpdated();
+  async function handleDelete() {
+    isLoading = true;
+    dialogError = "";
+
+    const result = await deleteCanister(canisterId);
+    if ("ok" in result) {
+      onCanisterUpdated();
+      deleteDialogOpen = false;
+    } else {
+      dialogError = result.err;
+    }
+    isLoading = false;
   }
 
   onMount(refreshStatus);
 </script>
+
+<!-- Rename Dialog -->
+<Dialog.Root bind:open={renameDialogOpen}>
+  <Dialog.Portal>
+    <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50" />
+    <Dialog.Content
+      class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] bg-[#1F1F1F] p-6 shadow-lg rounded-[21px] font-inder"
+    >
+      <Dialog.Title class="text-lg mb-4">Rename Canister</Dialog.Title>
+      <div class="space-y-4">
+        <Input
+          type="text"
+          placeholder="Enter new name"
+          bind:value={newCanisterName}
+          class="bg-transparent border border-[#0B8CE9] rounded-[9px]"
+        />
+        {#if dialogError}
+          <p class="text-red-500 text-sm">{dialogError}</p>
+        {/if}
+        <div class="flex justify-end gap-2">
+          <Button
+            variant="outline"
+            on:click={() => (renameDialogOpen = false)}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="outline"
+            on:click={handleRename}
+            disabled={isLoading}
+          >
+            {isLoading ? "Renaming..." : "Rename"}
+          </Button>
+        </div>
+      </div>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
+
+<!-- Delete Confirmation Dialog -->
+<Dialog.Root bind:open={deleteDialogOpen}>
+  <Dialog.Portal>
+    <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50" />
+    <Dialog.Content
+      class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] bg-[#1F1F1F] p-6 shadow-lg rounded-[21px] font-inder"
+    >
+      <Dialog.Title class="text-lg mb-4">Delete Canister</Dialog.Title>
+      <p class="mb-4">
+        Are you sure you want to delete "{statusInfo?.name || canisterName}"?
+        This action cannot be undone.
+      </p>
+      {#if dialogError}
+        <p class="text-red-500 text-sm mb-4">{dialogError}</p>
+      {/if}
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          on:click={() => (deleteDialogOpen = false)}
+          disabled={isLoading}
+        >
+          Cancel
+        </Button>
+        <Button
+          variant="outline"
+          class="text-red-500"
+          on:click={handleDelete}
+          disabled={isLoading}
+        >
+          {isLoading ? "Deleting..." : "Delete"}
+        </Button>
+      </div>
+    </Dialog.Content>
+  </Dialog.Portal>
+</Dialog.Root>
 
 <div class="relative">
   <Card.Root
@@ -87,20 +200,81 @@
       {/if}
 
       <!-- More Options -->
-      <DropdownMenu.Root bind:open={menuOpen}>
-        <DropdownMenu.Trigger>
-          <button class="absolute right-3 top-3" on:click|stopPropagation>
-            <MoreVertical class="w-3 h-[13px] text-white/75" />
-          </button>
-        </DropdownMenu.Trigger>
+      <div class="absolute right-3 top-3">
+        <DropdownMenu.Root bind:open={menuOpen}>
+          <DropdownMenu.Trigger>
+            <!-- <MoreVertical class="w-3 h-[13px] text-white/75" /> -->
+            open
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content
+            class="w-[134px] bg-[#1F1F1F] border border-[#0B8CE9] rounded-[11px] p-1 z-50"
+            sideOffset={5}
+            align="end"
+          >
+            <DropdownMenu.Item
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              on:click={() => {
+                menuOpen = false;
+                renameDialogOpen = true;
+              }}
+            >
+              Rename
+            </DropdownMenu.Item>
 
-        <CanisterOptionsMenu
-          {canisterId}
-          canisterName={statusInfo?.name || ""}
-          on:canisterRenamed={handleCanisterRenamed}
-          on:canisterDeleted={handleCanisterDeleted}
-        />
-      </DropdownMenu.Root>
+            <DropdownMenu.Item
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              on:click={() => {
+                menuOpen = false;
+                console.log("Backup clicked");
+              }}
+            >
+              Backup
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              on:click={() => {
+                menuOpen = false;
+                console.log("Controllers clicked");
+              }}
+            >
+              Controllers
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              on:click={() => {
+                menuOpen = false;
+                console.log("Topup Cycles clicked");
+              }}
+            >
+              Topup Cycles
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Item
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              on:click={() => {
+                menuOpen = false;
+                console.log("Memory clicked");
+              }}
+            >
+              Memory
+            </DropdownMenu.Item>
+
+            <DropdownMenu.Separator class="h-px bg-[#0B8CE9] my-1" />
+
+            <DropdownMenu.Item
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-red-500 font-inder"
+              on:click={() => {
+                menuOpen = false;
+                deleteDialogOpen = true;
+              }}
+            >
+              Delete
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu.Root>
+      </div>
 
       <!-- Card content (clickable) -->
       <div

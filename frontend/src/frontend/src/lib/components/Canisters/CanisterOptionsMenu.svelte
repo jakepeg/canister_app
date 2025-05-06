@@ -76,12 +76,16 @@
         <div class="flex justify-end gap-2">
           <Button
             variant="outline"
-            onclick={() => (renameDialogOpen = false)}
+            on:click={() => (renameDialogOpen = false)}
             disabled={isLoading}
           >
             Cancel
           </Button>
-          <Button variant="outline" onclick={handleRename} disabled={isLoading}>
+          <Button
+            variant="outline"
+            on:click={handleRename}
+            disabled={isLoading}
+          >
             {isLoading ? "Renaming..." : "Rename"}
           </Button>
         </div>
@@ -108,7 +112,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="outline"
-          onclick={() => (deleteDialogOpen = false)}
+          on:click={() => (deleteDialogOpen = false)}
           disabled={isLoading}
         >
           Cancel
@@ -116,7 +120,7 @@
         <Button
           variant="outline"
           class="text-red-500"
-          onclick={handleDelete}
+          on:click={handleDelete}
           disabled={isLoading}
         >
           {isLoading ? "Deleting..." : "Delete"}
@@ -129,6 +133,7 @@
 <DropdownMenu.Content
   class="w-[134px] bg-[#1F1F1F] border border-[#0B8CE9] rounded-[11px] p-1 z-50"
   sideOffset={5}
+  align="end"
 >
   <DropdownMenu.Item
     class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
