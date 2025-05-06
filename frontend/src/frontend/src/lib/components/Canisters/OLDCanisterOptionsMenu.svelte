@@ -76,16 +76,12 @@
         <div class="flex justify-end gap-2">
           <Button
             variant="outline"
-            on:click={() => (renameDialogOpen = false)}
+            onclick={() => (renameDialogOpen = false)}
             disabled={isLoading}
           >
             Cancel
           </Button>
-          <Button
-            variant="outline"
-            on:click={handleRename}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onclick={handleRename} disabled={isLoading}>
             {isLoading ? "Renaming..." : "Rename"}
           </Button>
         </div>
@@ -112,7 +108,7 @@
       <div class="flex justify-end gap-2">
         <Button
           variant="outline"
-          on:click={() => (deleteDialogOpen = false)}
+          onclick={() => (deleteDialogOpen = false)}
           disabled={isLoading}
         >
           Cancel
