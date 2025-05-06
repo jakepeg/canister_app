@@ -276,25 +276,23 @@
             {/if}
           </div>
 
-          <!-- Memory -->
+          <!-- Storage -->
           <div class="space-y-2 border-b border-white/20 pb-2">
-            <div class="text-[11px] leading-[14px] text-white">Memory</div>
+            <div class="text-[11px] leading-[14px] text-white">Storage</div>
             {#if statusInfo}
-              <div
-                class="relative h-[10px] bg-[#B6C8CE] rounded-full overflow-hidden"
-              >
+              <div class="relative h-[7px] bg-[#B6C8CE] overflow-hidden">
                 <div
-                  class="absolute left-0 top-0 h-full bg-[#0B8CE9] rounded-full"
+                  class="absolute left-0 top-0 h-full bg-[#0B8CE9]"
                   style:width={`${(Number(statusInfo.memorySize) / Number(statusInfo.memoryAllocation)) * 100}%`}
                 ></div>
               </div>
               <div class="text-[11px] leading-[14px] text-white">
                 {formatGB(statusInfo.memorySize)} / {formatGB(
                   statusInfo.memoryAllocation,
-                )} GB
+                )} GB used
               </div>
             {:else}
-              <div>Loading memory...</div>
+              <div>Loading storage...</div>
             {/if}
           </div>
 
