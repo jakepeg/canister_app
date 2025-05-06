@@ -213,37 +213,17 @@
           >
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
-              on:click={() => {
+              onclick={() => {
                 menuOpen = false;
-                renameDialogOpen = true;
+                console.log("Start/Stop clicked");
               }}
             >
-              Rename
+              Start/Stop
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
-              on:click={() => {
-                menuOpen = false;
-                console.log("Backup clicked");
-              }}
-            >
-              Backup
-            </DropdownMenu.Item>
-
-            <DropdownMenu.Item
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
-              on:click={() => {
-                menuOpen = false;
-                console.log("Controllers clicked");
-              }}
-            >
-              Controllers
-            </DropdownMenu.Item>
-
-            <DropdownMenu.Item
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
-              on:click={() => {
+              onclick={() => {
                 menuOpen = false;
                 console.log("Topup Cycles clicked");
               }}
@@ -253,20 +233,21 @@
 
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
-              on:click={() => {
+              onclick={() => {
                 menuOpen = false;
-                console.log("Memory clicked");
+                console.log("Rename clicked");
               }}
             >
-              Memory
+              Rename
             </DropdownMenu.Item>
 
             <DropdownMenu.Separator class="h-px bg-[#0B8CE9] my-1" />
 
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-red-500 font-inder"
-              on:click={() => {
+              onclick={() => {
                 menuOpen = false;
+                console.log("Delete clicked");
                 deleteDialogOpen = true;
               }}
             >
