@@ -1,44 +1,54 @@
 # Canister Cloud
 
-You can upload documents and authorize people to access them with a few clicks. Access to shared documents can expire or be explicitly revoked. In addition, you can ask other people to upload documents for you by simply sharing a link (no login required). Documents are transmitted and stored in encrypted form. The dapp can be used with any standard web browser, no plugins or extensions are needed and no passwords need to be remembered.
+Canister Cloud is a secure, scalable, and fully on-chain document storage and management dApp. Built on the **Internet Computer (ICP)** by **Dfinity**, it leverages blockchain technology to provide a decentralized, tamper-proof solution for document management. 
+
+## Features
+
+- **Drag-and-Drop File Upload** – Easily upload documents for streamlined management.
+- **Enhanced Document Requests and Sharing** – Request multiple documents in a single workflow and create workflow templates.
+- **VETKey-Backed Storage Security** – Strengthened file storage with VETKey-based encryption.
+- **File Management Tools** – Rename and delete files for better organization.
+
+## Technology Stack
+
+Canister Cloud is developed using:
+- **Rust**
+- **Svelte**
+- **TailwindCSS**
+- **Internet Identity** – Secure, decentralized authentication for user access.
+- **VETKeys** – Advanced encryption mechanism for securing document storage and access.
 
 ## Development
 
-To run the dapp locally, run the following in one terminal window:
+To run the dApp locally, start the Internet Computer backend:
 
-```
+```sh
+# Start the local DFX environment
 dfx start --clean
 ```
 
-And in another terminal"
+In another terminal, install dependencies and deploy the canisters:
 
-```
-# Install needed frontend dependencies.
+```sh
+# Install frontend dependencies
 npm install -g pnpm
 pnpm install
 
-# Deploy the canisters.
+# Deploy the canisters
 dfx deploy
-dfx deps pull
-dfx deps deploy
 ```
 
-In your browser you can now go to <canister_id>.localhost:8000 to access the frontend.
+## Local Frontend Development
 
-If you want to contribute, see our [CONTRIBUTING](.github/CONTRIBUTING.md) document to get started.
+After deploying Internet Identity and the backend canister locally, you can start the dApp frontend:
 
-## Local frontend development
-
-After deploying locally both Internet Identity and the backend canister, you can run the dapp frontend and the home page development server.
-
-### Frontend project of the dapp
-
-```
+```sh
 pnpm --filter frontend run dev
 ```
 
-### Home page
+## Resources
 
-```
-pnpm --filter landing-page run dev
-```
+- **Dapp:** [www.canister.co](https://www.canister.co)
+- **GitHub Repo:** [https://github.com/jakepeg/canister_app](https://github.com/jakepeg/canister_app)
+- **X/Twitter:** [https://x.com/CanisterCloud](https://x.com/CanisterCloud)
+- **LinkedIn:** [https://www.linkedin.com/company/canister-cloud/](https://www.linkedin.com/company/canister-cloud/)

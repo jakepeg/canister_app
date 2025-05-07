@@ -238,7 +238,7 @@
           </div>
 
           {#if generatedLinks.length > 0}
-            <div class="mt-4 border p-3 rounded-md bg-gray-50">
+            <div class="mt-4 border p-3 rounded-md">
               <h3 class="font-medium mb-2">Generated Links:</h3>
               <ul class="space-y-2">
                 {#each generatedLinks as link, i}
@@ -255,7 +255,7 @@
                         <CopyIcon />
                       </button>
                     </div>
-                    <div class="truncate text-gray-500 text-xs">
+                    <div class="truncate text-xs">
                       {link}
                     </div>
                   </li>

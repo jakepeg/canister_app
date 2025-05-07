@@ -10,15 +10,75 @@
   import ShareIcon from "../icons/ShareIcon.svelte";
   import PlaceholderLogo from "../icons/PlaceholderLogo.svelte";
   import type { file_metadata } from "../../../../../declarations/backend/backend.did";
-  import * as Dialog from "$lib/components/ui/dialog";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
-  import { authStore } from "$lib/services/auth";
+  import { Button } from "$lib/components/ui/button";
 
   export let auth: AuthStateAuthenticated;
   let isOpenRequestModal = false;
   let isOpenShareModal = false;
   let isOpenUploadModal = false;
   let shareFileData: file_metadata | undefined = undefined;
+
+  // Sorting variables
+  let sortField: "name" | "uploadedAt" = "uploadedAt";
+  let sortDirection: "asc" | "desc" = "desc"; // Default newest first
+
+  // Computed sorted files
+  $: sortedFiles =
+    $filesStore.state === "loaded"
+      ? [...$filesStore.files].sort((a, b) => {
+          if (sortField === "name") {
+            const nameA = a.name || "Unnamed file";
+            const nameB = b.name || "Unnamed file";
+            return sortDirection === "asc"
+              ? nameA.localeCompare(nameB)
+              : nameB.localeCompare(nameA);
+          } else {
+            let dateA = 0n;
+            let dateB = 0n;
+
+            if ("uploaded" in a.metadata.file_status) {
+              dateA = a.metadata.file_status.uploaded.uploaded_at;
+            }
+            if ("uploaded" in b.metadata.file_status) {
+              dateB = b.metadata.file_status.uploaded.uploaded_at;
+            }
+
+            return sortDirection === "asc"
+              ? dateA < dateB
+                ? -1
+                : dateA > dateB
+                  ? 1
+                  : 0
+              : dateA > dateB
+                ? -1
+                : dateA < dateB
+                  ? 1
+                  : 0;
+          }
+        })
+      : [];
+
+  // Toggle sort function
+  function toggleSort(field: "name" | "uploadedAt") {
+    console.log($filesStore);
+    if (sortField === field) {
+      // Toggle direction if clicking the same field
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      // Set new field and default direction
+      sortField = field;
+      sortDirection = field === "name" ? "asc" : "desc"; // Default: A-Z for name, newest first for date
+    }
+  }
+
+  // Get sort indicator
+  function getSortIndicator(field: "name" | "uploadedAt") {
+    if (sortField === field) {
+      return sortDirection === "asc" ? "↑" : "↓";
+    }
+    return "";
+  }
+
   onMount(() => {
     auth.filesService.reload();
   });
@@ -57,14 +117,24 @@
       <table class="table-auto w-full border-spacing-y-2 border-separate">
         <thead class="">
           <tr class="text-left">
-            <th class="body-2 pt-4 pb-2 pl-4">Name</th>
+            <th
+              class="body-2 pt-4 pb-2 pl-4 cursor-pointer"
+              on:click={() => toggleSort("name")}
+            >
+              Name {getSortIndicator("name")}
+            </th>
             <th class="body-2 pt-6 pb-2">Access</th>
-            <th class="body-2 pt-6 pb-2">Uploaded</th>
+            <th
+              class="body-2 pt-6 pb-2 cursor-pointer"
+              on:click={() => toggleSort("uploadedAt")}
+            >
+              Uploaded {getSortIndicator("uploadedAt")}
+            </th>
             <th></th>
           </tr>
         </thead>
         <tbody class="">
-          {#each $filesStore.files as file}
+          {#each sortedFiles as file}
             <tr
               class="hover:drop-shadow-xl cursor-pointer"
               on:click={() => goToDetails(file.file_id)}
@@ -77,7 +147,7 @@
                 {/if}
               </td>
               <td class=" body-1">{file.access}</td>
-              <td class="body-1">{file.uploadedAt}</td>
+              <td class="body-1">{file.uploadedAtShort}</td>
               <td
                 class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
               >
@@ -95,7 +165,26 @@
       </table>
     </div>
     <div class="md:hidden flex flex-col gap-2">
-      {#each $filesStore.files as file}
+      <!-- Mobile sorting controls -->
+      <div class="flex justify-between items-center mb-2 px-1">
+        <span class="body-2">Sort by:</span>
+        <div class="flex gap-2">
+          <button
+            class={`px-2 py-1 rounded ${sortField === "name" ? "bg-primary text-white" : "bg-background"}`}
+            on:click={() => toggleSort("name")}
+          >
+            Name {getSortIndicator("name")}
+          </button>
+          <button
+            class={`px-2 py-1 rounded ${sortField === "uploadedAt" ? "bg-primary text-white" : "bg-background"}`}
+            on:click={() => toggleSort("uploadedAt")}
+          >
+            Date {getSortIndicator("uploadedAt")}
+          </button>
+        </div>
+      </div>
+
+      {#each sortedFiles as file}
         <a
           class="bg-background rounded-xl py-3 px-4 flex flex-col"
           href="/details?fileId={file.file_id}"
@@ -158,3 +247,21 @@
     on:shared={() => auth.filesService.reload()}
   />
 {/if}
+
+<style lang="postcss">
+  tbody tr {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  tbody tr:hover {
+    transform: translateX(10px);
+  }
+
+  .md\:hidden > a {
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .md\:hidden > a:hover {
+    transform: translateX(10px);
+  }
+</style>

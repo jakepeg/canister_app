@@ -8,17 +8,24 @@
   import { onMount } from "svelte";
   import { page } from '$app/stores'; // Import page store
   import "../app.css";
-  import { ModeWatcher } from "mode-watcher";
+  import { ModeWatcher, resetMode, setMode } from "mode-watcher";
   import * as Sidebar from "$lib/components/ui/sidebar";
 
   onMount(async () => {
     authService.init();
-
     // Apply dark mode for non-authenticated users
+    // if ($authStore.state !== "authenticated") {
+    //   setMode("dark");
+    // } else {
+    //   resetMode();
+    // }
+  });
+
+  $effect(() => {
     if ($authStore.state !== "authenticated") {
-      document.documentElement.classList.add("dark");
+      setMode("dark");
     } else {
-      document.documentElement.classList.remove("dark");
+      resetMode();
     }
   });
 
@@ -67,7 +74,7 @@
     <ModeWatcher />
     <Navbar />
     <div class="flex flex-1 overflow-hidden">
-      <main class="flex-1">
+      <main class="flex-1 overflow-y-auto">
         <div class="max-w-5xl mx-auto px-4">
           {@render children?.()}
         </div>

@@ -1,29 +1,13 @@
 <script>
-  import { authService } from "$lib/services/auth";
-  import LogoIcon from "../icons/LogoIcon.svelte";
   import LinkedInIcon from "../icons/linkedin.svelte";
   import XIcon from "../icons/x-logo.svelte";
-  import { Button, buttonVariants } from "$lib/components/ui/button";
+  import Badge from "../icons/on-chain.svelte";
 </script>
 
 <div class="bg-background min-h-screen flex flex-col items-center px-6">
-  <!-- Header -->
-  <!-- <div class="w-full flex justify-between items-center py-6 px-8">
-    <div class="flex items-center gap-2">
-      <img src="/logo.svg" alt="Logo" class="h-10" />CANISTER
-    </div>
-    <button
-      class="gap-2 btn btn-accent flex items-center px-6 py-2 rounded-lg"
-      on:click={() => authService.login()}
-    >
-      <LogoIcon />
-      Login
-    </button>
-  </div> -->
-
   <!-- Main Content -->
-  <div class="flex flex-col items-center text-center mt-16 max-w-3xl">
-    <h1 class="text-4xl font-bold">Store, Share & Collect Documents</h1>
+  <div class="flex flex-col items-center text-center mt-8 max-w-3xl">
+    <h1 class="text-4xl font-bold">Cloud Storage Fully On-Chain</h1>
     <h2 class="text-lg mt-2 text-gray-400">
       Sovereign data management designed for privacy, secured on the blockchain.
     </h2>
@@ -56,31 +40,39 @@
   <!-- New CTA Section -->
   <div class="flex flex-col md:flex-row gap-6 mt-12">
     <a href="/personal" class="btn btn-cta"> Personal Canisters </a>
-    <a href="/business" class="btn btn-cta"> Enterprise Canisters </a>
+    <a href="/enterprise" class="btn btn-cta"> Enterprise Canisters </a>
   </div>
 
   <!-- Demo Notice Section -->
   <div class="mt-12 text-center text-gray-400">
     <h2 class="text-lg">
-      Demo version—do not upload confidential data.<br />
-      Big things are coming<br />
+      This is a Demo version of our MVP, do not upload confidential data.<br />
       Follow us for updates and news on our upcoming launch!
     </h2>
   </div>
-</div>
 
-<!-- Fixed Social Icons Section -->
-<div class="fixed-social-icons">
-  <a href="https://www.linkedin.com/company/canister-cloud/" target="_blank">
-    <span class="h-6 w-6">
-      <LinkedInIcon />
-    </span>
-  </a>
-  <a href="https://x.com/CanisterCloud" target="_blank">
-    <span class="h-6 w-6">
-      <XIcon />
-    </span>
-  </a>
+  <div class="mt-6 text-center">
+    <div class="flex gap-4">
+      <a
+        href="https://www.linkedin.com/company/canister-cloud/"
+        target="_blank"
+      >
+        <span class="h-6 w-6">
+          <LinkedInIcon />
+        </span>
+      </a>
+      <a href="https://x.com/CanisterCloud" target="_blank">
+        <span class="h-6 w-6">
+          <XIcon />
+        </span>
+      </a>
+    </div>
+  </div>
+  <div class="mt-6 text-center">
+    <a href="https://internetcomputer.org/" target="_blank">
+      <Badge />
+    </a>
+  </div>
 </div>
 
 <style>
@@ -131,3 +123,4 @@
     gap: 10px;
   }
 </style>
+

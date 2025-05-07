@@ -10,6 +10,7 @@ export const host =
   process.env.DFX_NETWORK_HOST ??
   (network === "local" ? "http://127.0.0.1:8080" : "https://icp0.io");
 
+
 export const readCanisterIds = ({
   prefix,
 }: {

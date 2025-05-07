@@ -2,8 +2,6 @@
   import { page } from "$app/stores";
   import { authService, authStore } from "$lib/services/auth";
   import { userStore } from "$lib/services/user";
-  import { fade, fly } from "svelte/transition";
-  import IconFile from "./icons/IconFile.svelte";
   import LogoIcon from "./icons/LogoIcon.svelte";
   import LogoutIcon from "./icons/LogoutIcon.svelte";
   import AccountIcon from "./icons/AccountIcon.svelte";
@@ -17,6 +15,7 @@
   let showMobileMenu = false;
   let showBalance = false;
 
+
   function logout() {
     if ($uploadInProgress) {
       if (
@@ -29,7 +28,12 @@
   }
 </script>
 
-<nav class="bg-sidebar w-full relative z-20">
+<nav
+  class="w-full relative z-20"
+  class:bg-sidebar={$authStore.state === "authenticated"}
+  class:bg-transparent={$authStore.state === "unauthenticated"}
+  class:backdrop-blur={$authStore.state === "unauthenticated"}
+>
   <div class="flex h-14 md:h-16 items-center px-4 justify-between">
     <!-- Left side with logo -->
     <div class="flex items-center gap-2">
@@ -118,6 +122,16 @@
           </span>
         </button>
 
+
+          <button
+            class="gap-4 btn btn-accent"
+            on:click={() => authService.login()}
+          >
+            <LogoIcon />
+            Demo
+          </button>
+        </div>
+      {:else if $authStore.state === "authenticated"}
         <div class="hidden md:flex gap-2 lg:gap-8">
           <button on:click={() => logout()} class="btn btn-ghost">
             <LogoutIcon />
@@ -179,3 +193,4 @@
     </div>
   </div>
 {/if}
+

@@ -17,6 +17,7 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills';
 const config: UserConfig = {
   // Add nodePolyfills plugin here
   plugins: [wasm(), topLevelAwait(), sveltekit(), nodePolyfills()], // Moved wasm() and topLevelAwait() first
+
   resolve: {
     alias: {
       $lib: path.resolve("./src/frontend/src/lib"),
@@ -24,6 +25,7 @@ const config: UserConfig = {
     },
   },
   // Remove optimizeDeps polyfill config, let the plugin handle it
+
   optimizeDeps: {
     esbuildOptions: {
       // Node.js global to browser globalThis - Still might be needed depending on dependencies
