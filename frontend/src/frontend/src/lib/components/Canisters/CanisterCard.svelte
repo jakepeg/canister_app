@@ -17,21 +17,26 @@
     deleteCanister,
   } from "$lib/services/canisterManagement";
 
-  export let canisterId: Principal;
-  export let canisterName: string;
-  export let onClick: () => void;
-  export let onCanisterUpdated: () => void;
+  // Svelte 5 Props
+  type Props = {
+    canisterId: Principal;
+    initialCanisterName: string; // Renamed for clarity, passed from list
+    onClick: () => void;
+    onUpdate?: () => void; // Callback to notify parent (CanisterList) of changes
+  };
+  let { canisterId, initialCanisterName, onClick, onUpdate }: Props = $props();
 
-  let statusInfo: CanisterStatusInfo | null = null;
-  let error: string | null = null;
-  let menuOpen = false;
+  // Svelte 5 Runes for state
+  let statusInfo = $state<CanisterStatusInfo | null>(null);
+  let cardError = $state<string | null>(null); // Error specific to fetching status for this card
+  let menuOpen = $state(false);
 
-  // Dialog state
-  let renameDialogOpen = false;
-  let deleteDialogOpen = false;
-  let newCanisterName = "";
-  let isLoading = false;
-  let dialogError = "";
+  // Dialog state - specific to this card's modals
+  let renameDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let newNameInput = $state(initialCanisterName); // Pre-fill with current name
+  let isDialogLoading = $state(false);
+  let dialogError = $state("");
 
   // Helper function to get status color
   function getStatusColor(status: CanisterStatusInfo["status"]): string {
@@ -64,52 +69,116 @@
     return `${id.slice(0, 5)}...${id.slice(-7)}`;
   }
 
-  async function refreshStatus() {
-    const result = await getCanisterStatus(canisterId, canisterName);
+  async function refreshCardStatus() {
+    cardError = null;
+    // Use the most current known name for fetching status, which might be statusInfo.name or initialCanisterName
+    const nameToFetch = statusInfo?.name || initialCanisterName;
+    console.log(
+      `CanisterCard (${canisterId.toText()}): Refreshing status with name: ${nameToFetch}`,
+    );
+    const result = await getCanisterStatus(canisterId, nameToFetch);
     if ("err" in result) {
-      error = result.err;
+      cardError = result.err;
+      // statusInfo = null; // Optionally clear, or keep old data on error
+      console.error(
+        `CanisterCard (${canisterId.toText()}): Error refreshing status:`,
+        result.err,
+      );
     } else {
       statusInfo = result;
+      console.log(
+        `CanisterCard (${canisterId.toText()}): Status refreshed:`,
+        statusInfo,
+      );
     }
   }
 
-  async function handleRename() {
-    if (!newCanisterName.trim()) {
+  function openRenameDialog() {
+    newNameInput = statusInfo?.name || initialCanisterName; // Pre-fill with the latest known name
+    dialogError = "";
+    renameDialogOpen = true;
+    menuOpen = false; // Close dropdown
+  }
+
+  async function submitRename() {
+    if (!newNameInput.trim()) {
       dialogError = "Name cannot be empty";
       return;
     }
-    isLoading = true;
+    isDialogLoading = true;
     dialogError = "";
 
-    const result = await renameCanister(canisterId, newCanisterName);
+    console.log(
+      `CanisterCard (${canisterId.toText()}): Attempting to rename to "${newNameInput}"`,
+    );
+    const result = await renameCanister(canisterId, newNameInput); // Backend call
+
     if ("ok" in result) {
-      canisterName = newCanisterName;
-      refreshStatus();
-      onCanisterUpdated();
+      console.log(
+        `CanisterCard (${canisterId.toText()}): Rename successful. New name: "${newNameInput}"`,
+      );
+      // The backend has confirmed the rename.
+      // 1. Update local `statusInfo` if possible, or rely on full refresh.
+      //    For immediate UI update of the name on THIS card:
+      if (statusInfo) {
+        statusInfo.name = newNameInput; // Directly update the displayed name
+      }
+      // 2. Close the dialog.
       renameDialogOpen = false;
-      newCanisterName = "";
-      console.log("canister name: ", statusInfo?.name);
+      // 3. Call `onUpdate` to tell the parent list to re-fetch all canisters.
+      //    This ensures the list in `+page.svelte` gets the absolute latest from the backend.
+      if (onUpdate) {
+        onUpdate();
+      }
+      // 4. Optionally, refresh this card's full status again (might be redundant if onUpdate re-fetches everything)
+      // await refreshCardStatus(); // This will get the new name again from canister status
     } else {
       dialogError = result.err;
+      console.error(
+        `CanisterCard (${canisterId.toText()}): Rename failed:`,
+        result.err,
+      );
     }
-    isLoading = false;
+    isDialogLoading = false;
   }
 
-  async function handleDelete() {
-    isLoading = true;
+  async function submitDelete() {
+    isDialogLoading = true;
     dialogError = "";
+    console.log(`CanisterCard (${canisterId.toText()}): Attempting to delete.`);
+    const result = await deleteCanister(canisterId); // Backend call
 
-    const result = await deleteCanister(canisterId);
     if ("ok" in result) {
-      onCanisterUpdated();
+      console.log(`CanisterCard (${canisterId.toText()}): Delete successful.`);
       deleteDialogOpen = false;
+      // Tell the parent list to re-fetch, which will remove this card.
+      if (onUpdate) {
+        onUpdate();
+      }
     } else {
       dialogError = result.err;
+      console.error(
+        `CanisterCard (${canisterId.toText()}): Delete failed:`,
+        result.err,
+      );
     }
-    isLoading = false;
+    isDialogLoading = false;
   }
 
-  onMount(refreshStatus);
+  // Handle Svelte 5 dialog open/close props
+  function handleRenameDialogValidOpenChange(value: boolean) {
+    renameDialogOpen = value;
+    if (!value) dialogError = ""; // Clear error when closing
+  }
+  function handleDeleteDialogValidOpenChange(value: boolean) {
+    deleteDialogOpen = value;
+    if (!value) dialogError = ""; // Clear error when closing
+  }
+
+  onMount(() => {
+    refreshCardStatus();
+    newNameInput = initialCanisterName; // Ensure newNameInput is set on mount
+  });
 </script>
 
 <!-- Rename Dialog -->
@@ -124,7 +193,7 @@
         <Input
           type="text"
           placeholder="Enter new name"
-          bind:value={newCanisterName}
+          bind:value={newNameInput}
           class="bg-transparent border border-[#0B8CE9] rounded-[9px]"
         />
         {#if dialogError}
@@ -134,12 +203,16 @@
           <Button
             variant="outline"
             onclick={() => (renameDialogOpen = false)}
-            disabled={isLoading}
+            disabled={isDialogLoading}
           >
             Cancel
           </Button>
-          <Button variant="outline" onclick={handleRename} disabled={isLoading}>
-            {isLoading ? "Renaming..." : "Rename"}
+          <Button
+            variant="outline"
+            onclick={submitRename}
+            disabled={isDialogLoading}
+          >
+            {isDialogLoading ? "Renaming..." : "Rename"}
           </Button>
         </div>
       </div>
@@ -156,8 +229,8 @@
     >
       <Dialog.Title class="text-lg mb-4">Delete Canister</Dialog.Title>
       <p class="mb-4">
-        Are you sure you want to delete "{statusInfo?.name || canisterName}"?
-        This action cannot be undone.
+        Are you sure you want to delete "{statusInfo?.name ||
+          initialCanisterName}"? This action cannot be undone.
       </p>
       {#if dialogError}
         <p class="text-red-500 text-sm mb-4">{dialogError}</p>
@@ -166,17 +239,17 @@
         <Button
           variant="outline"
           onclick={() => (deleteDialogOpen = false)}
-          disabled={isLoading}
+          disabled={isDialogLoading}
         >
           Cancel
         </Button>
         <Button
           variant="outline"
           class="text-red-500"
-          onclick={handleDelete}
-          disabled={isLoading}
+          onclick={submitDelete}
+          disabled={isDialogLoading}
         >
-          {isLoading ? "Deleting..." : "Delete"}
+          {isDialogLoading ? "Deleting..." : "Delete"}
         </Button>
       </div>
     </Dialog.Content>
@@ -260,8 +333,8 @@
       <div
         role="button"
         tabindex="0"
-        on:click={onClick}
-        on:keydown={(e) => e.key === "Enter" && onClick()}
+        onclick={onClick}
+        onkeydown={(e) => e.key === "Enter" && onClick()}
         class="h-full"
       >
         <!-- Canister Info -->

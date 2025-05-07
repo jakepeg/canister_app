@@ -4,11 +4,7 @@
   import { type ActorSubclass } from "@dfinity/agent"; // Import ActorSubclass
   import NotAuthenticated from "$lib/components/Home/NotAuthenticated.svelte";
   import { get } from "svelte/store"; // Import get
-  import {
-    authStore,
-    authService,
-    type AuthStateAuthenticated,
-  } from "$lib/services/auth"; // Keep only this authStore import
+  import { authStore, type AuthStateAuthenticated } from "$lib/services/auth"; // Keep only this authStore import
   import CanisterList from "$lib/components/Canisters/CanisterList.svelte";
   import CreateCanisterModal from "$lib/components/Canisters/CreateCanisterModal.svelte";
   // Corrected import path again (relative to src/frontend/src/routes)
@@ -24,13 +20,17 @@
     // iconUrl?: string; // Add if needed
   };
 
-  let canisters: ComponentCanisterInfo[] = []; // Use the local type alias
-  let isLoadingCanisters = true;
-  let isModalOpen = false;
-  let fetchError = "";
-  let unsubscribeAuth: () => void; // To store the unsubscribe function
-  const canisterId = import.meta.env.VITE_FRONTEND_CANISTER_ID;
-  console.log("canisterId", canisterId);
+  // Svelte 5 Runes for state
+  let canisters = $state<ComponentCanisterInfo[]>([]);
+  let isLoadingCanisters = $state(true);
+  let isModalOpen = $state(false);
+  let fetchError = $state("");
+  let authUnsubscribe: (() => void) | undefined = undefined; // For store subscription
+
+  // VITE_FRONTEND_CANISTER_ID is likely for the frontend's own canister,
+  // not directly used for listing user data canisters here.
+  // const frontendCanisterId = import.meta.env.VITE_FRONTEND_CANISTER_ID;
+  // console.log("Frontend's own canisterId (if needed):", frontendCanisterId);
 
   // $: {
   //   if (canisterId) {
@@ -38,25 +38,30 @@
   //   }
   // }
 
-  // Function to fetch canisters from the backend
   async function fetchCanisters() {
-    // Ensure loading state is set correctly at the start
-    isLoadingCanisters = true;
-    fetchError = "";
-    console.log("Fetching canisters from backend...");
-
+    // Only proceed if authenticated
     const authState = get(authStore);
     if (authState.state !== "authenticated") {
-      console.log("Not authenticated, skipping fetch.");
-      canisters = []; // Clear canisters
-      isLoadingCanisters = false; // Stop loading
+      console.log("+page.svelte: Not authenticated, cannot fetch canisters.");
+      canisters = [];
+      isLoadingCanisters = false; // Not loading if not auth'd
+      fetchError = ""; // Clear previous errors
       return;
     }
 
+    // If already fetching, don't start another one (basic guard)
+    // A more robust solution might use a status like 'fetching'
+    // if (isLoadingCanisters && fetchError === "") return; // Guard against re-entry if already fetching
+
+    isLoadingCanisters = true;
+    fetchError = "";
+    console.log("+page.svelte: Fetching canisters...");
+
     const actor = authState.actor as ActorSubclass<BackendService>;
     if (!actor) {
-      console.error("Backend actor not available.");
+      console.error("+page.svelte: Backend actor not available for fetching.");
       fetchError = "Backend actor not available.";
+      canisters = []; // Clear canisters on error
       isLoadingCanisters = false;
       return;
     }
@@ -68,23 +73,33 @@
           id: backendInfo.id.toText(),
           name: backendInfo.name,
         }));
-        console.log("Canisters fetched:", canisters);
+        console.log("+page.svelte: Canisters fetched:", canisters.length);
       } else if ("NotAuthenticated" in result) {
-        console.warn("Backend reported user not authenticated.");
+        console.warn(
+          "+page.svelte: Backend reported user not authenticated during fetch.",
+        );
         fetchError = "Not authenticated according to backend.";
         canisters = [];
       } else {
-        console.error("Unknown response from get_user_canisters:", result);
-        fetchError = "Unknown error fetching canisters.";
+        const errorKey = Object.keys(result)[0];
+        const errorValue = (result as any)[errorKey];
+        console.error(
+          `+page.svelte: Error from get_user_canisters: ${errorKey}`,
+          errorValue,
+        );
+        fetchError = `Error from backend: ${errorKey}`;
         canisters = [];
       }
     } catch (err: any) {
-      console.error("Error fetching canisters:", err);
+      console.error("+page.svelte: Error fetching canisters:", err);
       fetchError = `Error fetching canisters: ${err.message || "Unknown error"}`;
       canisters = [];
     } finally {
-      // Ensure loading state is turned off
-      isLoadingCanisters = false;
+      isLoadingCanisters = false; // Always set to false after attempt
+      console.log(
+        "+page.svelte: fetchCanisters finished. isLoadingCanisters:",
+        isLoadingCanisters,
+      );
     }
   }
 
@@ -94,7 +109,7 @@
     fetchCanisters(); // Re-fetch from backend
   }
 
-  function openModal() {
+  function openCreateCanisterModal() {
     isModalOpen = true;
   }
 
@@ -103,59 +118,127 @@
   }
 
   onMount(() => {
-    console.log("Main page mounted");
-    unsubscribeAuth = authStore.subscribe((authState) => {
-      // Fetch when authentication state changes *to* authenticated
-      if (authState.state === "authenticated") {
-        console.log(
-          "Auth state changed to authenticated, fetching canisters...",
-        );
-        // Only fetch if canisters haven't been loaded yet *by this subscription trigger*
-        // Let onMount / afterNavigate handle the initial/navigation load
-        // This avoids double-fetching if auth resolves quickly after mount
+    console.log("+page.svelte: Mounted.");
+
+    // Subscribe to authStore changes
+    authUnsubscribe = authStore.subscribe((currentAuth) => {
+      console.log(
+        "+page.svelte: Auth store changed:",
+        currentAuth.state,
+        "isLoading:",
+        isLoadingCanisters,
+      );
+      if (currentAuth.state === "authenticated") {
+        // If authenticated, and we are not already successfully loaded
+        // (isLoadingCanisters is true, or no canisters and no error)
+        // then attempt a fetch. afterNavigate is the primary fetch trigger on page load.
         if (isLoadingCanisters || (canisters.length === 0 && !fetchError)) {
-          fetchCanisters();
+          console.log(
+            "+page.svelte: Auth store became authenticated, triggering fetch (if needed).",
+          );
+          fetchCanisters(); // Call fetch if conditions met
+        } else {
+          console.log(
+            "+page.svelte: Auth store authenticated, but canisters seem loaded or error occurred. No fetch from subscribe.",
+          );
         }
-      } else {
-        // Reset state if user logs out or state changes otherwise
+      } else if (currentAuth.state === "unauthenticated") {
+        console.log(
+          "+page.svelte: Auth store is not-authenticated. Clearing canisters, stopping load.",
+        );
         canisters = [];
-        isLoadingCanisters = true; // Set to true until we know auth state
+        isLoadingCanisters = false;
+        fetchError = "";
+      } else if (currentAuth.state === "uninitialized") {
+        console.log(
+          "+page.svelte: Auth store is uninitialized. Setting loading true.",
+        );
+        isLoadingCanisters = true;
+        canisters = [];
         fetchError = "";
       }
     });
 
-    // Initial check needed in case already authenticated when mounting
-    // Let afterNavigate handle this for consistency, remove fetch from here.
-    // const initialAuthState = get(authStore);
-    // if (initialAuthState.state === 'authenticated') {
-    //  console.log('Authenticated on mount, fetching canisters...');
-    //  fetchCanisters();
-    // } else {
-    //  // If not authenticated on mount, set loading to false
-    //  // The subscription will handle fetching if auth state changes later
-    //  isLoadingCanisters = false;
-    // }
-  });
+    // Set up afterNavigate hook *once* on mount
+    afterNavigate(() => {
+      console.log("+page.svelte: afterNavigate triggered.");
+      const currentAuthStateOnNav = get(authStore); // Get fresh auth state on navigate
+      console.log(
+        "+page.svelte: Auth state in afterNavigate:",
+        currentAuthStateOnNav.state,
+      );
+
+      if (currentAuthStateOnNav.state === "authenticated") {
+        console.log(
+          "+page.svelte: Authenticated in afterNavigate, calling fetchCanisters.",
+        );
+        fetchCanisters();
+      } else if (currentAuthStateOnNav.state === "unauthenticated") {
+        console.log(
+          "+page.svelte: Not authenticated in afterNavigate. Clearing canisters, stopping load.",
+        );
+        canisters = [];
+        isLoadingCanisters = false;
+        fetchError = "";
+      } else {
+        // uninitialized
+        console.log(
+          "+page.svelte: Auth uninitialized in afterNavigate. Ensuring loading state.",
+        );
+        isLoadingCanisters = true;
+        canisters = [];
+        fetchError = "";
+      }
+    });
+
+    // Initial check based on current auth state AT MOUNT TIME
+    // This helps set the initial isLoadingCanisters correctly before afterNavigate or subscribe fully kick in.
+    const initialAuthStateOnMount = get(authStore);
+    console.log(
+      "+page.svelte: Initial auth state on mount (direct check):",
+      initialAuthStateOnMount.state,
+    );
+    if (initialAuthStateOnMount.state === "uninitialized") {
+      isLoadingCanisters = true;
+    } else if (initialAuthStateOnMount.state === "unauthenticated") {
+      isLoadingCanisters = false;
+      canisters = [];
+      fetchError = "";
+    } else if (initialAuthStateOnMount.state === "authenticated") {
+      // If authenticated on mount, afterNavigate will trigger the fetch.
+      // We might still be in isLoadingCanisters = true from its declaration, which is fine.
+      // Or if canisters were somehow loaded by a parent (not in this case for a page),
+      // we could potentially skip setting isLoadingCanisters = true here.
+      // For now, let afterNavigate handle the fetch.
+      console.log(
+        "+page.svelte: Authenticated on mount (direct check). afterNavigate will fetch.",
+      );
+    }
+  }); // --- End of onMount ---
 
   onDestroy(() => {
-    if (unsubscribeAuth) {
-      unsubscribeAuth(); // Clean up the subscription
+    if (authUnsubscribe) {
+      authUnsubscribe();
+      console.log("+page.svelte: Unsubscribed from authStore.");
     }
+    console.log("+page.svelte: Destroyed."); // Add this to see when/if it's destroyed
   });
-
-  // Removed the problematic reactive block that caused infinite loops
 </script>
 
 <section class="w-full">
-  {#if $authStore.state === "uninitialized" || ($authStore.state === "authenticated" && isLoadingCanisters)}
-    <!-- Unified Loading State -->
+  {#if isLoadingCanisters && $authStore.state !== "unauthenticated"}
     <div class="flex justify-center items-center h-screen">
       <h1 class="text-xl text-white">Loading...</h1>
-      <!-- Optional: Add a spinner here -->
     </div>
   {:else if $authStore.state === "authenticated"}
-    <!-- Render Canister List -->
-    <CanisterList {canisters} on:openCreateModal={openModal} />
+    {#if fetchError}
+      <div class="text-red-500 p-4 text-center">Error: {fetchError}</div>
+    {/if}
+    <CanisterList
+      {canisters}
+      onOpenCreateModal={openCreateCanisterModal}
+      onRefreshCanisters={fetchCanisters}
+    />
 
     <!-- Render Create Canister Modal -->
     <CreateCanisterModal
