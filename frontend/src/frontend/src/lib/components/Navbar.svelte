@@ -4,8 +4,17 @@
   import { userStore } from "$lib/services/user";
   import LogoIcon from "./icons/LogoIcon.svelte";
   import LogoutIcon from "./icons/LogoutIcon.svelte";
+  import AccountIcon from "./icons/AccountIcon.svelte";
+  import RequestsIcon from "./icons/RequestsIcon.svelte";
+  import UploadIcon from "./icons/UploadIcon.svelte";
   import { uploadInProgress } from "$lib/services/upload";
   import ModeToggle from "$lib/components/mode-toggle.svelte";
+  import Balance from "$lib/components/User/Balance.svelte";
+  import { Button } from "$lib/components/ui/button";
+
+  let showMobileMenu = false;
+  let showBalance = false;
+
 
   function logout() {
     if ($uploadInProgress) {
@@ -44,36 +53,75 @@
     </div>
 
     <!-- Right side with buttons -->
-    <div class="flex items-center ml-auto">
+    <div class="flex items-center ml-auto gap-1">
       {#if $authStore.state === "authenticated"}
         <ModeToggle />
+        <div class="relative">
+          <!-- <button
+            class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10"
+            on:click={() => (showBalance = !showBalance)}
+          >
+            <img
+              src={showBalance ? "/AccountIconClicked.svg" : <AccountIcon />}
+              alt="Account"
+              class="w-6 h-6"
+            />
+          </button> -->
+
+          <button
+            on:click={() => (showBalance = !showBalance)}
+            class="btn btn-ghost"
+          >
+            <AccountIcon />
+          </button>
+
+          {#if showBalance}
+            <div
+              role="button"
+              class="absolute right-0 top-[67px] mt-0"
+              transition:fade={{ duration: 100 }}
+              on:mouseleave={() => (showBalance = false)}
+            >
+              <Balance />
+            </div>
+          {/if}
+        </div>
       {/if}
 
       {#if $authStore.state === "unauthenticated"}
-        <div class="hidden md:flex items-center gap-4">
-          <a
-            href="/personal"
-            class="font-bold transition-colors"
-            class:text-blue-400={$page.url.pathname.startsWith("/personal")}
-            class:text-white={!$page.url.pathname.startsWith("/personal")}
-            class:hover:text-blue-400={!$page.url.pathname.startsWith(
-              "/personal",
-            )}
+        <button
+          class="gap-4 btn btn-accent"
+          on:click={() => authService.login()}
+        >
+          <LogoIcon />
+          Login
+        </button>
+      {:else if $authStore.state === "authenticated"}
+        <button
+          class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
+          on:click={() => (showMobileMenu = !showMobileMenu)}
+          aria-label="Open menu"
+        >
+          <span
+            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+              ? 'rotate-45 translate-y-[7px]'
+              : 'rotate-0'}"
           >
-            Personal
-          </a>
+          </span>
+          <span
+            class="h-[2px] bg-accent-100 rounded-full transition-opacity {showMobileMenu
+              ? 'opacity-0'
+              : 'opacity-100'}"
+          >
+          </span>
+          <span
+            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+              ? '-rotate-45 translate-y-[-7px]'
+              : 'rotate-0'}"
+          >
+          </span>
+        </button>
 
-          <a
-            href="/enterprise"
-            class="font-bold transition-colors"
-            class:text-blue-400={$page.url.pathname.startsWith("/enterprise")}
-            class:text-white={!$page.url.pathname.startsWith("/enterprise")}
-            class:hover:text-blue-400={!$page.url.pathname.startsWith(
-              "/enterprise",
-            )}
-          >
-            Enterprise
-          </a>
 
           <button
             class="gap-4 btn btn-accent"
@@ -93,3 +141,56 @@
     </div>
   </div>
 </nav>
+
+{#if showMobileMenu}
+  <div
+    class="md:hidden fixed inset-0 bg-black/50"
+    transition:fade|global={{ duration: 200 }}
+  ></div>
+  <div
+    transition:fly|global={{ duration: 300, x: 1000, opacity: 1 }}
+    class="fixed md:hidden inset-0 bg-background-300 z-10 pt-16"
+  >
+    <div class="p-4 flex flex-col gap-4 h-full">
+      <a
+        href="/"
+        class="btn btn-ghost justify-start"
+        class:btn-ghost-active={$page.route.id === "/"}
+        on:click={() => (showMobileMenu = false)}
+      >
+        <IconFile />
+        Files</a
+      >
+      <a
+        href="/upload"
+        class="btn btn-ghost justify-start"
+        class:btn-ghost-active={$page.route.id === "/upload"}
+        on:click={() => (showMobileMenu = false)}
+      >
+        <UploadIcon />
+        Upload</a
+      >
+      <a
+        href="/requests"
+        class="btn btn-ghost justify-start"
+        class:btn-ghost-active={$page.route.id === "/requests"}
+        on:click={() => (showMobileMenu = false)}
+      >
+        <RequestsIcon />
+        Requests</a
+      >
+      <div class="flex-1"></div>
+      <button
+        on:click={() => {
+          authService.logout();
+          showMobileMenu = false;
+        }}
+        class="btn btn-ghost justify-start"
+      >
+        <LogoutIcon />
+        Logout</button
+      >
+    </div>
+  </div>
+{/if}
+

@@ -26,7 +26,7 @@ pub fn get_requests(state: &State, caller: Principal) -> Vec<PublicFileMetadata>
                         state
                             .group_alias_index
                             .iter()
-                            .find(|(a, id)| **id == group.group_id)
+                            .find(|(_a, id)| **id == group.group_id)
                             .map(|(alias, _)| alias.clone())
                     });
 

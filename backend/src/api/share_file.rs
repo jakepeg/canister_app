@@ -81,7 +81,7 @@ pub fn get_shared_files(state: &State, caller: Principal) -> Vec<PublicFileMetad
         Some(file_ids) => file_ids
             .iter()
             .map(|file_id| {
-                let file = state.file_data.get(file_id).expect("file must exist");
+                let _file = state.file_data.get(file_id).expect("file must exist");
 
                 // Find group name for this file
                 let group_name = state
@@ -100,7 +100,7 @@ pub fn get_shared_files(state: &State, caller: Principal) -> Vec<PublicFileMetad
                         state
                             .group_alias_index
                             .iter()
-                            .find(|(a, id)| **id == group.group_id)
+                            .find(|(_a, id)| **id == group.group_id)
                             .map(|(alias, _)| alias.clone())
                     });
 

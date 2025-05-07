@@ -15,7 +15,12 @@ const config = {
   // for more information about preprocessors
   preprocess: vitePreprocess(),
   kit: {
-    adapter: adapter(),
+    // Configure adapter-static to create a fallback page for SPA routing
+    adapter: adapter({
+      // Pages can be dynamically generated (e.g., /users/123)
+      // fallback: '404.html' // You can also use 404.html
+      fallback: 'index.html' // Creates index.html as the fallback
+    }),
     files: {
       assets: filesPath("static"),
       hooks: {

@@ -24,22 +24,32 @@
 <aside class="bg-background w-64 min-h-screen flex flex-col">
   <div class="p-4">
     <nav class="flex-1">
+      <!-- Files link - dynamic based on canisterId param -->
       <a
-        href="/"
-        class="btn btn-ghost w-full justify-start {$page.route.id === '/'
+        href={$page.params.canisterId
+          ? `/canister/${$page.params.canisterId}/files`
+          : "/"}
+        class="btn btn-ghost w-full justify-start {$page.route.id ===
+        '/canister/[canisterId]/files'
           ? 'btn-ghost-active'
           : ''}"
+        aria-current={$page.route.id === '/canister/[canisterId]/files' ? 'page' : undefined}
       >
         <IconFile />
         Files
       </a>
       {#if $authStore.state === "authenticated"}
+        <!-- Requests link - dynamic based on canisterId param -->
+        <!-- Fallback to root if no canisterId, though requests might not make sense there -->
         <a
-          href="/requests"
+          href={$page.params.canisterId
+            ? `/canister/${$page.params.canisterId}/requests`
+            : "/"}
           class="btn btn-ghost w-full justify-start {$page.route.id ===
-          '/requests'
+          '/canister/[canisterId]/requests'
             ? 'btn-ghost-active'
             : ''}"
+          aria-current={$page.route.id === '/canister/[canisterId]/requests' ? 'page' : undefined}
         >
           <RequestsIcon />
           Requests

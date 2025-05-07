@@ -1,5 +1,5 @@
 // api/get_request_groups.rs
-use crate::{PublicFileMetadata, PublicRequestGroup, RequestGroup, State};
+use crate::{PublicFileMetadata, PublicRequestGroup, State};
 use candid::Principal;
 
 pub fn get_request_groups(state: &State, caller: Principal) -> Vec<PublicRequestGroup> {
@@ -35,7 +35,7 @@ pub fn get_request_groups(state: &State, caller: Principal) -> Vec<PublicRequest
                                 state
                                     .group_alias_index
                                     .iter()
-                                    .find(|(a, id)| **id == group.group_id)
+                                    .find(|(_a, id)| **id == group.group_id)
                                     .map(|(alias, _)| alias.clone())
                             });
 

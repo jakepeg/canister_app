@@ -1,6 +1,8 @@
 use backend::api::UploadFileAtomicRequest;
 // use backend::vetkd::{vetkd_encrypted_key, vetkd_public_key};
 use backend::*;
+// Import necessary types from the api module (which re-exports from canister_management)
+// use backend::api::{GetUserCanistersResponse, RegisterCanisterResponse};
 use candid::Principal;
 use ic_cdk::api::caller;
 use ic_cdk_macros::{post_upgrade, pre_upgrade, query, update};
@@ -97,18 +99,18 @@ fn multi_request(input: MultiRequestInput) -> MultiRequestResponse {
 
 #[query]
 fn get_user_templates() -> Vec<Template> {
-    with_state(|s| backend::api::template::get_user_templates(s, caller()))
+    with_state(|s| backend::api::get_user_templates(s, caller()))
 }
 
 #[query]
 fn get_template(name: String) -> Result<Template, GetAliasInfoError> {
-    with_state(|s| backend::api::template::get_template(s, caller(), name))
+    with_state(|s| backend::api::get_template(s, caller(), name))
 }
 
 #[update]
 fn delete_template(name: String) {
     with_state_mut(|s| {
-        backend::api::template::delete_template(s, caller(), name).unwrap_or_else(|err| {
+        backend::api::delete_template(s, caller(), name).unwrap_or_else(|err| {
             ic_cdk::println!("Error deleting template: {:?}", err);
         })
     });
@@ -171,6 +173,33 @@ fn rename_file(file_id: u64, new_name: String) -> FileSharingResponse {
 fn get_users() -> GetUsersResponse {
     with_state(|s| backend::api::get_users(s, caller()))
 }
+
+// --- New Canister Management Endpoints ---
+
+#[query]
+fn get_user_canisters() -> GetUserCanistersResponse {
+    // Directly call the implementation from the api module
+    backend::api::get_user_canisters()
+}
+
+#[update]
+async fn register_canister(canister_id: Principal, name: String) -> RegisterCanisterResponse {
+    // Directly call the implementation from the api module
+    // Note: This function in api is async, so we need await here.
+    backend::api::register_canister(canister_id, name).await
+}
+
+#[update]
+async fn rename_canister(canister_id: Principal, new_name: String) -> RenameCanisterResponse {
+    backend::api::rename_canister(canister_id, new_name).await
+}
+
+#[update]
+async fn delete_canister(canister_id: Principal) -> DeleteCanisterResponse {
+    backend::api::delete_canister_internal(canister_id).await
+}
+
+// --- End New Endpoints ---
 
 #[pre_upgrade]
 fn pre_upgrade() {

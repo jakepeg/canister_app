@@ -12,7 +12,8 @@
     aria-valuenow={percent}
     aria-valuemin="0"
     aria-valuemax="100"
-  />
+  >
+  </div>
   <div
     class="whitespace-nowrap absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2"
   >

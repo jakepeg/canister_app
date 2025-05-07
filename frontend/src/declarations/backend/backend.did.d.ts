@@ -2,6 +2,23 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface CanisterInfo { 'id' : Principal, 'name' : string }
+export type DeleteCanisterResponse = { 'Ok' : null } |
+  { 'CanisterNotFound' : null } |
+  { 'DeletionFailed' : string } |
+  { 'NotAuthorized' : null } |
+  { 'InternalError' : string };
+export type GetUserCanistersResponse = { 'Ok' : Array<CanisterInfo> } |
+  { 'NotAuthenticated' : null };
+export type RegisterCanisterResponse = { 'Ok' : null } |
+  { 'AlreadyRegistered' : null } |
+  { 'NotAuthorized' : null } |
+  { 'VerificationFailed' : string } |
+  { 'InternalError' : string };
+export type RenameCanisterResponse = { 'Ok' : null } |
+  { 'CanisterNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'InternalError' : string };
 export type VetkdEncryptedKeyResponse = { 'Ok' : Uint8Array | number[] } |
   { 'Err' : string };
 export type VetkdPublicKeyResponse = { 'Ok' : Uint8Array | number[] } |
@@ -99,6 +116,7 @@ export interface user {
 export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
 export interface _SERVICE {
+  'delete_canister' : ActorMethod<[Principal], DeleteCanisterResponse>,
   'delete_file' : ActorMethod<[file_id], share_file_response>,
   'delete_template' : ActorMethod<[string], undefined>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
@@ -118,10 +136,16 @@ export interface _SERVICE {
   'get_shared_files' : ActorMethod<[], Array<file_metadata>>,
   'get_template' : ActorMethod<[string], template_response>,
   'get_template_names' : ActorMethod<[], Array<string>>,
+  'get_user_canisters' : ActorMethod<[], GetUserCanistersResponse>,
   'get_user_templates' : ActorMethod<[], Array<template>>,
   'get_users' : ActorMethod<[], get_users_response>,
   'hello_world' : ActorMethod<[], string>,
   'multi_request' : ActorMethod<[multi_request_input], multi_request_response>,
+  'register_canister' : ActorMethod<
+    [Principal, string],
+    RegisterCanisterResponse
+  >,
+  'rename_canister' : ActorMethod<[Principal, string], RenameCanisterResponse>,
   'rename_file' : ActorMethod<[file_id, string], share_file_response>,
   'request_file' : ActorMethod<[string], string>,
   'revoke_share' : ActorMethod<[Principal, file_id], share_file_response>,
@@ -143,4 +167,4 @@ export interface _SERVICE {
   'who_am_i' : ActorMethod<[], who_am_i_response>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
-export declare const init: ({ IDL }: { IDL: IDL }) => IDL.Type[];
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
