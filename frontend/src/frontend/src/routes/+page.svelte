@@ -113,8 +113,22 @@
     isModalOpen = true;
   }
 
-  function closeModal() {
-    isModalOpen = false;
+  function handleCreateModalOpenChange(newOpenState: boolean) {
+    console.log(
+      `+page.svelte: handleCreateModalOpenChange called. Requested new state: ${newOpenState}. Current isModalOpen: ${isModalOpen}`,
+    );
+    isModalOpen = newOpenState;
+    if (!newOpenState) {
+      console.log(
+        "+page.svelte: CreateCanisterModal is NOW CLOSED by onOpenChange. isModalOpen final value:",
+        isModalOpen,
+      );
+    } else {
+      console.log(
+        "+page.svelte: CreateCanisterModal is NOW OPENED by onOpenChange. isModalOpen final value:",
+        isModalOpen,
+      );
+    }
   }
 
   onMount(() => {
@@ -242,9 +256,9 @@
 
     <!-- Render Create Canister Modal -->
     <CreateCanisterModal
-      bind:open={isModalOpen}
-      on:close={closeModal}
-      on:canisterCreated={handleCanisterCreated}
+      open={isModalOpen}
+      onOpenChange={handleCreateModalOpenChange}
+      onCanisterCreated={handleCanisterCreated}
     />
   {:else}
     <!-- Render Not Authenticated Component -->
