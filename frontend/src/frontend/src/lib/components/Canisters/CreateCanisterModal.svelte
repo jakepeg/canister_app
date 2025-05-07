@@ -1,82 +1,11 @@
 <!-- frontend/src/frontend/src/lib/components/Canisters/CreateCanisterModal.svelte -->
 <script lang="ts">
-<<<<<<< HEAD
-  import { createEventDispatcher } from "svelte";
-=======
->>>>>>> 069080e (CreateCanisterModal now closes after creating the canister.)
   import Button from "$lib/components/ui/button/button.svelte";
   import Input from "$lib/components/ui/input/input.svelte";
   import * as Dialog from "$lib/components/ui/dialog";
   import { Label } from "$lib/components/ui/label";
   import { X } from "lucide-svelte";
   import { createAndRegisterCanister } from "$lib/services/canisterManagement"; // Import the service function
-<<<<<<< HEAD
-
-  export let open = false; // Control modal visibility from parent
-
-  let canisterName = "";
-  let canisterSize = 10; // Default size in GB
-  let isLoading = false;
-  let error = "";
-
-  const dispatch = createEventDispatcher();
-
-  function closeModal() {
-    if (isLoading) return;
-    open = false;
-    canisterName = ""; // Reset form
-    error = "";
-    dispatch("close"); // Notify parent
-  }
-
-  async function handleCreateCanister() {
-    if (!canisterName.trim()) {
-      error = "Canister name cannot be empty.";
-      return;
-    }
-    if (canisterSize <= 0) {
-      error = "Canister size must be greater than 0 GB.";
-      return;
-    }
-    isLoading = true;
-    error = "";
-
-    try {
-      console.log(
-        `Attempting to create and register canister: ${canisterName} with size: ${canisterSize}GB`,
-      );
-      const result = await createAndRegisterCanister(
-        canisterName.trim(),
-        canisterSize,
-      );
-
-      if ("ok" in result) {
-        console.log(
-          `Canister ${result.ok.toText()} created and registered successfully!`,
-        );
-        dispatch("canisterCreated"); // Notify parent to refresh list
-        closeModal();
-      } else {
-        // Handle specific error from the service
-        console.error("Failed to create/register canister:", result.err);
-        error = `Failed: ${result.err}`;
-      }
-    } catch (err: any) {
-      // Catch unexpected errors during the process
-      console.error("Unexpected error during canister creation:", err);
-      error = `An unexpected error occurred: ${err.message || "Unknown error"}`;
-    } finally {
-      isLoading = false; // Ensure loading state is always reset
-    }
-  }
-
-  // Handle Escape key press to close modal
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === "Escape") {
-      closeModal();
-    }
-  }
-=======
   import { onMount, onDestroy } from "svelte"; // For keydown listener
 
   // Svelte 5 Props
@@ -203,14 +132,10 @@
   onDestroy(() => {
     window.removeEventListener("keydown", handleKeydown);
   });
->>>>>>> 069080e (CreateCanisterModal now closes after creating the canister.)
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<<<<<<< HEAD
-<Dialog.Root bind:open onOpenChange={(val) => !val && closeModal()}>
-=======
 <Dialog.Root
   {open}
   onOpenChange={(newOpenState) => {
@@ -230,7 +155,6 @@
     }
   }}
 >
->>>>>>> 069080e (CreateCanisterModal now closes after creating the canister.)
   <Dialog.Portal>
     <!-- Backdrop: Based on Rectangle 107 fill_RMREMI -->
     <Dialog.Overlay class="fixed inset-0 z-50 " />
@@ -280,27 +204,6 @@
         </div>
 
         <!-- Size Input -->
-<<<<<<< HEAD
-        <!-- <div>
-					<Label class="block text-sm font-inder mb-1">Size (GB)</Label>
-					<Input
-						type="number"
-						bind:value={canisterSize}
-						min="1"
-						placeholder="Enter size in GB"
-						class="bg-transparent border border-[#0B8CE9] rounded-[9px] placeholder:font-inder placeholder:text-base focus:ring-1 focus:ring-[#0B8CE9]"
-						disabled={isLoading}
-					/>
-				</div> -->
-
-        <!-- Setup Cost Display -->
-        <!-- <div>
-					<Label class="block text-base font-inder mb-1">Setup Cost:</Label>
-					<div class="font-inder text-base">
-						TBD 
-					</div>
-				</div> -->
-=======
         <div>
           <Label class="block text-sm font-inder mb-1">Size (GB)</Label>
           <Input
@@ -322,7 +225,6 @@
             TBD <!-- Placeholder - Needs clarification -->
           </div>
         </div>
->>>>>>> 069080e (CreateCanisterModal now closes after creating the canister.)
       </div>
 
       <!-- Error Message -->
