@@ -64,7 +64,7 @@
   });
 
   function formatBalance(e8s: bigint | null): string {
-    if (e8s === null) return "N/A";
+    if (e8s === null) return "";
     const icp = Number(e8s) / 10 ** 8;
     return icp.toLocaleString(undefined, {
       minimumFractionDigits: 2,
