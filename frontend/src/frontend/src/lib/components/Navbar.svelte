@@ -11,10 +11,11 @@
   import ModeToggle from "$lib/components/mode-toggle.svelte";
   import Balance from "$lib/components/User/Balance.svelte";
   import { Button } from "$lib/components/ui/button";
+  import { fade, fly } from "svelte/transition";
+  import IconFile from "./icons/IconFile.svelte";
 
   let showMobileMenu = false;
   let showBalance = false;
-
 
   function logout() {
     if ($uploadInProgress) {
@@ -69,7 +70,7 @@
           </button> -->
 
           <button
-            on:click={() => (showBalance = !showBalance)}
+            onclick={() => (showBalance = !showBalance)}
             class="btn btn-ghost"
           >
             <AccountIcon />
@@ -80,7 +81,7 @@
               role="button"
               class="absolute right-0 top-[67px] mt-0"
               transition:fade={{ duration: 100 }}
-              on:mouseleave={() => (showBalance = false)}
+              onmouseleave={() => (showBalance = false)}
             >
               <Balance />
             </div>
@@ -88,55 +89,53 @@
         </div>
       {/if}
 
+      <!-- Simplified Login/Logout Logic -->
       {#if $authStore.state === "unauthenticated"}
         <button
           class="gap-4 btn btn-accent"
-          on:click={() => authService.login()}
+          onclick={() => authService.login()}
         >
           <LogoIcon />
           Login
         </button>
       {:else if $authStore.state === "authenticated"}
+        <!-- Hamburger menu (Mobile Only) -->
         <button
           class="flex flex-col items-stretch gap-[5px] md:hidden w-5 h-5"
-          on:click={() => (showMobileMenu = !showMobileMenu)}
+          onclick={() => (showMobileMenu = !showMobileMenu)}
           aria-label="Open menu"
+          aria-expanded={showMobileMenu}
         >
           <span
-            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+            class="h-[2px] bg-accent-100 rounded-full transition-transform duration-200 {showMobileMenu
               ? 'rotate-45 translate-y-[7px]'
               : 'rotate-0'}"
-          >
-          </span>
+          ></span>
           <span
-            class="h-[2px] bg-accent-100 rounded-full transition-opacity {showMobileMenu
+            class="h-[2px] bg-accent-100 rounded-full transition-opacity duration-200 {showMobileMenu
               ? 'opacity-0'
               : 'opacity-100'}"
-          >
-          </span>
+          ></span>
           <span
-            class="h-[2px] bg-accent-100 rounded-full transition-transform {showMobileMenu
+            class="h-[2px] bg-accent-100 rounded-full transition-transform duration-200 {showMobileMenu
               ? '-rotate-45 translate-y-[-7px]'
               : 'rotate-0'}"
-          >
-          </span>
+          ></span>
         </button>
 
-
-          <button
-            class="gap-4 btn btn-accent"
-            on:click={() => authService.login()}
-          >
-            <LogoIcon />
-            Demo
-          </button>
-        </div>
-      {:else if $authStore.state === "authenticated"}
+        <!-- Desktop Logout Button -->
         <div class="hidden md:flex gap-2 lg:gap-8">
-          <button on:click={() => logout()} class="btn btn-ghost">
+          <button
+            onclick={() => logout()}
+            class="btn btn-ghost p-2"
+            aria-label="Logout"
+          >
+            <!-- Added padding -->
             <LogoutIcon />
           </button>
         </div>
+
+        <!-- REMOVED the seemingly erroneous "Demo" button from here -->
       {/if}
     </div>
   </div>
@@ -156,7 +155,7 @@
         href="/"
         class="btn btn-ghost justify-start"
         class:btn-ghost-active={$page.route.id === "/"}
-        on:click={() => (showMobileMenu = false)}
+        onclick={() => (showMobileMenu = false)}
       >
         <IconFile />
         Files</a
@@ -165,7 +164,7 @@
         href="/upload"
         class="btn btn-ghost justify-start"
         class:btn-ghost-active={$page.route.id === "/upload"}
-        on:click={() => (showMobileMenu = false)}
+        onclick={() => (showMobileMenu = false)}
       >
         <UploadIcon />
         Upload</a
@@ -174,14 +173,14 @@
         href="/requests"
         class="btn btn-ghost justify-start"
         class:btn-ghost-active={$page.route.id === "/requests"}
-        on:click={() => (showMobileMenu = false)}
+        onclick={() => (showMobileMenu = false)}
       >
         <RequestsIcon />
         Requests</a
       >
       <div class="flex-1"></div>
       <button
-        on:click={() => {
+        onclick={() => {
           authService.logout();
           showMobileMenu = false;
         }}
@@ -193,4 +192,3 @@
     </div>
   </div>
 {/if}
-
