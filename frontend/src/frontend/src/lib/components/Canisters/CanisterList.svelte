@@ -71,7 +71,7 @@
       {#each canisters as canister (canister.id)}
         <CanisterCard
           canisterId={Principal.fromText(canister.id)}
-          canisterName={canister.name}
+          initialCanisterName={canister.name}
           onClick={() => navigateToCanisterFiles(canister.id)}
           onUpdate={handleCanisterCardUpdate}
         />

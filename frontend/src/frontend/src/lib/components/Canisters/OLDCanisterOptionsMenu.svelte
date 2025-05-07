@@ -22,9 +22,9 @@
     onCanisterDeleted,
   }: Props = $props();
 
-  let renameDialogOpen = false;
-  let deleteDialogOpen = false;
-  let newCanisterName = "";
+  let renameDialogOpen = $state(false);
+  let deleteDialogOpen = $state(false);
+  let newCanisterName = $state("");
   let isLoading = false;
   let error = "";
 
