@@ -204,7 +204,7 @@
         </div>
 
         <!-- Size Input -->
-        <div>
+        <!-- <div>
           <Label class="block text-sm font-inder mb-1">Size (GB)</Label>
           <Input
             type="number"
@@ -215,40 +215,37 @@
             disabled={isLoading}
           />
         </div>
-
-        <!-- Setup Cost Display -->
         <div>
-          <!-- Label: Style: style_GUBF0I - Inder, 17px, White -->
           <Label class="block text-base font-inder mb-1">Setup Cost:</Label>
-          <!-- Value: Needs clarification - Using placeholder -->
           <div class="font-inder text-base">
-            TBD <!-- Placeholder - Needs clarification -->
+            TBD
           </div>
         </div>
-      </div>
+      </div> -->
 
-      <!-- Error Message -->
-      {#if error}
-        <p class="text-red-500 text-sm mt-2">{error}</p>
-      {/if}
+        <!-- Error Message -->
+        {#if error}
+          <p class="text-red-500 text-sm mt-2">{error}</p>
+        {/if}
 
-      <!-- Action Button -->
-      <Dialog.Footer class="mt-6">
-        <!-- Button: Based on Rectangle 95 (289:154) -->
-        <Button
-          class="w-full font-inder text-base borderrounded-[22px]"
-          variant="outline"
-          onclick={handleCreateCanister}
-          disabled={isLoading}
-        >
-          {#if isLoading}
-            Creating...
-          {:else}
-            Create Canister
-          {/if}
-        </Button>
-      </Dialog.Footer>
-    </Dialog.Content>
+        <!-- Action Button -->
+        <Dialog.Footer class="mt-6">
+          <!-- Button: Based on Rectangle 95 (289:154) -->
+          <Button
+            class="w-full font-inder text-base borderrounded-[22px]"
+            variant="outline"
+            onclick={handleCreateCanister}
+            disabled={isLoading}
+          >
+            {#if isLoading}
+              Creating...
+            {:else}
+              Create Canister
+            {/if}
+          </Button>
+        </Dialog.Footer>
+      </div></Dialog.Content
+    >
   </Dialog.Portal>
 </Dialog.Root>
 
