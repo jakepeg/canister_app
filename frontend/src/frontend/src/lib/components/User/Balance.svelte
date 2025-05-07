@@ -6,6 +6,7 @@
   import { AccountIdentifier } from "@dfinity/ledger-icp";
   import { Principal } from "@dfinity/principal";
   import { userStore } from "$lib/services/user";
+  import EditIcon from "$lib/components/icons/EditIcon.svelte";
 
   let balanceService: BalanceService | null = null;
   const balanceStore: Writable<BalanceState> = writable({
@@ -92,7 +93,8 @@
       <p class="text-[15px] font-['Inder'] text-white">
         Name: {$userStore.username}
       </p>
-      <button class="edit-button">
+
+      <!-- <button class="edit-button">
         <svg
           width="14"
           height="14"
@@ -106,7 +108,8 @@
             stroke-width="2"
           />
         </svg>
-      </button>
+      </button> -->
+      <EditIcon />
     </div>
   {/if}
 
