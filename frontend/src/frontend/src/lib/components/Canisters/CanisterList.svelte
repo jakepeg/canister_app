@@ -43,9 +43,11 @@
 
 <div class="container mx-auto px-4 py-8">
   <div class="flex justify-between items-center mb-6">
-    <!-- Header: Style: style_ESKRTZ - Inder, 20px, White -->
-    <h1 class="font-inder text-xl">My Canisters</h1>
-    <!-- New Canister Button: Style: style_GUBF0I - Inder, 17px, White, white stroke, 6px border-radius -->
+    <!-- Header with dark/light mode responsive text color -->
+    <h1 class="font-inder text-xl dark:text-white text-gray-900">
+      My Canisters
+    </h1>
+    <!-- Button component should handle its own styling -->
     <Button onclick={openCreateModal}>New Canister</Button>
   </div>
 
@@ -64,12 +66,14 @@
       {/each}
     </div>
   {:else}
-    <!-- Empty State: Based on Figma 280:6 -->
+    <!-- Empty State with dark/light mode responsive text color -->
     <div class="flex flex-col items-center justify-center text-center py-16">
       <!-- Logo/Icon: Based on 280:30 -->
       <img src="/logo.svg" alt="Logo" class="w-24 h-24 mb-6 opacity-50" />
-      <!-- Text: Style: style_8GQ93Y - Inder, 20px, White, Centered -->
-      <p class="font-inder text-xl mb-6">Create a canister to get started.</p>
+      <!-- Text with responsive color -->
+      <p class="font-inder text-xl mb-6 dark:text-white text-gray-900">
+        Create a canister to get started.
+      </p>
       <!-- Button is already present in the header -->
     </div>
   {/if}

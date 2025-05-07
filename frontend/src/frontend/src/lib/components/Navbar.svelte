@@ -6,6 +6,7 @@
   import IconFile from "./icons/IconFile.svelte";
   import LogoIcon from "./icons/LogoIcon.svelte";
   import LogoutIcon from "./icons/LogoutIcon.svelte";
+  import AccountIcon from "./icons/AccountIcon.svelte";
   import RequestsIcon from "./icons/RequestsIcon.svelte";
   import UploadIcon from "./icons/UploadIcon.svelte";
   import { uploadInProgress } from "$lib/services/upload";
@@ -48,23 +49,31 @@
     </div>
 
     <!-- Right side with buttons -->
-    <div class="flex items-center ml-auto gap-4">
+    <div class="flex items-center ml-auto gap-1">
       {#if $authStore.state === "authenticated"}
         <ModeToggle />
         <div class="relative">
-          <button
+          <!-- <button
             class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10"
             on:click={() => (showBalance = !showBalance)}
           >
             <img
-              src={showBalance ? "/AccountIconClicked.svg" : "/AccountIcon.svg"}
+              src={showBalance ? "/AccountIconClicked.svg" : <AccountIcon />}
               alt="Account"
               class="w-6 h-6"
             />
+          </button> -->
+
+          <button
+            on:click={() => (showBalance = !showBalance)}
+            class="btn btn-ghost"
+          >
+            <AccountIcon />
           </button>
 
           {#if showBalance}
             <div
+              role="button"
               class="absolute right-0 top-[67px] mt-0"
               transition:fade={{ duration: 100 }}
               on:mouseleave={() => (showBalance = false)}

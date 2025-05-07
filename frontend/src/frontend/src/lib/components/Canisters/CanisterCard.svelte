@@ -117,7 +117,7 @@
   <Dialog.Portal>
     <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50" />
     <Dialog.Content
-      class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] bg-[#1F1F1F] p-6 shadow-lg rounded-[21px] font-inder"
+      class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] dark:bg-[#1F1F1F] bg-white p-6 shadow-lg rounded-[21px] font-inder dark:text-white text-gray-900"
     >
       <Dialog.Title class="text-lg mb-4">Rename Canister</Dialog.Title>
       <div class="space-y-4">
@@ -152,7 +152,7 @@
   <Dialog.Portal>
     <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50" />
     <Dialog.Content
-      class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] bg-[#1F1F1F] p-6 shadow-lg rounded-[21px] font-inder"
+      class="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] dark:bg-[#1F1F1F] bg-white p-6 shadow-lg rounded-[21px] font-inder dark:text-white text-gray-900"
     >
       <Dialog.Title class="text-lg mb-4">Delete Canister</Dialog.Title>
       <p class="mb-4">
@@ -185,7 +185,7 @@
 
 <div class="relative">
   <Card.Root
-    class="w-full h-full border border-[#1F1F1F] shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] cursor-pointer"
+    class="w-full h-full border dark:border-[#1F1F1F] border-gray-200 shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] cursor-pointer dark:bg-[#1F1F1F] bg-white"
   >
     <Card.Content class="p-4 relative">
       <!-- Status Indicator -->
@@ -201,14 +201,16 @@
       <div class="absolute right-3 top-3">
         <DropdownMenu.Root bind:open={menuOpen}>
           <DropdownMenu.Trigger class="focus:outline-none">
-            <MoreVertical class="w-3 h-[13px] text-white/75 cursor-pointer" />
+            <MoreVertical
+              class="w-3 h-[13px] dark:text-white/75 text-gray-600 cursor-pointer"
+            />
           </DropdownMenu.Trigger>
           <DropdownMenu.Content
-            class="w-[134px] bg-[#1F1F1F] border border-[#0B8CE9] rounded-[11px] p-1 z-40 absolute right-0"
+            class="w-[134px] dark:bg-[#1F1F1F] bg-white border border-[#0B8CE9] rounded-[11px] p-1 z-40 absolute right-0"
             sideOffset={5}
           >
             <DropdownMenu.Item
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] dark:text-white text-gray-900 font-inder"
               onclick={() => {
                 menuOpen = true;
                 console.log("Start/Stop clicked");
@@ -218,7 +220,7 @@
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] dark:text-white text-gray-900 font-inder"
               onclick={() => {
                 menuOpen = true;
                 console.log("Topup Cycles clicked");
@@ -228,7 +230,7 @@
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
-              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+              class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] dark:text-white text-gray-900 font-inder"
               onclick={() => {
                 menuOpen = true;
                 console.log("Rename clicked");
@@ -265,13 +267,13 @@
         <!-- Canister Info -->
         <div class="mt-8 space-y-4">
           <!-- ID -->
-          <div class="text-[11px] leading-[14px] text-white">
+          <div class="text-[11px] leading-[14px] dark:text-white text-gray-900">
             ID: {truncateId(canisterId.toText())}
           </div>
 
           <!-- Cycles -->
           <div
-            class="text-[11px] leading-[14px] text-white border-b border-white/20 pb-2"
+            class="text-[11px] leading-[14px] dark:text-white text-gray-900 border-b dark:border-white/20 border-gray-300 pb-2"
           >
             {#if statusInfo}
               Cycles {formatCycles(statusInfo.cyclesBalance)} T
@@ -281,8 +283,14 @@
           </div>
 
           <!-- Storage -->
-          <div class="space-y-2 border-b border-white/20 pb-2">
-            <div class="text-[11px] leading-[14px] text-white">Storage</div>
+          <div
+            class="space-y-2 border-b dark:border-white/20 border-gray-300 pb-2"
+          >
+            <div
+              class="text-[11px] leading-[14px] dark:text-white text-gray-900"
+            >
+              Storage
+            </div>
             {#if statusInfo}
               <div class="relative h-[7px] bg-[#B6C8CE] overflow-hidden">
                 <div
@@ -290,18 +298,24 @@
                   style:width={`${(Number(statusInfo.memorySize) / Number(statusInfo.memoryAllocation)) * 100}%`}
                 ></div>
               </div>
-              <div class="text-[11px] leading-[14px] text-white">
+              <div
+                class="text-[11px] leading-[14px] dark:text-white text-gray-900"
+              >
                 {formatGB(statusInfo.memorySize)} / {formatGB(
                   statusInfo.memoryAllocation,
                 )} GB used
               </div>
             {:else}
-              <div>Loading storage...</div>
+              <div class="dark:text-white text-gray-900">
+                Loading storage...
+              </div>
             {/if}
           </div>
 
           <!-- Name -->
-          <div class="text-[14px] leading-[18px] text-white text-center mt-2">
+          <div
+            class="text-[14px] leading-[18px] dark:text-white text-gray-900 text-center mt-2"
+          >
             {#if statusInfo}
               {statusInfo.name}
             {:else}
