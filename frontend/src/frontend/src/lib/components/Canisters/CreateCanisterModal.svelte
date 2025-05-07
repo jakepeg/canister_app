@@ -1,24 +1,21 @@
-<!-- frontend/src/frontend/src/lib/components/Canisters/CreateCanisterModal.svelte -->
 <script lang="ts">
   import Button from "$lib/components/ui/button/button.svelte";
   import Input from "$lib/components/ui/input/input.svelte";
   import * as Dialog from "$lib/components/ui/dialog";
   import { Label } from "$lib/components/ui/label";
   import { X } from "lucide-svelte";
-  import { createAndRegisterCanister } from "$lib/services/canisterManagement"; // Import the service function
-  import { onMount, onDestroy } from "svelte"; // For keydown listener
+  import { createAndRegisterCanister } from "$lib/services/canisterManagement";
+  import { onMount, onDestroy } from "svelte";
 
-  // Svelte 5 Props
   type Props = {
     open: boolean;
-    onOpenChange: (isOpen: boolean) => void; // Callback to notify parent about open state changes
-    onCanisterCreated?: () => void; // Callback when canister is successfully created
+    onOpenChange: (isOpen: boolean) => void;
+    onCanisterCreated?: () => void;
   };
   let { open, onOpenChange, onCanisterCreated }: Props = $props();
 
-  // Svelte 5 State Runes
   let canisterName = $state("");
-  let canisterSize = $state(10); // Default size in GB
+  let canisterSize = $state(10);
   let isLoading = $state(false);
   let error = $state("");
 
@@ -26,11 +23,11 @@
     console.log(
       "CreateCanisterModal: attemptCloseModal START. isLoading:",
       isLoading,
-    ); // <<< ADD LOG
+    );
     if (isLoading) {
       console.log(
         "CreateCanisterModal: attemptCloseModal - bailing because isLoading is true.",
-      ); // <<< ADD LOG
+      );
       return;
     }
     canisterName = "";
@@ -38,9 +35,9 @@
     error = "";
     console.log(
       "CreateCanisterModal: attemptCloseModal - Calling onOpenChange(false)",
-    ); // <<< ADD LOG
+    );
     onOpenChange(false);
-    console.log("CreateCanisterModal: attemptCloseModal END."); // <<< ADD LOG
+    console.log("CreateCanisterModal: attemptCloseModal END.");
   }
 
   async function handleCreateCanister() {
@@ -79,16 +76,16 @@
         if (onCanisterCreated) {
           console.log(
             "CreateCanisterModal: Calling onCanisterCreated callback.",
-          ); // <<< ADD LOG
+          );
           onCanisterCreated();
         }
         console.log(
           "CreateCanisterModal: BEFORE calling attemptCloseModal after creation.",
-        ); // <<< ADD LOG
-        attemptCloseModal(); // Close the modal on success
+        );
+        attemptCloseModal();
         console.log(
           "CreateCanisterModal: AFTER calling attemptCloseModal after creation.",
-        ); // <<< ADD LOG
+        );
       } else {
         console.error(
           "CreateCanisterModal: Failed to create/register canister:",
@@ -107,24 +104,15 @@
       console.log(
         "CreateCanisterModal: handleCreateCanister finally block. isLoading:",
         isLoading,
-      ); // <<< ADD LOG
+      );
     }
   }
 
-  // Handle Escape key press to close modal
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === "Escape" && open) {
-      // Only act if modal is open
       attemptCloseModal();
     }
   }
-
-  // Svelte 5: For `bind:value` on custom Input component, if it's not Svelte 5 compatible,
-  // you'd need it to expose `value` prop and an `onInput` (or similar) event.
-  // Assuming your Input component is Svelte 5 compatible and works with $state directly or
-  // you modify it to accept value and emit changes.
-  // If it's a simple wrapper, then:
-  // <input value={canisterName} oninput={(e) => canisterName = e.target.value} ... />
 
   onMount(() => {
     window.addEventListener("keydown", handleKeydown);
@@ -142,58 +130,37 @@
     console.log(
       "CreateCanisterModal: Dialog.Root onOpenChange called with:",
       newOpenState,
-    ); // <<< ADD LOG
+    );
     onOpenChange(newOpenState);
     if (!newOpenState && !isLoading) {
-      // Only reset form if not loading
       canisterName = "";
       canisterSize = 10;
       error = "";
       console.log(
         "CreateCanisterModal: Dialog.Root onOpenChange - form reset because closing.",
-      ); // <<< ADD LOG
+      );
     }
   }}
 >
   <Dialog.Portal>
-    <!-- Backdrop: Based on Rectangle 107 fill_RMREMI -->
     <Dialog.Overlay class="fixed inset-0 z-50 " />
-    <!-- Modal Container: Based on 289:141 -->
     <Dialog.Content
       class="fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 border-2 border-[#0B8CE9] p-6 shadow-lg duration-200 rounded-[21px] font-inder"
       aria-describedby="create-canister-description"
     >
-      <!-- Header -->
       <Dialog.Header class="flex justify-between items-center">
-        <!-- Title: Style: style_GUBF0I - Inder, 17px, White -->
         <Dialog.Title class="text-lg font-inder"
           >Create New Canister</Dialog.Title
         >
-        <!-- Close Button: Style: style_GUBF0I - Inder, 17px, White -->
-        <!-- Reverted to simple button with typed on:click -->
-        <!-- <button
-					on:click={(e: MouseEvent) => closeModal()}
-					class="p-1 rounded-full hover:bg-white/10 transition-colors"
-					aria-label="Close"
-				>
-					<X class="h-5 w-5" />
-				</button> -->
       </Dialog.Header>
-
-      <!-- Description for Accessibility -->
       <Dialog.Description id="create-canister-description" class="sr-only">
         Modal to create a new canister by providing a name.
       </Dialog.Description>
-
-      <!-- Form Fields -->
       <div class="space-y-4 mt-4">
-        <!-- Canister Name Input -->
         <div>
-          <!-- Label: Style: style_4O2OYN - Inder, 15px, White -->
           <label for="canisterName" class="block text-sm font-inder mb-1"
             >Canister Name</label
           >
-          <!-- Input: Based on Rectangle 93 (289:150) -->
           <Input
             id="canisterName"
             bind:value={canisterName}
@@ -230,7 +197,6 @@
 
         <!-- Action Button -->
         <Dialog.Footer class="mt-6">
-          <!-- Button: Based on Rectangle 95 (289:154) -->
           <Button
             class="w-full font-inder text-base borderrounded-[22px]"
             variant="outline"
