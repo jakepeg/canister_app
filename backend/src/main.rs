@@ -195,8 +195,8 @@ async fn rename_canister(canister_id: Principal, new_name: String) -> RenameCani
 }
 
 #[update]
-async fn delete_canister(canister_id: Principal) -> DeleteCanisterResponse {
-    backend::api::delete_canister_internal(canister_id).await
+async fn unregister_canister(canister_id: Principal) -> DeleteCanisterResponse {
+    backend::api::unregister_canister_internal(canister_id)
 }
 
 // --- End New Endpoints ---

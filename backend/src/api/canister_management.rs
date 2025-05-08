@@ -95,98 +95,66 @@ pub async fn rename_canister(canister_id: Principal, new_name: String) -> Rename
     })
 }
 
-pub async fn delete_canister_internal(canister_id: Principal) -> DeleteCanisterResponse {
+// RENAMED and SIMPLIFIED function
+// Changed return type to use DeleteCanisterResponse for simplicity, but adjust if needed
+// Removed `async` as it no longer makes async calls
+pub fn unregister_canister_internal(canister_id: Principal) -> DeleteCanisterResponse {
     let caller = ic_cdk::caller();
+    // While update calls usually block anonymous, explicit check is safer if query calls could somehow reach this logic
     if caller == Principal::anonymous() {
+        ic_cdk::println!("Attempt to unregister canister by anonymous caller blocked.");
         return DeleteCanisterResponse::NotAuthorized;
     }
 
-    // First verify the canister exists in user's list (read-only)
-    let canister_exists = with_user_canisters(|map| {
-        map.get(&caller)
-            .map(|list| list.0.iter().any(|c| c.id == canister_id))
-            .unwrap_or(false)
+    ic_cdk::println!(
+        "Unregister attempt: caller {}, target canister {}",
+        caller,
+        canister_id
+    );
+
+    // Use mutable access to check and remove in one go
+    let result = with_user_canisters_mut(|map| {
+        if let Some(mut canister_list_vec) = map.get(&caller) {
+            let initial_len = canister_list_vec.0.len();
+            // Retain only canisters whose ID is NOT the one we want to remove
+            canister_list_vec.0.retain(|c| c.id != canister_id);
+            let final_len = canister_list_vec.0.len();
+
+            if initial_len == final_len {
+                // The canister ID was not found in the list for this caller
+                ic_cdk::println!(
+                    "Unregister failed: Canister {} not found in list for caller {}.",
+                    canister_id,
+                    caller
+                );
+                Err(DeleteCanisterResponse::CanisterNotFound)
+            } else {
+                // Canister was found and removed, update the map
+                ic_cdk::println!(
+                    "Unregister success: Canister {} removed from list for caller {}. Length {} -> {}.",
+                    canister_id,
+                    caller,
+                    initial_len,
+                    final_len
+                );
+                // Re-insert the modified vector back into the map
+                map.insert(caller, canister_list_vec);
+                Ok(DeleteCanisterResponse::Ok)
+            }
+        } else {
+            // The caller principal has no canisters registered at all
+            ic_cdk::println!(
+                "Unregister failed: Caller {} has no registered canisters.",
+                caller
+            );
+            Err(DeleteCanisterResponse::CanisterNotFound)
+        }
     });
 
-    if !canister_exists {
-        return DeleteCanisterResponse::CanisterNotFound;
+    // Return the result (Ok or CanisterNotFound)
+    match result {
+        Ok(response) => response,
+        Err(response) => response,
     }
-
-    // Stop the canister first - Pass CanisterIdRecord by value
-    match stop_canister(CanisterIdRecord { canister_id }).await {
-        Ok(_) => ic_cdk::println!("Canister {} stopped successfully.", canister_id),
-        Err((code, msg)) => {
-            ic_cdk::println!(
-                "Failed to stop canister {}: {:?} - {}",
-                canister_id,
-                code,
-                msg
-            );
-            // Proceed with deletion attempt even if stop fails? Or return error?
-            // Returning error here is safer.
-            return DeleteCanisterResponse::DeletionFailed(format!(
-                "Failed to stop canister (code: {:?}): {}",
-                code, msg
-            ));
-        }
-    }
-
-    // Delete the canister using the IC management canister - Pass CanisterIdRecord by value
-    match ic_cdk::api::management_canister::main::delete_canister(CanisterIdRecord { canister_id })
-        .await
-    {
-        Ok(_) => {
-            ic_cdk::println!(
-                "Canister {} deleted successfully via management canister.",
-                canister_id
-            );
-            // Remove from user's list
-            let result = with_user_canisters_mut(|map| {
-                // Get the list again within the mutable context
-                if let Some(mut canister_list_vec) = map.get(&caller) {
-                    ic_cdk::println!(
-                        "Removing canister {} from user {}'s list.",
-                        canister_id,
-                        caller
-                    );
-                    let initial_len = canister_list_vec.0.len();
-                    // Modify the owned vec
-                    canister_list_vec.0.retain(|c| c.id != canister_id);
-                    let final_len = canister_list_vec.0.len();
-                    ic_cdk::println!("List length changed from {} to {}.", initial_len, final_len);
-
-                    // Insert the modified vec back
-                    map.insert(caller, canister_list_vec);
-                    Ok(())
-                } else {
-                    // Should not happen if initial check passed, but handle defensively.
-                    ic_cdk::println!(
-                        "Error: Canister list for user {} not found during removal.",
-                        caller
-                    );
-                    Err("Internal error: User canister list disappeared unexpectedly.")
-                }
-            });
-
-            match result {
-                Ok(_) => DeleteCanisterResponse::Ok,
-                Err(msg) => {
-                    ic_cdk::println!("Internal error after canister deletion: {}", msg);
-                    DeleteCanisterResponse::InternalError(msg.to_string())
-                }
-            }
-        }
-        Err((code, msg)) => {
-            ic_cdk::println!(
-                "Failed to delete canister {} via management canister: {:?} - {}",
-                canister_id,
-                code,
-                msg
-            );
-            DeleteCanisterResponse::DeletionFailed(format!(
-                "Failed to delete canister (code: {:?}): {}",
-                code, msg
-            ))
-        }
-    }
+    // Note: InternalError for map operations is less likely but could be added if needed
 }
