@@ -66,6 +66,16 @@
           `CreateCanisterModal: Canister ${result.ok.toText()} created and registered!`,
         );
 
+        // Google Analytics event tracking
+        if (typeof gtag === "function") {
+          gtag("event", "canister_creation", {
+            event_category: "Canister",
+            event_label: canisterName,
+            value: canisterSize,
+          });
+          console.log("Google Analytics: Canister creation event tracked.");
+        }
+
         // --- FIX: Set isLoading false BEFORE trying to close ---
         isLoading = false;
         console.log(
