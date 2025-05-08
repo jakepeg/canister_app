@@ -545,3 +545,89 @@ export async function deleteCanister(
     };
   }
 }
+
+// --- NEW FUNCTIONS FOR START/STOP ---
+async function getManagementCanister(): Promise<
+  ICManagementCanister | { err: string }
+> {
+  const authState = get(authStore);
+  if (authState.state !== "authenticated") {
+    return { err: "User not authenticated" };
+  }
+
+  const identity = authState.authClient.getIdentity();
+  try {
+    const agent = await createAgent({ identity, host });
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      try {
+        await agent.fetchRootKey();
+      } catch (fetchKeyErr: any) {
+        console.warn(
+          "Could not fetch root key for management operation:",
+          fetchKeyErr,
+        );
+        // Depending on the operation, this might be critical or not.
+        // For start/stop, it usually is on local replica.
+        return { err: `Failed to fetch root key: ${fetchKeyErr.message}` };
+      }
+    }
+    return ICManagementCanister.create({ agent });
+  } catch (agentErr: any) {
+    return {
+      err: `Failed to create agent for management canister: ${agentErr.message}`,
+    };
+  }
+}
+
+export async function startUserCanister(
+  canisterId: Principal,
+): Promise<{ ok: true } | { err: string }> {
+  console.log(`Attempting to start canister ${canisterId.toText()}`);
+  const managementCanisterOrError = await getManagementCanister();
+  if ("err" in managementCanisterOrError) {
+    return managementCanisterOrError;
+  }
+  const managementCanister = managementCanisterOrError;
+
+  try {
+    await managementCanister.startCanister(canisterId);
+    console.log(`Canister ${canisterId.toText()} started successfully.`);
+    return { ok: true };
+  } catch (err: any) {
+    console.error(`Error starting canister ${canisterId.toText()}:`, err);
+    if (err.message?.includes("is already running")) {
+      console.log(`Canister ${canisterId.toText()} was already running.`);
+      return { ok: true }; // Treat as success if already in desired state
+    }
+    return { err: err.message || "Failed to start canister" };
+  }
+}
+
+export async function stopUserCanister(
+  canisterId: Principal,
+): Promise<{ ok: true } | { err: string }> {
+  console.log(`Attempting to stop canister ${canisterId.toText()}`);
+  const managementCanisterOrError = await getManagementCanister();
+  if ("err" in managementCanisterOrError) {
+    return managementCanisterOrError;
+  }
+  const managementCanister = managementCanisterOrError;
+
+  try {
+    await managementCanister.stopCanister(canisterId);
+    console.log(`Canister ${canisterId.toText()} stopped successfully.`);
+    return { ok: true };
+  } catch (err: any) {
+    console.error(`Error stopping canister ${canisterId.toText()}:`, err);
+    if (
+      err.message?.includes("is not running") ||
+      err.message?.includes("already stopped")
+    ) {
+      console.log(
+        `Canister ${canisterId.toText()} was already stopped or not running.`,
+      );
+      return { ok: true }; // Treat as success if already in desired state
+    }
+    return { err: err.message || "Failed to stop canister" };
+  }
+}

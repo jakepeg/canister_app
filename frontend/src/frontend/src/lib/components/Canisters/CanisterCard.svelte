@@ -5,6 +5,8 @@
   import {
     getCanisterStatus,
     type CanisterStatusInfo,
+    startUserCanister, // Import new functions
+    stopUserCanister, // Import new functions
   } from "$lib/services/canisterManagement";
   import * as Card from "$lib/components/ui/card";
   import { MoreVertical } from "lucide-svelte";
@@ -37,6 +39,10 @@
   let newNameInput = $state(initialCanisterName); // Pre-fill with current name
   let isDialogLoading = $state(false);
   let dialogError = $state("");
+
+  // State for Start/Stop functionality
+  let isStartStopLoading = $state(false);
+  let startStopError = $state<string | null>(null); // Specific error for start/stop actions
 
   // Helper function to get status color
   function getStatusColor(status: CanisterStatusInfo["status"]): string {
@@ -165,6 +171,63 @@
     isDialogLoading = false;
   }
 
+  // Handler for Start/Stop Canister
+  async function handleStartStop() {
+    if (!statusInfo || isStartStopLoading || "stopping" in statusInfo.status) {
+      console.log("Disabled or loading, not attempting start/stop.");
+      // Do nothing if no status, already loading, or canister is in "stopping" state
+      return;
+    }
+
+    isStartStopLoading = true;
+    startStopError = null; // Clear previous error
+    menuOpen = false; // Close dropdown
+
+    let result;
+    try {
+      if ("running" in statusInfo.status) {
+        console.log(
+          `CanisterCard (${canisterId.toText()}): Attempting to stop.`,
+        );
+        result = await stopUserCanister(canisterId);
+      } else if ("stopped" in statusInfo.status) {
+        console.log(
+          `CanisterCard (${canisterId.toText()}): Attempting to start.`,
+        );
+        result = await startUserCanister(canisterId);
+      } else {
+        // Should not happen if button is enabled correctly
+        console.warn(
+          `CanisterCard (${canisterId.toText()}): No action for status ${getStatusText(statusInfo.status)}`,
+        );
+        isStartStopLoading = false;
+        return;
+      }
+
+      if (result && "ok" in result) {
+        console.log(
+          `CanisterCard (${canisterId.toText()}): Start/Stop operation successful.`,
+        );
+        // Status will be updated by refreshCardStatus
+      } else if (result && "err" in result) {
+        startStopError = result.err;
+        console.error(
+          `CanisterCard (${canisterId.toText()}): Start/Stop operation failed: ${result.err}`,
+        );
+      }
+    } catch (e: any) {
+      startStopError =
+        e.message || "An unexpected error occurred during start/stop.";
+      console.error(
+        `CanisterCard (${canisterId.toText()}): Unexpected Start/Stop error:`,
+        e,
+      );
+    } finally {
+      isStartStopLoading = false;
+      await refreshCardStatus(); // Always refresh status afterwards
+    }
+  }
+
   // Handle Svelte 5 dialog open/close props
   function handleRenameDialogValidOpenChange(value: boolean) {
     renameDialogOpen = value;
@@ -284,12 +347,27 @@
           >
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] dark:text-white text-gray-900 font-inder"
-              onclick={() => {
-                menuOpen = true;
-                console.log("Start/Stop clicked");
-              }}
+              disabled={!statusInfo ||
+                isStartStopLoading ||
+                (statusInfo && "stopping" in statusInfo.status)}
+              onclick={handleStartStop}
             >
-              <span>Start/Stop</span>
+              {#if isStartStopLoading}
+                <span>Processing...</span>
+              {:else if statusInfo}
+                {#if "running" in statusInfo.status}
+                  <span>Stop Canister</span>
+                {:else if "stopped" in statusInfo.status}
+                  <span>Start Canister</span>
+                {:else if "stopping" in statusInfo.status}
+                  <span class="opacity-50">Stopping...</span>
+                {:else}
+                  <!-- Should not happen with valid statusInfo -->
+                  <span class="opacity-50">Status Error</span>
+                {/if}
+              {:else}
+                <span class="opacity-50">Status N/A</span>
+              {/if}
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
