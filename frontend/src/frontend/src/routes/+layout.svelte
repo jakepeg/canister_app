@@ -41,39 +41,43 @@
   );
 </script>
 
-<div class="flex flex-col h-screen overflow-hidden">
+<div class="flex flex-col h-screen overflow-hidden gap-y-2">
   <ModeWatcher />
   <Navbar />
-
   <div class="flex flex-1 overflow-hidden">
-    <!-- Conditionally render the Sidebar component itself -->
-    {#if showSidebar}
+    {#if $authStore.state === "authenticated"}
       <Sidebar.Provider>
-        <AppSidebar />
+        {#if showSidebar}
+          <AppSidebar />
+        {/if}
+
+        {#if showSidebar}
+          <Sidebar.Inset class="flex-1 flex overflow-auto">
+            <main class="flex-1">
+              <Sidebar.Trigger class="sticky top-4 left-4 z-10" />
+              <div class="max-w-5xl mx-auto px-4 ml-10">
+                {@render children?.()}
+              </div>
+            </main>
+          </Sidebar.Inset>
+        {:else}
+          <main class="flex-1 overflow-auto">
+            <div class="max-w-5xl mx-auto px-4">
+              {@render children?.()}
+            </div>
+          </main>
+        {/if}
       </Sidebar.Provider>
+    {:else}
+      <main class="flex-1 overflow-y-auto">
+        <div class="max-w-5xl mx-auto px-4">
+          {@render children?.()}
+        </div>
+      </main>
     {/if}
-
-    <!-- Main content area - ALWAYS rendered -->
-    <main
-      class="flex-1 overflow-y-auto p-4 transition-all duration-300 ease-in-out"
-      class:md:ml-64={showSidebar}
-      class:ml-0={!showSidebar}
-    >
-      {#if showSidebar}
-        <!-- Position trigger within main, maybe absolutely or relatively if needed -->
-        <Sidebar.Trigger
-          class="fixed top-18 left-4 z-10 md:hidden p-2 rounded bg-background/80 backdrop-blur-sm border"
-        />
-      {/if}
-
-      <!-- Container for page content -->
-      <div class="max-w-5xl mx-auto">
-        {@render children?.()}
-      </div>
-    </main>
   </div>
 </div>
-<!-- Registration modal remains outside -->
+
 {#if $authStore.state === "authenticated" && $userStore.state === "unregistered"}
   <RegistrationModal
     isOpen={$userStore.state === "unregistered"}
