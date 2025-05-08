@@ -74,3 +74,53 @@
     </a>
   </div>
 </div>
+
+<style>
+  .glow-box {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 250px;
+    box-shadow: 0 0 15px rgba(0, 162, 255, 0.4);
+    transition: box-shadow 0.3s ease-in-out;
+  }
+
+  .glow-box:hover {
+    box-shadow: 0 0 15px rgba(0, 162, 255, 0.8);
+  }
+
+  /* .btn-primary {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #0056b3;
+  }
+
+  .btn-secondary {
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    transition: background-color 0.3s ease;
+  }
+
+  .btn-secondary:hover {
+    background-color: #1e7e34;
+  } */
+
+  .fixed-social-icons {
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+</style>
+

@@ -10,32 +10,38 @@ import {
 import path from "path";
 import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
+// Import the new polyfill plugin
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
+
 
 const config: UserConfig = {
-  plugins: [wasm(), sveltekit(), topLevelAwait()],
+  // Add nodePolyfills plugin here
+  plugins: [wasm(), topLevelAwait(), sveltekit(), nodePolyfills()], // Moved wasm() and topLevelAwait() first
+
   resolve: {
     alias: {
       $lib: path.resolve("./src/frontend/src/lib"),
       // Removed alias for ic-vetkd-utils to let Vite handle it
-      // "ic-vetkd-utils": path.resolve(
-      //   "./node_modules/ic-vetkd-utils/ic_vetkd_utils.js",
-      // ),
     },
   },
-  build: {
-    target: "es2020",
-    rollupOptions: {},
-  },
-  ssr: {
-    noExternal: ["ic-vetkd-utils"]
-  },
+  // Remove optimizeDeps polyfill config, let the plugin handle it
+
   optimizeDeps: {
     esbuildOptions: {
-      // Node.js global to browser globalThis
+      // Node.js global to browser globalThis - Still might be needed depending on dependencies
       define: {
         global: "globalThis",
       },
     },
+  },
+  // Keep single build config
+  build: {
+    target: "es2020",
+    rollupOptions: {}, // Remove the polyfill plugin from here
+  },
+  // Add SSR configuration to process ic-vetkd-utils
+  ssr: {
+    noExternal: ['ic-vetkd-utils'],
   },
 };
 

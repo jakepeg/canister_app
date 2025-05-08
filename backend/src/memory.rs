@@ -3,8 +3,9 @@ use ic_stable_structures::DefaultMemoryImpl;
 use std::cell::RefCell;
 
 const UPGRADES: MemoryId = MemoryId::new(0);
-
 const FILE_CONTENTS: MemoryId = MemoryId::new(1);
+// Assuming MemoryId(2) might be used for recipient_file_contents or similar
+const USER_CANISTERS: MemoryId = MemoryId::new(3); // Add new MemoryId
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -21,4 +22,9 @@ pub fn get_upgrades_memory() -> Memory {
 
 pub fn get_file_contents_memory() -> Memory {
     MEMORY_MANAGER.with(|m| m.borrow().get(FILE_CONTENTS))
+}
+
+// Add function to get memory for the user canisters map
+pub fn get_user_canisters_memory() -> Memory {
+    MEMORY_MANAGER.with(|m| m.borrow().get(USER_CANISTERS))
 }

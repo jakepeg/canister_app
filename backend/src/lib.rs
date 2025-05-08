@@ -5,9 +5,14 @@ mod upgrade;
 use crate::aliases::{AliasGenerator, Randomness};
 use candid::CandidType;
 use candid::Principal;
-use ic_stable_structures::StableBTreeMap;
-use memory::Memory;
+use ic_stable_structures::{
+    memory_manager::MemoryId,
+    storable::Storable, // Import Bound from storable submodule
+    StableBTreeMap,
+};
+use memory::{get_user_canisters_memory, Memory}; // Assuming get_user_canisters_memory will be added to memory.rs
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::ops::Bound::{Excluded, Included};
@@ -15,13 +20,102 @@ pub use upgrade::{post_upgrade, pre_upgrade};
 mod declarations;
 pub mod vetkd;
 
+// --- New Canister Management Structs ---
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct CanisterInfo {
+    pub id: Principal,
+    pub name: String,
+    // Add other relevant metadata if needed in the future, e.g., creation_timestamp
+}
+
+// Implement Storable and BoundedStorable for StableBTreeMap compatibility
+impl Storable for CanisterInfo {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        // Using ciborium for efficient encoding
+        let mut bytes = vec![];
+        ciborium::ser::into_writer(self, &mut bytes).unwrap();
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        ciborium::de::from_reader(bytes.as_ref()).unwrap()
+    }
+
+    const BOUND: ic_stable_structures::storable::Bound =
+        ic_stable_structures::storable::Bound::Bounded {
+            // Explicitly qualify Bound
+            // Max size for Principal text representation (~63 chars) + name + overhead
+            max_size: 128 + 256, // Example: Max 256 chars for name
+            is_fixed_size: false,
+        };
+}
+
+// Define a wrapper type for Vec<CanisterInfo> to implement Storable
+#[derive(Serialize, Deserialize, Default, Debug, Clone)]
+struct CanisterInfoVec(Vec<CanisterInfo>);
+
+impl Storable for CanisterInfoVec {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        let mut bytes = vec![];
+        ciborium::ser::into_writer(self, &mut bytes).unwrap();
+        Cow::Owned(bytes)
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        ciborium::de::from_reader(bytes.as_ref()).unwrap_or_default()
+    }
+
+    const BOUND: ic_stable_structures::storable::Bound =
+        ic_stable_structures::storable::Bound::Bounded {
+            // Explicitly qualify Bound
+            // Estimate max size: N canisters * (size of CanisterInfo) + Vec overhead
+            max_size: 100 * (128 + 256) + 1024, // Example: Max 100 canisters per user
+            is_fixed_size: false,
+        };
+}
+
+// --- End New Structs ---
+
+// Memory IDs - Assuming existing IDs are 0, 1, 2 in memory.rs
+const USER_CANISTERS_MEMORY_ID: MemoryId = MemoryId::new(3); // Ensure this ID is unique
+
 thread_local! {
     /// Initialize the state randomness with the current time.
     static STATE: RefCell<State> = RefCell::new(State::new(&get_randomness_seed()[..]));
+
+    // The memory manager is used for managing memory chunks
+    // Assuming MEMORY_MANAGER is already defined similarly in memory.rs or here
+    // If not, it needs to be defined like this:
+    // static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
+    //     RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
+
+    // The StableBTreeMap for user canisters
+    static USER_CANISTERS: RefCell<StableBTreeMap<Principal, CanisterInfoVec, Memory>> = RefCell::new(
+        StableBTreeMap::init(get_user_canisters_memory()) // Use helper from memory.rs
+    );
 }
 
 type FileId = u64;
 type ChunkId = u64;
+
+// --- Helper functions for new stable map ---
+
+/// A helper method to read the user canisters map.
+pub fn with_user_canisters<R>(
+    f: impl FnOnce(&StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R,
+) -> R {
+    USER_CANISTERS.with(|p| f(&p.borrow()))
+}
+
+/// A helper method to mutate the user canisters map.
+pub fn with_user_canisters_mut<R>(
+    f: impl FnOnce(&mut StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R,
+) -> R {
+    USER_CANISTERS.with(|p| f(&mut p.borrow_mut()))
+}
+
+// --- End Helper Functions ---
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RequestGroup {
@@ -251,9 +345,12 @@ pub struct State {
     group_files: BTreeMap<u64, Vec<u64>>,
 
     user_templates: BTreeMap<Principal, BTreeMap<String, Template>>,
+    // Note: user_canisters map is now managed separately via USER_CANISTERS thread_local
 }
 
 impl State {
+    // Note: State::new might not need to initialize anything related to user_canisters
+    // if it's purely managed by the thread_local static.
     pub(crate) fn generate_file_id(&mut self) -> u64 {
         // The file ID is an auto-incrementing integer.
 
@@ -333,6 +430,40 @@ pub enum GetUsersResponse {
     #[serde(rename = "users")]
     Users(Vec<PublicUser>),
 }
+
+// --- New Canister Management Response Types (Moved from canister_management.rs) ---
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum RegisterCanisterResponse {
+    Ok,
+    NotAuthorized,              // If caller doesn't control the canister_id
+    VerificationFailed(String), // If canister_status call fails
+    AlreadyRegistered,
+    InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum GetUserCanistersResponse {
+    Ok(Vec<CanisterInfo>),
+    NotAuthenticated,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum RenameCanisterResponse {
+    Ok,
+    NotAuthorized,
+    CanisterNotFound,
+    InternalError(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum DeleteCanisterResponse {
+    Ok,
+    NotAuthorized,
+    CanisterNotFound,
+    DeletionFailed(String),
+    InternalError(String),
+}
+// --- End New Types ---
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UploadFileRequest {

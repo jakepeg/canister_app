@@ -98,16 +98,51 @@ function createServices(actor: ActorType) {
 }
 
 export class AuthService {
+  private currentCanisterId: string;
   constructor(
-    private canisterId: string,
-    private host: string,
+    private defaultCanisterId: string,
+        private host: string,
     private iiUrl: string
-  ) {}
+  ) {
+    this.currentCanisterId = defaultCanisterId;
+  }
+
+  setCurrentCanister(canisterId: string) {
+    this.currentCanisterId = canisterId;
+    this.refreshActor();
+  }
+
+  private async refreshActor() {
+    const store = get(authStore);
+    if (store.state === 'authenticated' || store.state === 'unauthenticated') {
+      const actor = createActor(this.currentCanisterId, {
+        agentOptions: {
+          host: this.host,
+          identity: store.authClient.getIdentity(),
+        },
+      });
+
+      if (store.state === 'authenticated') {
+        const { userService, filesService, requestsService, uploadService } = createServices(actor, store.authClient);
+        authStore.setLoggedin(
+          actor,
+          store.authClient,
+          userService,
+          filesService,
+          requestsService,
+          uploadService
+        );
+      } else {
+        const uploadService = new UploadService(actor);
+        authStore.setLoggedout(actor, store.authClient, uploadService);
+      }
+    }
+  }
 
   async init() {
     const authClient = await AuthClient.create();
     if (await authClient.isAuthenticated()) {
-      const actor = createActor(this.canisterId, {
+      const actor = createActor(this.currentCanisterId, {
         agentOptions: { host: this.host, identity: authClient.getIdentity() },
       });
 
@@ -123,7 +158,7 @@ export class AuthService {
         uploadService
       );
     } else {
-      const actor = createActor(this.canisterId, {
+      const actor = createActor(this.currentCanisterId, {
         agentOptions: {
           host: this.host,
           identity: authClient.getIdentity(),
@@ -152,7 +187,7 @@ export class AuthService {
             onError: reject,
           });
         });
-        const actor = createActor(this.canisterId, {
+        const actor = createActor(this.currentCanisterId, {
           agentOptions: {
             host: this.host,
             identity: store.authClient.getIdentity(),
@@ -170,7 +205,7 @@ export class AuthService {
           uploadService
         );
       } catch (e) {
-        const actor = createActor(this.canisterId, {
+        const actor = createActor(this.currentCanisterId, {
           agentOptions: {
             host: this.host,
             identity: store.authClient.getIdentity(),
@@ -191,7 +226,7 @@ export class AuthService {
       try {
         await store.authClient.logout();
         store.userService.reset();
-        const actor = createActor(this.canisterId, {
+        const actor = createActor(this.currentCanisterId, {
           agentOptions: {
             host: this.host,
             identity: store.authClient.getIdentity(),

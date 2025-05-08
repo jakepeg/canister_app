@@ -20,7 +20,9 @@
   let items = $derived([
     {
       title: "Files",
-      url: "/",
+      url: $page.params.canisterId
+          ? `/canister/${$page.params.canisterId}/files`
+          : "/",
       icon: IconFile,
     },
     // Only include Requests when authenticated
@@ -28,7 +30,9 @@
       ? [
           {
             title: "Requests",
-            url: "/requests",
+            url: $page.params.canisterId
+            ? `/canister/${$page.params.canisterId}/requests`
+            : "/",
             icon: RequestsIcon,
           },
         ]

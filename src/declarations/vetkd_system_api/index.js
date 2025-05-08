@@ -10,8 +10,7 @@ export { idlFactory } from "./vetkd_system_api.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_VETKD_SYSTEM_API ||
-  process.env.VETKD_SYSTEM_API_CANISTER_ID;
+  process.env.CANISTER_ID_VETKD_SYSTEM_API;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });

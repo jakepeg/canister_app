@@ -1,3 +1,5 @@
+// Add the new module
+mod canister_management;
 mod delete_file;
 mod download_file;
 mod get_alias_info;
@@ -9,10 +11,15 @@ mod multi_request;
 mod rename_file;
 mod request_file;
 mod share_file;
-pub mod template;
+mod template;
 mod upload_file;
 mod upload_file_atomic;
 mod user_info;
+
+// Re-export functions from the new module
+pub use canister_management::{
+    delete_canister_internal, get_user_canisters, register_canister, rename_canister,
+};
 
 use crate::{FileContent, State, UploadFileContinueRequest};
 pub use delete_file::delete_file;
@@ -26,7 +33,7 @@ pub use multi_request::multi_request;
 pub use rename_file::rename_file;
 pub use request_file::request_file;
 pub use share_file::{get_shared_files, revoke_share, share_file};
-pub use template::{get_template, get_user_templates};
+pub use template::{delete_template, get_template, get_user_templates}; // Added delete_template
 pub use upload_file::upload_file;
 pub use upload_file_atomic::{upload_file_atomic, UploadFileAtomicRequest};
 pub use user_info::set_user_info;
