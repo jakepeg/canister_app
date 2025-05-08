@@ -13,6 +13,8 @@
     _SERVICE as BackendService,
   } from "../../../declarations/backend/backend.did";
 
+  import { BalanceService, type BalanceState } from "$lib/services/balance";
+
   // Local type alias for the component prop, expecting id as string
   type ComponentCanisterInfo = {
     id: string; // Expecting string ID for the component
@@ -25,7 +27,21 @@
   let isLoadingCanisters = $state(true);
   let isModalOpen = $state(false);
   let fetchError = $state("");
-  let authUnsubscribe: (() => void) | undefined = undefined; // For store subscription
+
+  // --- Balance State ---
+  let pageBalanceService: BalanceService | null = $state(null);
+  let icpBalanceE8s: bigint | null = $state(null);
+  let icpBalanceLoading = $state(true); // Start as true until first fetch attempt
+  let icpBalanceError: string | null = $state(null);
+
+  // Derived state for sufficient funds (1 ICP = 100,000,000 e8s)
+  let hasSufficientFunds = $derived(
+    icpBalanceE8s !== null && icpBalanceE8s >= 100_000_000n,
+  );
+  // --- End Balance State ---
+
+  let authUnsubscribe: (() => void) | undefined = undefined;
+  let balanceUnsubscribe: (() => void) | undefined = undefined; // For balance store subscription
 
   // Get the main backend canister ID (ensure this env var is set correctly)
   const MAIN_BACKEND_CANISTER_ID = import.meta.env.VITE_BACKEND_CANISTER_ID;
@@ -34,8 +50,12 @@
       "VITE_BACKEND_CANISTER_ID is not set in environment variables!",
     );
     fetchError = "Application configuration error: Missing backend ID.";
-    isLoadingCanisters = false; // Stop loading if config is broken
+    isLoadingCanisters = false; // Stop loading i0f config is broken
   }
+  console.log(
+    "+page.svelte: MAIN_BACKEND_CANISTER_ID:",
+    MAIN_BACKEND_CANISTER_ID,
+  );
 
   async function fetchCanisters() {
     // Only proceed if authenticated
@@ -134,13 +154,27 @@
     console.log("+page.svelte: Mounted.");
 
     // Subscribe to authStore changes
-    authUnsubscribe = authStore.subscribe((currentAuth) => {
+    authUnsubscribe = authStore.subscribe(async (currentAuth) => {
       console.log(
         "+page.svelte: Auth store changed:",
         currentAuth.state,
         "isLoading:",
         isLoadingCanisters,
       );
+
+      // Reset balance state and unsubscribe on auth change
+      if (balanceUnsubscribe) {
+        balanceUnsubscribe();
+        balanceUnsubscribe = undefined;
+      }
+      if (pageBalanceService) {
+        pageBalanceService.reset(); // Assuming BalanceService has a reset method
+        pageBalanceService = null;
+      }
+      icpBalanceE8s = null;
+      icpBalanceLoading = true; // Set to true until fetch attempt
+      icpBalanceError = null;
+
       if (currentAuth.state === "authenticated") {
         // If authenticated, and we are not already successfully loaded
         // (isLoadingCanisters is true, or no canisters and no error)
@@ -155,6 +189,27 @@
           console.log(
             "+page.svelte: Auth store authenticated, but canisters seem loaded or error occurred. No fetch from subscribe.",
           );
+        }
+
+        // Initialize and fetch balance
+        console.log(
+          "+page.svelte: Authenticated, initializing BalanceService.",
+        );
+        pageBalanceService = new BalanceService(currentAuth.authClient);
+        balanceUnsubscribe = pageBalanceService.store.subscribe((state) => {
+          icpBalanceE8s = state.balance;
+          icpBalanceLoading = state.loading;
+          icpBalanceError = state.error;
+          console.log("+page.svelte: Balance state updated:", state);
+        });
+        try {
+          await pageBalanceService.fetchBalance();
+        } catch (err) {
+          console.error(
+            "+page.svelte: Error fetching balance on auth change:",
+            err,
+          );
+          // error is already set in icpBalanceError via store subscription
         }
       } else if (currentAuth.state === "unauthenticated") {
         console.log(
@@ -235,6 +290,13 @@
       authUnsubscribe();
       console.log("+page.svelte: Unsubscribed from authStore.");
     }
+    if (balanceUnsubscribe) {
+      balanceUnsubscribe();
+      console.log("+page.svelte: Unsubscribed from balanceStore.");
+    }
+    if (pageBalanceService) {
+      pageBalanceService.reset(); // Clean up the service instance
+    }
     console.log("+page.svelte: Destroyed."); // Add this to see when/if it's destroyed
   });
 </script>
@@ -252,6 +314,8 @@
       {canisters}
       onOpenCreateModal={openCreateCanisterModal}
       onRefreshCanisters={fetchCanisters}
+      {hasSufficientFunds}
+      balanceLoading={icpBalanceLoading}
     />
 
     <!-- Render Create Canister Modal -->

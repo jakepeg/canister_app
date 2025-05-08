@@ -17,12 +17,19 @@
     canisters: CanisterInfo[];
     onOpenCreateModal?: () => void; // Callback from parent (+page.svelte)
     onRefreshCanisters?: () => void; // Callback from parent (+page.svelte)
+    hasSufficientFunds: boolean; // New prop
+    balanceLoading: boolean;
   };
   let {
     canisters = [],
     onOpenCreateModal,
     onRefreshCanisters,
+    hasSufficientFunds = false, // Default value
+    balanceLoading = true, // Default value
   }: Props = $props();
+
+  const insufficientFundsMessage =
+    "To create a canister and fund it with cycles for computation, at least 1 ICP is required. To add ICP to your account, click the profile icon in the top right of the screen to open the dropdown. Copy your account id, purchase ICP on an exchange, and send 1 or more ICP to your account id.";
 
   function handleOpenCreateModal() {
     if (onOpenCreateModal) {
@@ -60,8 +67,22 @@
     <!-- Header: Style: style_ESKRTZ - Inder, 20px, White -->
     <h1 class="font-inder text-xl">My Canisters</h1>
     <!-- New Canister Button: Style: style_GUBF0I - Inder, 17px, White, white stroke, 6px border-radius -->
-    <Button onclick={handleOpenCreateModal}>New Canister</Button>
+    {#if balanceLoading}
+      <Button disabled class="opacity-75">Loading Balance...</Button>
+    {:else if hasSufficientFunds}
+      <Button onclick={handleOpenCreateModal}>New Canister</Button>
+    {/if}
   </div>
+
+  {#if !balanceLoading && !hasSufficientFunds}
+    <div
+      class="mb-6 p-4 border border-yellow-400 bg-yellow-50 text-yellow-700 rounded-lg dark:bg-yellow-700/20 dark:text-yellow-300 dark:border-yellow-600"
+      role="alert"
+    >
+      <p class="font-semibold">Insufficient Funds</p>
+      <p class="text-sm">{insufficientFundsMessage}</p>
+    </div>
+  {/if}
 
   {#if canisters.length > 0}
     <!-- Canister Grid: Based on Figma 288:76 -->
