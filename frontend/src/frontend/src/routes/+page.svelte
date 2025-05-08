@@ -27,16 +27,15 @@
   let fetchError = $state("");
   let authUnsubscribe: (() => void) | undefined = undefined; // For store subscription
 
-  // VITE_FRONTEND_CANISTER_ID is likely for the frontend's own canister,
-  // not directly used for listing user data canisters here.
-  // const frontendCanisterId = import.meta.env.VITE_FRONTEND_CANISTER_ID;
-  // console.log("Frontend's own canisterId (if needed):", frontendCanisterId);
-
-  // $: {
-  //   if (canisterId) {
-  //     authService.setCurrentCanister(canisterId);
-  //   }
-  // }
+  // Get the main backend canister ID (ensure this env var is set correctly)
+  const MAIN_BACKEND_CANISTER_ID = import.meta.env.VITE_BACKEND_CANISTER_ID;
+  if (!MAIN_BACKEND_CANISTER_ID) {
+    console.error(
+      "VITE_BACKEND_CANISTER_ID is not set in environment variables!",
+    );
+    fetchError = "Application configuration error: Missing backend ID.";
+    isLoadingCanisters = false; // Stop loading if config is broken
+  }
 
   async function fetchCanisters() {
     // Only proceed if authenticated
@@ -150,6 +149,7 @@
           console.log(
             "+page.svelte: Auth store became authenticated, triggering fetch (if needed).",
           );
+
           fetchCanisters(); // Call fetch if conditions met
         } else {
           console.log(
