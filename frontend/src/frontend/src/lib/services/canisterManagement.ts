@@ -41,7 +41,7 @@ const LOCAL_LEDGER_CANISTER_ID = Principal.fromText(
 const LOCAL_CMC_CANISTER_ID = Principal.fromText("rkp4c-7iaaa-aaaaa-aaaca-cai"); // Replace if different
 export const DEFAULT_ICP_TRANSFER_FEE = 10000n; // 0.0001 ICP
 const CREATE_CANISTER_MEMO = BigInt(0x41455243); // CREA, // Use standard 'CREA' memo (0x41455243)
-const TOP_UP_MEMO = BigInt("0x5455504359434C45"); // "TUPCYCLE" (8 bytes)
+export const TOP_UP_CANISTER_MEMO = BigInt(0x50555054); // TPUP
 
 // --- Result Type ---
 export type CreateCanisterResult =
@@ -133,7 +133,7 @@ export async function topUpCanisterWithCycles(
       to: cmcTargetCanisterAccount,
       amount: icpAmountE8s,
       fee: DEFAULT_ICP_TRANSFER_FEE,
-      memo: TOP_UP_MEMO,
+      memo: TOP_UP_CANISTER_MEMO,
       // Assuming your @dfinity/ledger-icp version expects `createdAt` as a direct bigint (nanos)
       // If it expects `created_at_time: { timestamp_nanos: bigint }`, adjust this.
       createdAt: BigInt(Date.now() * 1_000_000),
