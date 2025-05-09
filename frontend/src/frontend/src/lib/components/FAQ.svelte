@@ -6,39 +6,92 @@
         "Canister is a decentralized cloud storage app where you can securely upload, store, and share documents — all powered by the ICP blockchain.",
     },
     {
-      question: "How is Canister different from Dropbox or Google Drive?",
+      question: "What is the Internet Computer?",
       answer:
-        'Unlike traditional services, Canister gives you full control of your data in a personal "canister" — your own smart contract running on-chain, without centralized servers.',
+        "The Internet Computer (ICP) is a blockchain network that enables decentralized applications and services to run at web speed.",
     },
     {
-      question: "Who owns the data I store on Canister?",
+      question: "What is an ICP Token?",
       answer:
-        "You do. Your files are stored in your personal canister, and only you control access to it.",
+        "ICP Tokens are the native cryptocurrency of the Internet Computer, used to pay for computation, store data, and participate in network governance.",
     },
     {
-      question: "How do I sign up or log in to Canister?",
+      question: "What is Internet Identity?",
+      answer:
+        "Internet Identity is a secure, passwordless authentication system built on the ICP blockchain.",
+    },
+    {
+      question: "What is Decentralized Cloud Storage?",
+      answer:
+        "Decentralized cloud storage stores data on a distributed network rather than centralized servers, giving users more control over their data.",
+    },
+    {
+      question:
+        "What is the difference between personal and enterprise Canisters?",
+      answer:
+        "Personal Canisters are designed for individual use, while enterprise Canisters offer enhanced features like multi-user access and data management.",
+    },
+    {
+      question: "How do I log in?",
       answer:
         "You log in using Internet Identity, a secure, passwordless system built on the ICP blockchain.",
     },
     {
-      question: "Is my data encrypted?",
+      question: "How do I create a Canister?",
       answer:
-        "Yes, files are encrypted before storage and stay encrypted inside your canister.",
+        "Click the 'Create Canister' button, enter a name, and click 'Create Canister'. You need at least 1 ICP to create a Canister.",
     },
     {
-      question: "Does storing data on Canister require cryptocurrency?",
+      question: "How do I add funds?",
       answer:
-        "No crypto is required to get started. We handle the cost of storage (cycles) for you during the MVP phase.",
+        "Click the profile icon, copy your account ID, purchase ICP on an exchange, and send 1 or more ICP to your account ID.",
     },
     {
-      question: "How much does Canister cost?",
+      question: "How do I top-up a Canister?",
       answer:
-        "During the MVP, Canister is free for personal use. Pricing tiers will be introduced in later versions.",
+        "On the Canister list screen, click on the 3 dots at the top left of the Canister card, select 'Topup Cycles', enter the amount, and click 'Top Up'.",
     },
     {
-      question: "How do I report a bug or give feedback?",
+      question: "How do I start or stop a Canister?",
       answer:
-        "You can use the in-app feedback option or email us at support@canister.co.",
+        "On the Canister list screen, click on the 3 dots at the top left of the Canister card, select 'Start' or 'Stop'.",
+    },
+    {
+      question: "How do I delete a Canister?",
+      answer:
+        "On the Canister list screen, click on the 3 dots at the top left of the Canister card, select 'Delete' and confirm.",
+    },
+    {
+      question: "How do I rename a Canister?",
+      answer:
+        "On the Canister list screen, click on the 3 dots at the top left of the Canister card, select 'Rename', enter a new name, and confirm.",
+    },
+    {
+      question: "How do I upload files?",
+      answer: "Use the upload button in your Canister interface to add files.",
+    },
+    {
+      question: "How do I request files?",
+      answer:
+        "Click the 'Request' button, enter the file name, and click 'Create Request'. Share the generated link with others to receive files.",
+    },
+    {
+      question: "How do I delete files?",
+      answer:
+        "On the file preview screen, click the delete (trashcan) icon and confirm the action.",
+    },
+    {
+      question: "How do I rename files?",
+      answer:
+        "On the file preview screen, click the edit (pencil) icon, change the name, and confirm.",
+    },
+    {
+      question: "How do I recover my account?",
+      answer: "Use your recovery passphrase to regain access.",
+    },
+    {
+      question: "How can I get in touch?",
+      answer: "For support, reach out via email at support@canister.co.",
     },
   ];
 </script>
