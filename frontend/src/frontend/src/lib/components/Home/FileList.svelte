@@ -12,51 +12,65 @@
   import type { file_metadata } from "../../../../../declarations/backend/backend.did";
   import { Button } from "$lib/components/ui/button";
 
-  export let auth: AuthStateAuthenticated;
-  let isOpenRequestModal = false;
-  let isOpenShareModal = false;
-  let isOpenUploadModal = false;
-  let shareFileData: file_metadata | undefined = undefined;
+  type Props = {
+    auth: AuthStateAuthenticated;
+  };
+  let { auth }: Props = $props();
 
-  // Sorting variables
-  let sortField: "name" | "uploadedAt" = "uploadedAt";
-  let sortDirection: "asc" | "desc" = "desc"; // Default newest first
+  // State (Using Runes where appropriate within the component)
+  let isOpenRequestModal = $state(false);
+  let isOpenShareModal = $state(false);
+  let isOpenUploadModal = $state(false);
+  let shareFileData: file_metadata | undefined = $state(undefined);
 
-  // Computed sorted files
-  $: sortedFiles =
-    $filesStore.state === "loaded"
-      ? [...$filesStore.files].sort((a, b) => {
-          if (sortField === "name") {
-            const nameA = a.name || "Unnamed file";
-            const nameB = b.name || "Unnamed file";
-            return sortDirection === "asc"
-              ? nameA.localeCompare(nameB)
-              : nameB.localeCompare(nameA);
-          } else {
-            let dateA = 0n;
-            let dateB = 0n;
+  // Sorting variables - Use $state for reactivity
+  let sortField = $state<"name" | "uploadedAt">("uploadedAt");
+  let sortDirection = $state<"asc" | "desc">("desc");
 
-            if ("uploaded" in a.metadata.file_status) {
-              dateA = a.metadata.file_status.uploaded.uploaded_at;
-            }
-            if ("uploaded" in b.metadata.file_status) {
-              dateB = b.metadata.file_status.uploaded.uploaded_at;
-            }
+  // Computed sorted files - Use $derived
+  let sortedFiles = $derived(() => {
+    if ($filesStore.state !== "loaded") {
+      return [];
+    }
+    // Get dependencies for derived state
+    const field = sortField;
+    const direction = sortDirection;
+    const files = $filesStore.files;
 
-            return sortDirection === "asc"
-              ? dateA < dateB
-                ? -1
-                : dateA > dateB
-                  ? 1
-                  : 0
-              : dateA > dateB
-                ? -1
-                : dateA < dateB
-                  ? 1
-                  : 0;
-          }
-        })
-      : [];
+    // Perform sorting
+    return [...files].sort((a, b) => {
+      if (field === "name") {
+        const nameA = a.name || "Unnamed file";
+        const nameB = b.name || "Unnamed file";
+        return direction === "asc"
+          ? nameA.localeCompare(nameB)
+          : nameB.localeCompare(nameA);
+      } else {
+        // uploadedAt
+        let dateA = 0n;
+        let dateB = 0n;
+        // Safely access nested properties
+        if (a.metadata?.file_status && "uploaded" in a.metadata.file_status) {
+          dateA = a.metadata.file_status.uploaded.uploaded_at;
+        }
+        if (b.metadata?.file_status && "uploaded" in b.metadata.file_status) {
+          dateB = b.metadata.file_status.uploaded.uploaded_at;
+        }
+        // Comparison logic remains the same
+        return direction === "asc"
+          ? dateA < dateB
+            ? -1
+            : dateA > dateB
+              ? 1
+              : 0
+          : dateA > dateB
+            ? -1
+            : dateA < dateB
+              ? 1
+              : 0;
+      }
+    });
+  });
 
   // Toggle sort function
   function toggleSort(field: "name" | "uploadedAt") {
@@ -119,14 +133,14 @@
           <tr class="text-left">
             <th
               class="body-2 pt-4 pb-2 pl-4 cursor-pointer"
-              on:click={() => toggleSort("name")}
+              onclick={() => toggleSort("name")}
             >
               Name {getSortIndicator("name")}
             </th>
             <th class="body-2 pt-6 pb-2">Access</th>
             <th
               class="body-2 pt-6 pb-2 cursor-pointer"
-              on:click={() => toggleSort("uploadedAt")}
+              onclick={() => toggleSort("uploadedAt")}
             >
               Uploaded {getSortIndicator("uploadedAt")}
             </th>
@@ -134,10 +148,10 @@
           </tr>
         </thead>
         <tbody class="">
-          {#each sortedFiles as file}
+          {#each sortedFiles() as file (file.file_id)}
             <tr
               class="hover:drop-shadow-xl cursor-pointer"
-              on:click={() => goToDetails(file.file_id)}
+              onclick={() => goToDetails(file.file_id)}
             >
               <td class="pl-4 rounded-tl-xl rounded-bl-xl body-1">
                 {#if file.name}
@@ -152,8 +166,11 @@
                 class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
               >
                 <button
-                  on:click|preventDefault|stopPropagation={() =>
-                    openShareModal(file.metadata)}
+                  onclick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openShareModal(file.metadata);
+                  }}
                   class="btn btn-icon"
                 >
                   <ShareIcon />
@@ -171,20 +188,20 @@
         <div class="flex gap-2">
           <button
             class={`px-2 py-1 rounded ${sortField === "name" ? "bg-primary text-white" : "bg-background"}`}
-            on:click={() => toggleSort("name")}
+            onclick={() => toggleSort("name")}
           >
             Name {getSortIndicator("name")}
           </button>
           <button
             class={`px-2 py-1 rounded ${sortField === "uploadedAt" ? "bg-primary text-white" : "bg-background"}`}
-            on:click={() => toggleSort("uploadedAt")}
+            onclick={() => toggleSort("uploadedAt")}
           >
             Date {getSortIndicator("uploadedAt")}
           </button>
         </div>
       </div>
 
-      {#each sortedFiles as file}
+      {#each sortedFiles() as file}
         <a
           class="bg-background rounded-xl py-3 px-4 flex flex-col"
           href="/details?fileId={file.file_id}"
@@ -199,8 +216,11 @@
             </span>
             <span>
               <button
-                on:click|preventDefault|stopPropagation={() =>
-                  openShareModal(file.metadata)}
+                onclick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  openShareModal(file.metadata);
+                }}
                 class="btn btn-icon"
               >
                 <ShareIcon />
@@ -234,7 +254,7 @@
 <div class="md:hidden fixed bottom-0 left-0 right-0 bg-background-200 p-4">
   <button
     class="btn btn-accent btn-full"
-    on:click={() => (isOpenRequestModal = true)}>Create new file request</button
+    onclick={() => (isOpenRequestModal = true)}>Create new file request</button
   >
 </div>
 <RequestModal bind:isOpen={isOpenRequestModal} {auth} />
