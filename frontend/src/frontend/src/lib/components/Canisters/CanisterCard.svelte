@@ -18,6 +18,7 @@
     renameCanister,
     deleteCanister,
   } from "$lib/services/canisterManagement";
+  import TopUpCyclesModal from "./TopUpCyclesModal.svelte"; // Import the new modal
 
   // Svelte 5 Props
   type Props = {
@@ -43,6 +44,8 @@
   // State for Start/Stop functionality
   let isStartStopLoading = $state(false);
   let startStopError = $state<string | null>(null); // Specific error for start/stop actions
+
+  let topUpModalOpen = $state(false); // State for the new modal
 
   // Helper function to get status color
   function getStatusColor(status: CanisterStatusInfo["status"]): string {
@@ -238,6 +241,28 @@
     if (!value) dialogError = ""; // Clear error when closing
   }
 
+  // Functions for TopUpCyclesModal
+  function openTopUpModal() {
+    startStopError = null;
+    cardError = null;
+    menuOpen = false;
+    topUpModalOpen = true;
+  }
+
+  function handleTopUpSuccess(event: CustomEvent<{ message: string }>) {
+    console.log(
+      "CanisterCard: Top-up success reported by modal:",
+      event.detail.message,
+    );
+    // topUpModalOpen = false; // Modal will self-close on success or user clicks Done
+    refreshCardStatus();
+    // Optionally show a global success toast here
+  }
+
+  function handleTopUpModalClose() {
+    topUpModalOpen = false; // Sync state if modal closes itself
+  }
+
   onMount(() => {
     refreshCardStatus();
     newNameInput = initialCanisterName; // Ensure newNameInput is set on mount
@@ -319,6 +344,19 @@
   </Dialog.Portal>
 </Dialog.Root>
 
+<!-- Top Up Cycles Modal -->
+{#if statusInfo && topUpModalOpen}
+  <!-- Conditionally render or pass open prop, bind:open handles visibility -->
+  <TopUpCyclesModal
+    bind:open={topUpModalOpen}
+    {canisterId}
+    canisterName={statusInfo.name || initialCanisterName}
+    currentCyclesT={formatCycles(statusInfo.cyclesBalance) + " T"}
+    on:close={handleTopUpModalClose}
+    on:topupSuccess={handleTopUpSuccess}
+  />
+{/if}
+
 <div class="relative">
   <Card.Root
     class="w-full h-full border dark:border-[#1F1F1F] border-gray-200 shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] cursor-pointer dark:bg-[#1F1F1F] bg-white"
@@ -372,10 +410,8 @@
 
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] dark:text-white text-gray-900 font-inder"
-              onclick={() => {
-                menuOpen = true;
-                console.log("Topup Cycles clicked");
-              }}
+              disabled={!statusInfo || isStartStopLoading}
+              onclick={openTopUpModal}
             >
               <span>Topup Cycles</span>
             </DropdownMenu.Item>

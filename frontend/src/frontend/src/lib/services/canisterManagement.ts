@@ -39,13 +39,16 @@ const LOCAL_LEDGER_CANISTER_ID = Principal.fromText(
   "ryjl3-tyaaa-aaaaa-aaaba-cai",
 ); // Replace if different
 const LOCAL_CMC_CANISTER_ID = Principal.fromText("rkp4c-7iaaa-aaaaa-aaaca-cai"); // Replace if different
-const DEFAULT_ICP_TRANSFER_FEE = 10000n; // 0.0001 ICP
+export const DEFAULT_ICP_TRANSFER_FEE = 10000n; // 0.0001 ICP
 const CREATE_CANISTER_MEMO = BigInt(0x41455243); // CREA, // Use standard 'CREA' memo (0x41455243)
+const TOP_UP_MEMO = BigInt("0x5455504359434C45"); // "TUPCYCLE" (8 bytes)
 
 // --- Result Type ---
 export type CreateCanisterResult =
   | { ok: Principal } // Success, returns new canister Principal
   | { err: string }; // Failure, returns error message
+
+export type TopUpResult = { ok: true; message?: string } | { err: string };
 
 // Add these new types after the existing CreateCanisterResult type
 export interface CanisterStatusInfo {
@@ -55,6 +58,132 @@ export interface CanisterStatusInfo {
   memorySize: bigint;
   memoryAllocation: bigint; // Total allocated memory
   cyclesBalance: bigint;
+}
+
+export async function topUpCanisterWithCycles(
+  targetCanisterId: Principal,
+  icpAmountE8s: bigint, // Amount of ICP (in e8s) user wants to convert and send
+): Promise<TopUpResult> {
+  console.log(
+    `Attempting to top up ${targetCanisterId.toText()} with ${icpAmountE8s} e8s worth of ICP.`,
+  );
+
+  const authState = get(authStore);
+  if (authState.state !== "authenticated") {
+    return { err: "User not authenticated" };
+  }
+  if (!host) {
+    return { err: "VITE_HOST environment variable not set" };
+  }
+
+  const { authClient } = authState;
+  const identity = authClient.getIdentity();
+  const userPrincipal = identity.getPrincipal();
+
+  let agent;
+  try {
+    agent = await createAgent({ identity, host });
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      console.log("Fetching root key for local replica (top-up)...");
+      await agent.fetchRootKey();
+      console.log("Root key fetched for top-up.");
+    }
+  } catch (err: any) {
+    console.error("Error creating agent or fetching root key for top-up:", err);
+    return { err: `Agent/root key error: ${err.message}` };
+  }
+
+  const cmc = CMCCanister.create({ agent, canisterId: LOCAL_CMC_CANISTER_ID });
+  const ledger = LedgerCanister.create({
+    agent,
+    canisterId: LOCAL_LEDGER_CANISTER_ID,
+  });
+
+  // Determine CMC's subaccount for the target canister
+  const targetCanisterSubAccountBytes = principalToSubAccount(targetCanisterId);
+  const targetCanisterSubAccount = SubAccount.fromBytes(
+    targetCanisterSubAccountBytes,
+  ) as SubAccount;
+
+  const cmcTargetCanisterAccount = AccountIdentifier.fromPrincipal({
+    principal: LOCAL_CMC_CANISTER_ID,
+    subAccount: targetCanisterSubAccount,
+  });
+  const cmcTargetCanisterAccountHex = cmcTargetCanisterAccount.toHex();
+  console.log(
+    `CMC account for topping up ${targetCanisterId.toText()}: ${cmcTargetCanisterAccountHex}`,
+  );
+
+  // Validate ICP amount against fee (user pays transfer fee + sends amount for cycles)
+  if (icpAmountE8s <= 0n) {
+    // The amount to be converted to cycles must be positive
+    return { err: `ICP amount for cycles must be positive.` };
+  }
+  // The total ICP debited from user will be icpAmountE8s + DEFAULT_ICP_TRANSFER_FEE
+  // The icpAmountE8s is what's sent to the CMC account for conversion.
+
+  let blockHeight: BlockHeight;
+  try {
+    console.log(
+      `Transferring ${icpAmountE8s} e8s from ${userPrincipal.toText()} to CMC account ${cmcTargetCanisterAccountHex} for canister ${targetCanisterId.toText()}. User also pays ${DEFAULT_ICP_TRANSFER_FEE} fee.`,
+    );
+    // Note: The 'amount' field in ledger.transfer is the amount received by 'to'.
+    // The sender is debited 'amount' + 'fee'.
+    blockHeight = await ledger.transfer({
+      to: cmcTargetCanisterAccount,
+      amount: icpAmountE8s,
+      fee: DEFAULT_ICP_TRANSFER_FEE,
+      memo: TOP_UP_MEMO,
+      // Assuming your @dfinity/ledger-icp version expects `createdAt` as a direct bigint (nanos)
+      // If it expects `created_at_time: { timestamp_nanos: bigint }`, adjust this.
+      createdAt: BigInt(Date.now() * 1_000_000),
+      fromSubAccount: undefined, // Default subaccount of the user
+    });
+    console.log(
+      `ICP transfer for top-up successful, block height: ${blockHeight}`,
+    );
+  } catch (err: any) {
+    console.error("Error transferring ICP for top-up:", err);
+    return { err: `ICP transfer error: ${err.message}` };
+  }
+
+  // Notify CMC to top up the canister
+  try {
+    console.log(
+      `Notifying CMC to top up canister ${targetCanisterId.toText()} using block height ${blockHeight}`,
+    );
+    const notifyResult = await cmc.notifyTopUp({
+      block_index: blockHeight,
+      canister_id: targetCanisterId,
+    });
+
+    if (notifyResult >= 0) {
+      const cyclesAdded = notifyResult;
+      console.log(
+        `CMC successfully processed top-up. Cycles added: ${cyclesAdded}`,
+      );
+      const cyclesAddedT = (Number(cyclesAdded) / 1_000_000_000_000).toFixed(3);
+      return {
+        ok: true,
+        message: `Successfully added ${cyclesAddedT}T cycles.`,
+      };
+    } else if (notifyResult < 0) {
+      const errorType = Object.keys(notifyResult)[0];
+      const errorDetails = (notifyResult as any)[errorType]; // Type assertion for details
+      const errorMessage = `CMC notification error: ${errorType}${errorDetails ? ` (${JSON.stringify(errorDetails)})` : ""}`;
+      console.error(errorMessage);
+      return { err: errorMessage };
+    } else {
+      console.error("Unknown response from cmc.notifyTopUp:", notifyResult);
+      return { err: "Unknown response from CMC notifyTopUp." };
+    }
+  } catch (err: any) {
+    console.error(
+      `Error notifying CMC for top-up of ${targetCanisterId.toText()}:`,
+      err,
+    );
+    return { err: `CMC notification error: ${err.message}` };
+  }
 }
 
 export async function getCanisterStatus(
