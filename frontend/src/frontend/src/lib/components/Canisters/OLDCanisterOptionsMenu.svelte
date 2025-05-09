@@ -4,29 +4,51 @@
   import {
     renameCanister,
     deleteCanister,
+    startUserCanister, // Import new functions
+    stopUserCanister, // Import new functions
+    type CanisterStatusInfo,
   } from "$lib/services/canisterManagement";
   import type { Principal } from "@dfinity/principal";
   import Input from "$lib/components/ui/input/input.svelte";
   import Button from "$lib/components/ui/button/button.svelte";
+  import { enumIs } from "$lib/shared/enums";
 
   type Props = {
     canisterId: Principal;
     canisterName: string;
+    canisterCurrentStatus?: CanisterStatusInfo["status"]; // New optional prop for current status
     onCanisterRenamed?: () => void; // Callback prop
     onCanisterDeleted?: () => void; // Callback prop
+    onCanisterStatusChanged?: () => void; // New callback for status changes
   };
   let {
     canisterId,
     canisterName,
+    canisterCurrentStatus,
     onCanisterRenamed,
     onCanisterDeleted,
+    onCanisterStatusChanged,
   }: Props = $props();
 
   let renameDialogOpen = $state(false);
   let deleteDialogOpen = $state(false);
   let newCanisterName = $state("");
-  let isLoading = false;
+  let isLoading = $state(false);
   let error = "";
+  let actionError = $state(""); // Renamed from 'error' to be more specific
+
+  // Computed properties for Start/Stop button visibility/state
+  // These will determine if the canister is running or stopped.
+  // If canisterCurrentStatus is undefined, we might disable or hide the buttons.
+  let isRunning = $derived(
+    canisterCurrentStatus && "running" in canisterCurrentStatus,
+  );
+  let isStopped = $derived(
+    canisterCurrentStatus && "stopped" in canisterCurrentStatus,
+  );
+  let isStopping = $derived(
+    canisterCurrentStatus && "stopping" in canisterCurrentStatus,
+  );
 
   function handleRename() {
     // In a real app, you'd open a rename dialog or call a service
@@ -42,6 +64,42 @@
     if (onCanisterDeleted) {
       onCanisterDeleted();
     }
+  }
+
+  async function handleStartCanister() {
+    isLoading = true;
+    actionError = "";
+    console.log(`Attempting to start canister: ${canisterId.toText()}`);
+    const result = await startUserCanister(canisterId);
+    if (enumIs(result, "err")) {
+      actionError = `Start error: ${result.err}`;
+      // Display this error to the user, perhaps in a toast or dedicated error area
+      console.error(actionError);
+    } else {
+      console.log("Start successful, calling onCanisterStatusChanged");
+      if (onCanisterStatusChanged) {
+        onCanisterStatusChanged();
+      }
+    }
+    isLoading = false;
+  }
+
+  async function handleStopCanister() {
+    isLoading = true;
+    actionError = "";
+    console.log(`Attempting to stop canister: ${canisterId.toText()}`);
+    const result = await stopUserCanister(canisterId);
+    if (enumIs(result, "err")) {
+      actionError = `Stop error: ${result.err}`;
+      // Display this error
+      console.error(actionError);
+    } else {
+      console.log("Stop successful, calling onCanisterStatusChanged");
+      if (onCanisterStatusChanged) {
+        onCanisterStatusChanged();
+      }
+    }
+    isLoading = false;
   }
 </script>
 
@@ -127,6 +185,39 @@
   >
     Rename
   </DropdownMenu.Item>
+
+  <!-- Start/Stop Canister Items -->
+  {#if canisterCurrentStatus}
+    {#if isStopped || isStopping}
+      <!-- Show Start if stopped or stopping (stopping implies it will be stopped) -->
+      <DropdownMenu.Item
+        class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+        onclick={handleStartCanister}
+        disabled={isLoading || isStopping}
+      >
+        {#if isLoading && !renameDialogOpen && !deleteDialogOpen}Starting...{:else}Start
+          Canister{/if}
+      </DropdownMenu.Item>
+    {/if}
+    {#if isRunning}
+      <!-- Show Stop if running -->
+      <DropdownMenu.Item
+        class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"
+        onclick={handleStopCanister}
+        disabled={isLoading}
+      >
+        {#if isLoading && !renameDialogOpen && !deleteDialogOpen}Stopping...{:else}Stop
+          Canister{/if}
+      </DropdownMenu.Item>
+    {/if}
+  {:else}
+    <DropdownMenu.Item
+      class="relative flex items-center rounded-sm px-2 py-1.5 text-sm text-gray-500 font-inder"
+      disabled={true}
+    >
+      Start/Stop (No Status)
+    </DropdownMenu.Item>
+  {/if}
 
   <DropdownMenu.Item
     class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] text-white font-inder"

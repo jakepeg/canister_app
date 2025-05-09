@@ -5,6 +5,8 @@
   import {
     getCanisterStatus,
     type CanisterStatusInfo,
+    startUserCanister, // Import new functions
+    stopUserCanister, // Import new functions
   } from "$lib/services/canisterManagement";
   import * as Card from "$lib/components/ui/card";
   import { MoreVertical } from "lucide-svelte";
@@ -16,6 +18,7 @@
     renameCanister,
     deleteCanister,
   } from "$lib/services/canisterManagement";
+  import TopUpCyclesModal from "./TopUpCyclesModal.svelte"; // Import the new modal
 
   // Svelte 5 Props
   type Props = {
@@ -37,6 +40,12 @@
   let newNameInput = $state(initialCanisterName); // Pre-fill with current name
   let isDialogLoading = $state(false);
   let dialogError = $state("");
+
+  // State for Start/Stop functionality
+  let isStartStopLoading = $state(false);
+  let startStopError = $state<string | null>(null); // Specific error for start/stop actions
+
+  let topUpModalOpen = $state(false); // State for the new modal
 
   // Helper function to get status color
   function getStatusColor(status: CanisterStatusInfo["status"]): string {
@@ -165,6 +174,63 @@
     isDialogLoading = false;
   }
 
+  // Handler for Start/Stop Canister
+  async function handleStartStop() {
+    if (!statusInfo || isStartStopLoading || "stopping" in statusInfo.status) {
+      console.log("Disabled or loading, not attempting start/stop.");
+      // Do nothing if no status, already loading, or canister is in "stopping" state
+      return;
+    }
+
+    isStartStopLoading = true;
+    startStopError = null; // Clear previous error
+    menuOpen = false; // Close dropdown
+
+    let result;
+    try {
+      if ("running" in statusInfo.status) {
+        console.log(
+          `CanisterCard (${canisterId.toText()}): Attempting to stop.`,
+        );
+        result = await stopUserCanister(canisterId);
+      } else if ("stopped" in statusInfo.status) {
+        console.log(
+          `CanisterCard (${canisterId.toText()}): Attempting to start.`,
+        );
+        result = await startUserCanister(canisterId);
+      } else {
+        // Should not happen if button is enabled correctly
+        console.warn(
+          `CanisterCard (${canisterId.toText()}): No action for status ${getStatusText(statusInfo.status)}`,
+        );
+        isStartStopLoading = false;
+        return;
+      }
+
+      if (result && "ok" in result) {
+        console.log(
+          `CanisterCard (${canisterId.toText()}): Start/Stop operation successful.`,
+        );
+        // Status will be updated by refreshCardStatus
+      } else if (result && "err" in result) {
+        startStopError = result.err;
+        console.error(
+          `CanisterCard (${canisterId.toText()}): Start/Stop operation failed: ${result.err}`,
+        );
+      }
+    } catch (e: any) {
+      startStopError =
+        e.message || "An unexpected error occurred during start/stop.";
+      console.error(
+        `CanisterCard (${canisterId.toText()}): Unexpected Start/Stop error:`,
+        e,
+      );
+    } finally {
+      isStartStopLoading = false;
+      await refreshCardStatus(); // Always refresh status afterwards
+    }
+  }
+
   // Handle Svelte 5 dialog open/close props
   function handleRenameDialogValidOpenChange(value: boolean) {
     renameDialogOpen = value;
@@ -173,6 +239,28 @@
   function handleDeleteDialogValidOpenChange(value: boolean) {
     deleteDialogOpen = value;
     if (!value) dialogError = ""; // Clear error when closing
+  }
+
+  // Functions for TopUpCyclesModal
+  function openTopUpModal() {
+    startStopError = null;
+    cardError = null;
+    menuOpen = false;
+    topUpModalOpen = true;
+  }
+
+  function handleTopUpSuccess(event: CustomEvent<{ message: string }>) {
+    console.log(
+      "CanisterCard: Top-up success reported by modal:",
+      event.detail.message,
+    );
+    // topUpModalOpen = false; // Modal will self-close on success or user clicks Done
+    refreshCardStatus();
+    // Optionally show a global success toast here
+  }
+
+  function handleTopUpModalClose() {
+    topUpModalOpen = false; // Sync state if modal closes itself
   }
 
   onMount(() => {
@@ -256,6 +344,19 @@
   </Dialog.Portal>
 </Dialog.Root>
 
+<!-- Top Up Cycles Modal -->
+{#if statusInfo && topUpModalOpen}
+  <!-- Conditionally render or pass open prop, bind:open handles visibility -->
+  <TopUpCyclesModal
+    bind:open={topUpModalOpen}
+    {canisterId}
+    canisterName={statusInfo.name || initialCanisterName}
+    currentCyclesT={formatCycles(statusInfo.cyclesBalance) + " T"}
+    on:close={handleTopUpModalClose}
+    on:topupSuccess={handleTopUpSuccess}
+  />
+{/if}
+
 <div class="relative">
   <Card.Root
     class="w-full h-full border dark:border-[#1F1F1F] border-gray-200 shadow-[0px_4px_14px_2px_#0B8CE9] rounded-[15px] cursor-pointer dark:bg-[#1F1F1F] bg-white"
@@ -284,20 +385,33 @@
           >
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] dark:text-white text-gray-900 font-inder"
-              onclick={() => {
-                menuOpen = true;
-                console.log("Start/Stop clicked");
-              }}
+              disabled={!statusInfo ||
+                isStartStopLoading ||
+                (statusInfo && "stopping" in statusInfo.status)}
+              onclick={handleStartStop}
             >
-              <span>Start/Stop</span>
+              {#if isStartStopLoading}
+                <span>Processing...</span>
+              {:else if statusInfo}
+                {#if "running" in statusInfo.status}
+                  <span>Stop Canister</span>
+                {:else if "stopped" in statusInfo.status}
+                  <span>Start Canister</span>
+                {:else if "stopping" in statusInfo.status}
+                  <span class="opacity-50">Stopping...</span>
+                {:else}
+                  <!-- Should not happen with valid statusInfo -->
+                  <span class="opacity-50">Status Error</span>
+                {/if}
+              {:else}
+                <span class="opacity-50">Status N/A</span>
+              {/if}
             </DropdownMenu.Item>
 
             <DropdownMenu.Item
               class="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-[#2F2F2F] dark:text-white text-gray-900 font-inder"
-              onclick={() => {
-                menuOpen = true;
-                console.log("Topup Cycles clicked");
-              }}
+              disabled={!statusInfo || isStartStopLoading}
+              onclick={openTopUpModal}
             >
               <span>Topup Cycles</span>
             </DropdownMenu.Item>

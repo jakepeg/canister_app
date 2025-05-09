@@ -116,7 +116,6 @@ export interface user {
 export type who_am_i_response = { 'known_user' : { 'username' : string } } |
   { 'unknown_user' : null };
 export interface _SERVICE {
-  'delete_canister' : ActorMethod<[Principal], DeleteCanisterResponse>,
   'delete_file' : ActorMethod<[file_id], share_file_response>,
   'delete_template' : ActorMethod<[string], undefined>,
   'download_file' : ActorMethod<[file_id, bigint], download_file_response>,
@@ -152,6 +151,7 @@ export interface _SERVICE {
   'set_user' : ActorMethod<[string, Uint8Array | number[]], set_user_response>,
   'share_file' : ActorMethod<[Principal, file_id], share_file_response>,
   'share_file_with_users' : ActorMethod<[Array<Principal>, file_id], undefined>,
+  'unregister_canister' : ActorMethod<[Principal], DeleteCanisterResponse>,
   'upload_file' : ActorMethod<[upload_file_request], upload_file_response>,
   'upload_file_atomic' : ActorMethod<[upload_file_atomic_request], file_id>,
   'upload_file_continue' : ActorMethod<

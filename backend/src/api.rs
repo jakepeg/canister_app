@@ -18,7 +18,7 @@ mod user_info;
 
 // Re-export functions from the new module
 pub use canister_management::{
-    delete_canister_internal, get_user_canisters, register_canister, rename_canister,
+    get_user_canisters, register_canister, rename_canister, unregister_canister_internal,
 };
 
 use crate::{FileContent, State, UploadFileContinueRequest};

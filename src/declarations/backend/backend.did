@@ -251,6 +251,6 @@ service docutrack : {
   register_canister : (canister_id : principal, name : text) -> (RegisterCanisterResponse);
   get_user_canisters : () -> (GetUserCanistersResponse) query;
   rename_canister : (principal, text) -> (RenameCanisterResponse);
-  delete_canister : (principal) -> (DeleteCanisterResponse);
+  unregister_canister : (principal) -> (DeleteCanisterResponse);
   // --- End New Methods ---
 };
