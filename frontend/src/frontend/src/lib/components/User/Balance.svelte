@@ -6,6 +6,7 @@
   import { AccountIdentifier } from "@dfinity/ledger-icp";
   import { Principal } from "@dfinity/principal";
   import { userStore } from "$lib/services/user";
+  import EditIcon from "$lib/components/icons/EditIcon.svelte";
 
   let balanceService: BalanceService | null = null;
   const balanceStore: Writable<BalanceState> = writable({
@@ -84,15 +85,18 @@
   }
 </script>
 
-<div class="w-[286px] bg-[#1F1F1F] border border-[#0B8CE9] rounded-[21px] p-6">
-  <h2 class="text-[17px] font-['Inder'] text-white mb-4">My Account</h2>
+<div
+  class="w-[286px] border border-[#0B8CE9] rounded-[21px] p-6 dark:bg-black bg-white"
+>
+  <h2 class="text-[17px] font-['Inder'] mb-4">My Account</h2>
 
   {#if $userStore.state === "registered"}
     <div class="flex items-center justify-between mb-3">
-      <p class="text-[15px] font-['Inder'] text-white">
+      <p class="text-[15px] font-['Inder']">
         Name: {$userStore.username}
       </p>
-      <button class="edit-button">
+
+      <!-- <button class="edit-button">
         <svg
           width="14"
           height="14"
@@ -106,25 +110,26 @@
             stroke-width="2"
           />
         </svg>
-      </button>
+      </button> -->
+      <EditIcon />
     </div>
   {/if}
 
   <div class="mb-3">
-    <p class="text-[15px] font-['Inder'] text-white">
+    <p class="text-[15px] font-['Inder']">
       ICP Balance: {formatBalance($balanceStore.balance)}
     </p>
   </div>
 
   <div class="mb-4">
-    <button class="text-[16px] font-['Inder'] text-white"> Add Funds </button>
+    <button class="text-[16px] font-['Inder']"> Add Funds </button>
   </div>
 
   <div class="currency-selector mb-4">
     <div
       class="border border-[#0B8CE9] rounded-[9px] p-3 flex justify-between items-center"
     >
-      <span class="text-[16px] font-['Inder'] text-white">ICP</span>
+      <span class="text-[16px] font-['Inder']">ICP</span>
       <svg
         width="10"
         height="6"
@@ -138,9 +143,7 @@
   </div>
 
   <div class="mt-4">
-    <p class="text-[16px] font-['Inder'] text-white mb-2">
-      Send ICP to your account:
-    </p>
+    <p class="text-[16px] font-['Inder'] mb-2">Send ICP to your account:</p>
     <div class="flex items-center justify-between">
       <span class="text-[16px] font-['Inder'] text-[#0B8CE9]">
         {accountId ? truncateAddress(accountId) : "N/A"}
@@ -159,9 +162,7 @@
             ></div>
           </div>
           {#if showCopyTooltip}
-            <span
-              class="absolute -top-8 right-0 bg-white text-black text-xs px-2 py-1 rounded"
-            >
+            <span class="absolute -top-8 right-0 text-xs px-2 py-1 rounded">
               Copied!
             </span>
           {/if}

@@ -58,17 +58,6 @@
       {#if $authStore.state === "authenticated"}
         <ModeToggle />
         <div class="relative">
-          <!-- <button
-            class="flex items-center gap-2 px-2 py-1 rounded hover:bg-white/10"
-            on:click={() => (showBalance = !showBalance)}
-          >
-            <img
-              src={showBalance ? "/AccountIconClicked.svg" : <AccountIcon />}
-              alt="Account"
-              class="w-6 h-6"
-            />
-          </button> -->
-
           <button
             onclick={() => (showBalance = !showBalance)}
             class="btn btn-ghost"
@@ -91,13 +80,49 @@
 
       <!-- Simplified Login/Logout Logic -->
       {#if $authStore.state === "unauthenticated"}
-        <button
-          class="gap-4 btn btn-accent"
-          onclick={() => authService.login()}
-        >
-          <LogoIcon />
-          Login
-        </button>
+        <div class="hidden md:flex items-center gap-4">
+          <a
+            href="/personal"
+            class="font-bold transition-colors"
+            class:text-blue-400={$page.url.pathname.startsWith("/personal")}
+            class:text-white={!$page.url.pathname.startsWith("/personal")}
+            class:hover:text-blue-400={!$page.url.pathname.startsWith(
+              "/personal",
+            )}
+          >
+            Personal
+          </a>
+
+          <a
+            href="/enterprise"
+            class="font-bold transition-colors"
+            class:text-blue-400={$page.url.pathname.startsWith("/enterprise")}
+            class:text-white={!$page.url.pathname.startsWith("/enterprise")}
+            class:hover:text-blue-400={!$page.url.pathname.startsWith(
+              "/enterprise",
+            )}
+          >
+            Enterprise
+          </a>
+
+          <!-- <a
+            href="/faq"
+            class="font-bold transition-colors"
+            class:text-blue-400={$page.url.pathname.startsWith("/faq")}
+            class:text-white={!$page.url.pathname.startsWith("/faq")}
+            class:hover:text-blue-400={!$page.url.pathname.startsWith("/faq")}
+          >
+            FAQ
+          </a> -->
+
+          <button
+            class="gap-4 btn btn-accent"
+            onclick={() => authService.login()}
+          >
+            <LogoIcon />
+            Login
+          </button>
+        </div>
       {:else if $authStore.state === "authenticated"}
         <!-- Hamburger menu (Mobile Only) -->
         <button
