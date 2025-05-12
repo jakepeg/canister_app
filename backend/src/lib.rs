@@ -96,7 +96,7 @@ thread_local! {
     );
 }
 
-type FileId = u64;
+type ItemId = u64;
 type ChunkId = u64;
 
 // --- Helper functions for new stable map ---
@@ -116,6 +116,78 @@ pub fn with_user_canisters_mut<R>(
 }
 
 // --- End Helper Functions ---
+
+// --- START: Hierarchical File System Changes ---
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ItemType {
+    File,
+    Folder,
+}
+
+/// Metadata for an item (file or folder) in the hierarchical system.
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ItemMetadata {
+    // --- Core Hierarchy Fields ---
+    pub id: ItemId,
+    pub name: String,
+    pub item_type: ItemType,
+    pub parent_id: Option<ItemId>, // None for root items
+
+    // --- Common Fields ---
+    pub owner_principal: Principal,
+    pub created_at: u64,  // Timestamp for creation
+    pub modified_at: u64, // Timestamp for last modification
+
+    // --- File-Specific Fields (will be None for Folders) ---
+    pub content_type: Option<String>, // Mime type like "image/jpeg" for files
+    pub size: Option<u64>,            // File size in bytes for files
+    pub num_chunks: Option<u64>,      // Total number of chunks for the file
+}
+
+/// Public representation of an item's metadata, returned to the frontend.
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct PublicItemMetadata {
+    pub id: ItemId,
+    pub name: String,
+    pub item_type: ItemType,
+    pub parent_id: Option<ItemId>,
+    pub modified_at: u64,
+    pub size: Option<u64>, // For files, None for folders
+                           // pub owner_principal: Principal, // Consider adding if frontend needs it for display directly
+}
+
+// The FileContent enum might be simplified or its data incorporated elsewhere
+// For now, its direct usage in `State` via `File` struct is removed.
+// Information like num_chunks and file_type (content_type) are now in ItemMetadata.
+// The `Pending { alias }` state is handled by `file_alias_index` and items not yet having content metadata.
+/*
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum FileContent { // This might be removed or significantly refactored
+    Pending {
+        alias: String,
+    },
+    Uploaded {
+        num_chunks: u64, // Now in ItemMetadata
+        file_type: String, // Now in ItemMetadata as content_type
+    },
+    PartiallyUploaded {
+        num_chunks: u64, // Now in ItemMetadata
+        file_type: String, // Now in ItemMetadata as content_type
+    },
+}
+*/
+
+// The `File` struct is removed. `ItemMetadata` is stored directly in the state.
+/*
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct File {
+    pub metadata: FileMetadata, // Old FileMetadata, to be replaced by ItemMetadata logic
+    pub content: FileContent,
+}
+*/
+
+// --- END: Hierarchical File System Changes ---
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct RequestGroup {
@@ -149,7 +221,7 @@ pub struct PublicRequestGroup {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct FileInfo {
-    pub file_id: u64,
+    pub file_id: ItemId,
     pub file_name: String,
     pub alias: String,
 }
@@ -313,21 +385,22 @@ pub struct State {
     /// Keeps track of usernames vs. their principals.
     pub users: BTreeMap<Principal, User>,
 
-    /// Mapping between file IDs and file information.
-    pub file_data: BTreeMap<u64, File>,
+    /// Mapping between items IDs and item information.
+    pub items: BTreeMap<ItemId, ItemMetadata>, // New map for all items
 
-    /// Mapping between file aliases (randomly generated links) and file ID.
-    pub file_alias_index: BTreeMap<String, u64>,
+    /// Mapping between file aliases (randomly generated links) and item ID.
+    /// This is primarily for alias-based file uploads.
+    pub file_alias_index: BTreeMap<String, ItemId>,
 
-    /// Mapping between a user's principal and the list of files that are owned by the user.
-    pub file_owners: BTreeMap<Principal, Vec<u64>>,
+    /// Mapping between a user's principal and the list of items (files/folders) owned by the user.
+    pub item_owners: BTreeMap<Principal, Vec<ItemId>>, // Renamed from file_owners
 
-    /// Mapping between a user's principal and the list of files that are shared with them.
-    pub file_shares: BTreeMap<Principal, Vec<u64>>,
+    /// Mapping between a user's principal and the list of items (files/folders) shared with them.
+    pub item_shares: BTreeMap<Principal, Vec<ItemId>>, // Renamed from file_shares
 
     /// The contents of the file (stored in stable memory).
     #[serde(skip, default = "init_file_contents")]
-    pub file_contents: StableBTreeMap<(FileId, ChunkId), Vec<u8>, Memory>,
+    pub file_contents: StableBTreeMap<(ItemId, ChunkId), Vec<u8>, Memory>, // Key is (ItemId, ChunkId)
 
     // Generates aliases for file requests.
     #[serde(skip, default = "init_alias_generator")]
@@ -342,7 +415,7 @@ pub struct State {
     /// Mapping between group aliases and group IDs
     group_alias_index: BTreeMap<String, u64>,
     /// Mapping between group IDs and their file IDs
-    group_files: BTreeMap<u64, Vec<u64>>,
+    group_files: BTreeMap<u64, Vec<ItemId>>,
 
     user_templates: BTreeMap<Principal, BTreeMap<String, Template>>,
     // Note: user_canisters map is now managed separately via USER_CANISTERS thread_local
@@ -351,7 +424,7 @@ pub struct State {
 impl State {
     // Note: State::new might not need to initialize anything related to user_canisters
     // if it's purely managed by the thread_local static.
-    pub(crate) fn generate_file_id(&mut self) -> u64 {
+    pub(crate) fn generate_file_id(&mut self) -> ItemId {
         // The file ID is an auto-incrementing integer.
 
         let file_id = self.file_count;
@@ -369,10 +442,10 @@ impl State {
         Self {
             file_count: 0,
             users: BTreeMap::new(),
-            file_data: BTreeMap::new(),
+            items: BTreeMap::new(),
             file_alias_index: BTreeMap::new(),
-            file_owners: BTreeMap::new(),
-            file_shares: BTreeMap::new(),
+            item_owners: BTreeMap::new(),
+            item_shares: BTreeMap::new(),
             alias_generator: AliasGenerator::new(Randomness::try_from(rand_seed).unwrap()),
             file_contents: init_file_contents(),
             group_count: 0,
@@ -384,9 +457,9 @@ impl State {
     }
 
     /// Returns the number of uploaded chunks for the given file id
-    pub(crate) fn num_chunks_uploaded(&self, file_id: u64) -> u64 {
+    pub(crate) fn num_chunks_uploaded(&self, item_id: ItemId) -> u64 {
         self.file_contents
-            .range((Included((file_id, 0u64)), Excluded(((file_id + 1), 0u64))))
+            .range((Included((item_id, 0u64)), Excluded(((item_id + 1), 0u64))))
             .count() as u64
     }
 }
@@ -467,17 +540,19 @@ pub enum DeleteCanisterResponse {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UploadFileRequest {
-    pub file_id: u64,
+    pub file_id: ItemId,
     pub file_content: Vec<u8>,
     pub file_type: String,
     // Not needed for VetKD
     // pub owner_key: Vec<u8>,
     pub num_chunks: u64,
+    // pub parent_id: Option<ItemId>, // Required for new plan
+    // pub name: Option<String>, // Required if uploading a new file not tied to an alias
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct UploadFileContinueRequest {
-    pub file_id: u64,
+    pub file_id: ItemId,
     pub chunk_id: u64,
     pub contents: Vec<u8>,
 }
@@ -513,6 +588,6 @@ pub fn ceil_division(dividend: usize, divisor: usize) -> usize {
     }
 }
 
-fn init_file_contents() -> StableBTreeMap<(FileId, ChunkId), Vec<u8>, Memory> {
+fn init_file_contents() -> StableBTreeMap<(ItemId, ChunkId), Vec<u8>, Memory> {
     StableBTreeMap::init(crate::memory::get_file_contents_memory())
 }

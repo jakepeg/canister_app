@@ -18,7 +18,7 @@ async fn vetkd_encrypted_key(
         // Look up the file's owner principal from metadata
         let principal = with_state(|state| {
             state
-                .file_data
+                .items
                 .get(&id)
                 .map(|file| file.metadata.requester_principal.as_slice().to_vec())
                 .ok_or_else(|| "File not found".to_string())

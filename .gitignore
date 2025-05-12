@@ -13,6 +13,9 @@ node_modules
 # env
 .env
 
+# wasm files
+/frontend/src/frontend/static/backend.wasm
+
 # IDE
 .idea/*
 **/.vscode/*
