@@ -386,7 +386,7 @@ pub struct State {
     pub users: BTreeMap<Principal, User>,
 
     /// Mapping between items IDs and item information.
-    pub items: BTreeMap<ItemId, ItemMetadata>, // New map for all items
+    pub items: BTreeMap<ItemId, ItemMetadata>, // New map for all items (was pub file_data: BTreeMap<u64, File> before)
 
     /// Mapping between file aliases (randomly generated links) and item ID.
     /// This is primarily for alias-based file uploads.
@@ -424,7 +424,7 @@ pub struct State {
 impl State {
     // Note: State::new might not need to initialize anything related to user_canisters
     // if it's purely managed by the thread_local static.
-    pub(crate) fn generate_file_id(&mut self) -> ItemId {
+    pub(crate) fn generate_item_id(&mut self) -> ItemId {
         // The file ID is an auto-incrementing integer.
 
         let file_id = self.file_count;

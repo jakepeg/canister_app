@@ -44,7 +44,7 @@ pub fn upload_file_continue(request: UploadFileContinueRequest, state: &mut Stat
     let file_id = request.file_id;
     let chunk_id = request.chunk_id;
 
-    let updated_file_data = match state.file_data.remove(&file_id) {
+    let updated_file_data = match state.items.remove(&file_id) {
         Some(mut file) => {
             let updated_contents = match file.content {
                 FileContent::PartiallyUploaded {

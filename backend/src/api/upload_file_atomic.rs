@@ -1,4 +1,4 @@
-use crate::{get_time, File, FileContent, FileMetadata, State};
+use crate::{get_time, File, FileContent, FileMetadata, ItemId, ItemMetadata, ItemType, State};
 use candid::CandidType;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
@@ -14,6 +14,7 @@ pub struct UploadFileAtomicRequest {
     // pub owner_key: Vec<u8>,
     pub file_type: String,
     pub num_chunks: u64,
+    pub parent_id: Option<ItemId>,
 }
 
 pub fn upload_file_atomic(
@@ -21,7 +22,8 @@ pub fn upload_file_atomic(
     request: UploadFileAtomicRequest,
     state: &mut State,
 ) -> u64 {
-    let file_id = state.generate_file_id();
+    // let file_id = state.generate_file_id();
+    let item_id = state.generate_item_id();
 
     let content = if request.num_chunks == 1 {
         // File is uploaded in one chunk.
@@ -47,19 +49,21 @@ pub fn upload_file_atomic(
     let chunk_id = 0;
     state
         .file_contents
-        .insert((file_id, chunk_id), request.content);
+        .insert((item_id, chunk_id), request.content);
 
-    let old_value = state.file_data.insert(
-        file_id,
-        File {
-            metadata: FileMetadata {
-                file_name: request.name,
-                user_public_key: get_user_key(state, caller),
-                requester_principal: caller,
-                requested_at: get_time(),
-                uploaded_at: Some(get_time()),
-            },
-            content,
+    let old_value = state.items.insert(
+        item_id,
+        ItemMetadata {
+            id: item_id,
+            name: request.name.clone(), // From request
+            item_type: ItemType::File,
+            parent_id: request.parent_id, // From request
+            owner_principal: caller,
+            created_at: get_time(),
+            modified_at: get_time(),
+            content_type: Some(request.file_type.clone()),
+            size: Some(request.content.len() as u64), // Initial size, can be updated for multi-chunk
+            num_chunks: Some(request.num_chunks),
         },
     );
 
@@ -69,12 +73,12 @@ pub fn upload_file_atomic(
 
     // Add the caller as the owner of this file.
     state
-        .file_owners
+        .item_owners
         .entry(caller)
         .or_insert_with(Vec::new)
-        .push(file_id);
+        .push(item_id);
 
-    file_id
+    item_id
 }
 
 #[cfg(test)]
