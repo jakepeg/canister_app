@@ -215,7 +215,7 @@ pub struct MultiRequestResponse {
 pub struct PublicRequestGroup {
     pub group_id: u64,
     pub name: String,
-    pub files: Vec<PublicFileMetadata>,
+    pub files: Vec<PublicItemMetadata>,
     pub created_at: u64,
 }
 
