@@ -1,55 +1,43 @@
-// api/get_request_groups.rs
-use crate::{PublicFileMetadata, PublicRequestGroup, State};
+// ic-docutrack/backend/src/api/get_request_groups.rs
+use crate::{
+    PublicItemMetadata, // Use new PublicItemMetadata
+    PublicRequestGroup,
+    State,
+};
 use candid::Principal;
 
 pub fn get_request_groups(state: &State, caller: Principal) -> Vec<PublicRequestGroup> {
     state
-        .request_groups
+        .request_groups // This map's key is the group_folder_id
         .iter()
-        .filter(|(_, group)| group.requester == caller)
-        .map(|(_, group)| {
-            PublicRequestGroup {
-                group_id: group.group_id,
-                name: group.name.clone(),
-                files: group
-                    .files
-                    .iter()
-                    .map(|file_id| {
-                        // Reuse the existing get_requests function logic to format file metadata
-                        let file_data = state.file_data.get(file_id).expect("File must exist");
-
-                        // Find group name for this file
-                        let group_name = state
-                            .request_groups
-                            .values()
-                            .find(|group| group.files.contains(file_id))
-                            .map(|group| group.name.clone())
-                            .unwrap_or_default();
-
-                        // Find group alias for this file
-                        let group_alias = state
-                            .request_groups
-                            .values()
-                            .find(|group| group.files.contains(file_id))
-                            .and_then(|group| {
-                                state
-                                    .group_alias_index
-                                    .iter()
-                                    .find(|(_a, id)| **id == group.group_id)
-                                    .map(|(alias, _)| alias.clone())
-                            });
-
-                        PublicFileMetadata {
-                            file_id: *file_id,
-                            file_name: file_data.metadata.file_name.clone(),
-                            group_name,
-                            group_alias,
-                            shared_with: super::get_requests::get_allowed_users(state, *file_id),
-                            file_status: super::get_requests::get_file_status(state, *file_id),
+        .filter(|(_group_folder_id, group_info)| group_info.requester == caller)
+        .map(|(group_folder_id, group_info_entry)| {
+            // group_info_entry is RequestGroup
+            // The files in group_info_entry.files are ItemIds of the requested files
+            let files_metadata: Vec<PublicItemMetadata> = group_info_entry
+                .files
+                .iter()
+                .filter_map(|&item_id_in_group| {
+                    state.items.get(&item_id_in_group).map(|item_meta| {
+                        // Convert ItemMetadata of the file to PublicItemMetadata
+                        PublicItemMetadata {
+                            id: item_meta.id,
+                            name: item_meta.name.clone(),
+                            item_type: item_meta.item_type.clone(),
+                            parent_id: item_meta.parent_id, // This will be Some(group_folder_id)
+                            modified_at: item_meta.modified_at,
+                            size: item_meta.size,
+                            // owner_principal: item_meta.owner_principal, // If needed
                         }
                     })
-                    .collect(),
-                created_at: group.created_at,
+                })
+                .collect();
+
+            PublicRequestGroup {
+                group_id: *group_folder_id, // This is the ID of the folder representing the group
+                name: group_info_entry.name.clone(),
+                files: files_metadata,
+                created_at: group_info_entry.created_at,
             }
         })
         .collect()

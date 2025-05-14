@@ -380,7 +380,8 @@ pub struct Template {
 pub struct State {
     // Keeps track of how many files have been requested so far
     // and is used to assign IDs to newly requested files.
-    file_count: u64,
+    // file_count: u64,
+    item_id_counter: u64, // Renamed from file_count
 
     /// Keeps track of usernames vs. their principals.
     pub users: BTreeMap<Principal, User>,
@@ -427,8 +428,8 @@ impl State {
     pub(crate) fn generate_item_id(&mut self) -> ItemId {
         // The file ID is an auto-incrementing integer.
 
-        let file_id = self.file_count;
-        self.file_count += 1;
+        let file_id = self.item_id_counter;
+        self.item_id_counter += 1;
         file_id
     }
 
@@ -440,7 +441,7 @@ impl State {
 
     fn new(rand_seed: &[u8]) -> Self {
         Self {
-            file_count: 0,
+            item_id_counter: 0,
             users: BTreeMap::new(),
             items: BTreeMap::new(),
             file_alias_index: BTreeMap::new(),
