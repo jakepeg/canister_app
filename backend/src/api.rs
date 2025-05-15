@@ -22,7 +22,7 @@ pub use canister_management::{
 };
 
 use crate::{ItemType, State, UploadFileContinueRequest};
-pub use delete_file::delete_file;
+pub use delete_file::delete_item;
 pub use download_file::download_file;
 pub use get_alias_info::get_alias_info;
 pub use get_group_by_alias::get_group_by_alias;
@@ -30,9 +30,9 @@ pub use get_request_groups::get_request_groups;
 pub use get_requests::get_requests;
 pub use get_users::get_users;
 pub use multi_request::multi_request;
-pub use rename_file::rename_file;
+pub use rename_file::rename_item;
 pub use request_file::request_file;
-pub use share_file::{get_shared_files, revoke_share, share_file};
+pub use share_file::{get_items_shared_with_me, revoke_share, share_item};
 pub use template::{delete_template, get_template, get_user_templates}; // Added delete_template
 pub use upload_file::upload_file;
 pub use upload_file_atomic::{upload_file_atomic, UploadFileAtomicRequest};

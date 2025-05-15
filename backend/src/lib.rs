@@ -96,7 +96,7 @@ thread_local! {
     );
 }
 
-type ItemId = u64;
+pub type ItemId = u64;
 type ChunkId = u64;
 
 // --- Helper functions for new stable map ---

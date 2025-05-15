@@ -1,6 +1,6 @@
 use crate::{with_user_canisters, with_user_canisters_mut, CanisterInfo}; // Added CanisterInfoVec
 use candid::Principal;
-use ic_cdk::api::management_canister::main::{stop_canister, CanisterIdRecord};
+// use ic_cdk::api::management_canister::main::{stop_canister, CanisterIdRecord};
 
 // Import the response types from lib.rs
 use crate::{

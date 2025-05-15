@@ -20,7 +20,7 @@ async fn vetkd_encrypted_key(
             state
                 .items
                 .get(&id)
-                .map(|file| file.metadata.requester_principal.as_slice().to_vec())
+                .map(|item_meta| item_meta.owner_principal.as_slice().to_vec())
                 .ok_or_else(|| "File not found".to_string())
         })?;
         // println!("Found owner principal for file_id {}: {:?}", id, principal);

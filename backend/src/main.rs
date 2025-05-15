@@ -39,21 +39,21 @@ fn who_am_i() -> WhoamiResponse {
 }
 
 #[query]
-fn get_requests() -> Vec<PublicFileMetadata> {
+fn get_requests() -> Vec<PublicItemMetadata> {
     with_state(|s| backend::api::get_requests(s, caller()))
 }
 
 #[query]
-fn get_shared_files() -> Vec<PublicFileMetadata> {
-    with_state(|s| backend::api::get_shared_files(s, caller()))
+fn get_shared_files() -> Vec<PublicItemMetadata> {
+    with_state(|s| backend::api::get_items_shared_with_me(s, caller()))
 }
 
 #[query]
 fn get_file_owner_principal(file_id: u64) -> Result<Vec<u8>, String> {
     with_state(|s| {
-        s.file_data
+        s.items
             .get(&file_id)
-            .map(|file| file.metadata.requester_principal.as_slice().to_vec())
+            .map(|item_meta| item_meta.owner_principal.as_slice().to_vec())
             .ok_or_else(|| "File not found".to_string())
     })
 }
@@ -88,8 +88,8 @@ fn upload_file_continue(request: UploadFileContinueRequest) {
 }
 
 #[update]
-fn request_file(request_name: String) -> String {
-    with_state_mut(|s| backend::api::request_file(caller(), request_name, s))
+fn request_file(request_name: String, parent_id: Option<ItemId>) -> String {
+    with_state_mut(|s| backend::api::request_file(caller(), request_name, parent_id, s))
 }
 
 #[update]
@@ -138,7 +138,7 @@ fn share_file(
     // file_key not needed as we have vetkeys now
     // file_key_encrypted_for_user: Vec<u8>,
 ) -> FileSharingResponse {
-    with_state_mut(|s| backend::api::share_file(s, caller(), user_id, file_id))
+    with_state_mut(|s| backend::api::share_item(s, caller(), user_id, file_id))
 }
 
 #[update]
@@ -149,7 +149,7 @@ fn share_file_with_users(
 ) {
     with_state_mut(|s| {
         for (id, _key) in user_id.iter().zip(file_key_encrypted_for_user.iter()) {
-            backend::api::share_file(s, caller(), *id, file_id);
+            backend::api::share_item(s, caller(), *id, file_id);
         }
     });
 }
@@ -161,12 +161,12 @@ fn revoke_share(user_id: Principal, file_id: u64) -> FileSharingResponse {
 
 #[update]
 fn delete_file(file_id: u64) -> FileSharingResponse {
-    with_state_mut(|s| backend::api::delete_file(s, caller(), file_id))
+    with_state_mut(|s| backend::api::delete_item(s, caller(), file_id))
 }
 
 #[update]
 fn rename_file(file_id: u64, new_name: String) -> FileSharingResponse {
-    with_state_mut(|s| backend::api::rename_file(s, caller(), file_id, new_name))
+    with_state_mut(|s| backend::api::rename_item(s, caller(), file_id, new_name))
 }
 
 #[query]
