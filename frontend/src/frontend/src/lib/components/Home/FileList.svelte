@@ -9,7 +9,7 @@
   import { goto } from "$app/navigation";
   import ShareIcon from "../icons/ShareIcon.svelte";
   import PlaceholderLogo from "../icons/PlaceholderLogo.svelte";
-  import type { file_metadata } from "../../../../../declarations/backend/backend.did";
+  import type { public_item_metadata } from "../../../../../declarations/backend/backend.did";
   import { Button } from "$lib/components/ui/button";
 
   type Props = {
@@ -21,7 +21,7 @@
   let isOpenRequestModal = $state(false);
   let isOpenShareModal = $state(false);
   let isOpenUploadModal = $state(false);
-  let shareFileData: file_metadata | undefined = $state(undefined);
+  let shareFileData: public_item_metadata | undefined = $state(undefined);
 
   // Sorting variables - Use $state for reactivity
   let sortField = $state<"name" | "uploadedAt">("uploadedAt");
@@ -101,7 +101,7 @@
     goto(`/details?fileId=${file_id}`);
   }
 
-  function openShareModal(file: file_metadata) {
+  function openShareModal(file: public_item_metadata) {
     shareFileData = file;
     isOpenShareModal = true;
   }

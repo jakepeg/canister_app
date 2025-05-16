@@ -4,7 +4,7 @@ import { enumIs } from "$lib/shared/enums";
 import { flatten } from "$lib/shared/flatten";
 import { unreachable } from "$lib/shared/unreachable";
 import { get, writable } from "svelte/store";
-import type { file_metadata } from "../../../../declarations/backend/backend.did";
+import type { public_item_metadata } from "../../../../declarations/backend/backend.did";
 
 export type UploadedFile = {
   name: string;
@@ -12,7 +12,7 @@ export type UploadedFile = {
   uploadedAt: string;
   uploadedAtShort: string;
   file_id: bigint;
-  metadata: file_metadata;
+  metadata: public_item_metadata;
 };
 
 export type FilesState =
@@ -102,7 +102,7 @@ export class FilesService {
   private async loadFiles(): Promise<UploadedFile[]> {
     const files = flatten(
       await Promise.all([
-        this.actor.get_shared_files(),
+        this.actor.get_items_shared_with_me(),
         this.actor.get_requests(),
       ]),
     );
