@@ -49,8 +49,8 @@ export class VetkdCryptoService {
   ): Promise<Uint8Array> {
     try {
       // First, check if this is a shared file by checking if file is in shared_files
-      const sharedFiles = await this.actor.get_shared_files();
-      const isSharedFile = sharedFiles.some((file) => file.file_id === fileId);
+      const sharedFiles = await this.actor.get_items_shared_with_me();
+      const isSharedFile = sharedFiles.some((file) => file.id === fileId);
 
       console.log("Is this a shared file?", isSharedFile);
 

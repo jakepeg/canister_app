@@ -64,7 +64,7 @@ fn get_alias_info(alias: String) -> Result<AliasInfo, GetAliasInfoError> {
 }
 
 #[update]
-fn upload_file(request: UploadFileRequest) -> Result<(), UploadFileError> {
+fn upload_file_to_item(request: UploadFileRequest) -> Result<(), UploadFileError> {
     with_state_mut(|s| {
         backend::api::upload_file(
             request.file_id,

@@ -116,8 +116,8 @@ export class UploadService {
       if (uploadType.type === "request") {
         fileId = uploadType.fileInfo.file_id;
         console.log("fileId for request: ", fileId);
-        const res = await this.auth.actor.upload_file({
-          file_id: fileId,
+        const res = await this.auth.actor.upload_file_to_item({
+          item_id: fileId,
           file_content: firstChunk,
           file_type: dataType,
           num_chunks: BigInt(numChunks),
@@ -191,8 +191,8 @@ export class UploadService {
           return;
         }
         const chunk = content.subarray(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-        await this.auth.actor.upload_file_continue({
-          file_id: fileId,
+        await this.auth.actor.upload_chunk_continue({
+          item_id: fileId,
           contents: chunk,
           chunk_id: BigInt(i),
         });

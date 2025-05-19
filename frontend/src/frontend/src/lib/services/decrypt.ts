@@ -52,13 +52,13 @@ export class DecryptService {
     let files = flatten(
       await Promise.all([
         this.auth.actor.get_requests(),
-        this.auth.actor.get_shared_files(),
+        this.auth.actor.get_items_shared_with_me(),
       ]),
     );
 
     if (this.aborted) return "aborted";
 
-    const maybeFile = files.find((entry) => entry.file_id == BigInt(fileId));
+    const maybeFile = files.find((entry) => entry.id == BigInt(fileId));
 
     if (!maybeFile) {
       throw new Error("Error: File not found");
@@ -141,7 +141,7 @@ export class DecryptService {
         );
 
         return {
-          name: maybeFile.file_name,
+          name: maybeFile.name,
           dataType: downloadedFile.found_file.file_type,
           uploadDate: formatUploadDate(
             maybeFile.file_status.uploaded.uploaded_at,
@@ -152,7 +152,7 @@ export class DecryptService {
       } catch {
         throw new Error(
           "Failed to decrypt file: " +
-            ((maybeFile.file_name || "unnamed file") +
+            ((maybeFile.name || "unnamed file") +
               ". You may be able to access this file with a different browser, as the decryption key is stored in the browser."),
         );
       }

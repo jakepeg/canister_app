@@ -75,7 +75,7 @@
           fileInfo: aliasInfo.Ok,
         };
         console.log("uploadType: ", uploadType.type);
-        file_id = aliasInfo.Ok.file_id;
+        file_id = aliasInfo.Ok.item_id;
         console.log("fileId: ", file_id);
       } else if (enumIs(aliasInfo, "Err")) {
         state = "error";

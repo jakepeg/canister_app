@@ -4,7 +4,7 @@
   import type { Principal } from "@dfinity/principal";
   import { createEventDispatcher, onMount } from "svelte";
   import type {
-    file_metadata,
+    public_item_metadata,
     user,
   } from "../../../../declarations/backend/backend.did";
   import Modal from "./Modal.svelte";
@@ -17,7 +17,7 @@
   export let auth: AuthStateAuthenticated;
 
   export let isOpen = false;
-  export let fileData: file_metadata;
+  export let fileData: public_item_metadata;
 
   const dispatch = createEventDispatcher<{
     shared: { file_id: bigint; shared_with: user[] };
@@ -112,12 +112,12 @@
         }
         const masterPublicKey = publicKeyResponse.Ok;
 
-        const shareResult = await auth.actor.share_file(
+        const shareResult = await auth.actor.share_item(
           recipientPrincipal,
-          fileData.file_id,
+          fileData.id,
         );
 
-        if (enumIs(shareResult, "permission_error")) {
+        if (enumIs(shareResult, "Err")) {
           throw new Error("Permission denied to share file");
         }
       } catch {
@@ -134,9 +134,9 @@
             obj.ic_principal.compareTo(oldSharedWith[i].ic_principal) === "eq",
         );
         if (!res) {
-          await auth.actor.revoke_share(
+          await auth.actor.revoke_item_share(
             oldSharedWith[i].ic_principal,
-            fileData.file_id,
+            fileData.id,
           );
         }
       } catch {
@@ -152,7 +152,7 @@
     loading = false;
 
     dispatch("shared", {
-      file_id: fileData.file_id,
+      file_id: fileData.id,
       shared_with: fileData.shared_with,
     });
   }
@@ -195,7 +195,7 @@
 
 <div>
   <Modal
-    title={`Share "${fileData.file_name || "Unnamed file"}"`}
+    title={`Share "${fileData.name || "Unnamed file"}"`}
     bind:isOpen
     minWidth="min-w-[250px]"
   >

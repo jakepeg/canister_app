@@ -13,7 +13,7 @@
   import { ObjectUrlManager } from "$lib/services/objectUrls";
   import { unreachable } from "$lib/shared/unreachable";
   import { onDestroy, onMount } from "svelte";
-  import type { file_metadata } from "../../../../../declarations/backend/backend.did";
+  import type { public_item_metadata } from "../../../../../declarations/backend/backend.did";
   import ErrorMessage from "../ErrorMessage.svelte";
   import DecryptProgress from "./DecryptProgress.svelte";
   import { goto } from "$app/navigation";
@@ -38,7 +38,7 @@
         uploadDate: string;
         downloadUrl: string;
         isOpenShareModal: boolean;
-        originalMetadata: file_metadata;
+        originalMetadata: public_item_metadata;
       }
     | { type: "error"; error: string };
 
@@ -92,9 +92,9 @@
   async function DeleteFile() {
     try {
       const fileId = BigInt(getFileId());
-      const response = await auth.actor.delete_file(fileId);
+      const response = await auth.actor.delete_item(fileId);
 
-      if (enumIs(response, "ok")) {
+      if (enumIs(response, "Ok")) {
         await goto("/");
         console.log("File deleted with fileId:", fileId);
       } else {
@@ -110,12 +110,12 @@
     if (state.type === "loaded") {
       try {
         const fileId = BigInt(getFileId());
-        const response = await auth.actor.rename_file(fileId, editedName);
+        const response = await auth.actor.rename_item(fileId, editedName);
 
         console.log("fileId:", fileId);
         console.log("newName:", editedName);
 
-        if (enumIs(response, "ok")) {
+        if (enumIs(response, "Ok")) {
           state.name = editedName;
           isEditing = false;
         } else {
