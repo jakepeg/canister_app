@@ -1,6 +1,4 @@
 import crypto from "$lib/crypto";
-// import FileTools from "$lib/file";
-// import type { ActorType } from "$lib/shared/actor";
 import type {
   AuthStateAuthenticated,
   AuthStateUnauthenticated,
@@ -8,16 +6,25 @@ import type {
 import { enumIs } from "$lib/shared/enums";
 import pLimit from "p-limit";
 import { writable } from "svelte/store";
-import type { get_alias_info_response } from "../../../../declarations/backend/backend.did";
+import type { alias_info_response } from "../../../../declarations/backend/backend.did";
 export const CHUNK_SIZE = 2_000_000;
 import { VetkdCryptoService } from "../vetkeys/vetkdCrypto";
 
 export const uploadInProgress = writable(false);
 
+interface FileInfo {
+  user: {
+    ic_principal: any;
+    public_key?: Uint8Array;
+  };
+  file_name: string;
+  file_id: bigint;
+}
+
 export type UploadType =
   | {
       type: "request";
-      fileInfo: Extract<get_alias_info_response, { Ok: any }>["Ok"];
+      fileInfo: FileInfo;
     }
   | {
       type: "self";
@@ -41,6 +48,7 @@ export class UploadService {
     dataType,
     onStarted = () => {},
     onAborted = () => {},
+    parentId = undefined,
   }: {
     uploadType: UploadType;
     file: File;
@@ -50,20 +58,14 @@ export class UploadService {
     onCompleted?: (file_id: bigint) => void;
     onError?: (message: string) => void;
     onAborted?: () => void;
+    parentId?: bigint | undefined;
   }) {
-    // Get user principal for encryption
     const userId =
       uploadType.type === "request"
         ? uploadType.fileInfo.user.ic_principal
         : this.auth.authClient.getIdentity?.().getPrincipal();
 
     const userPrincipalBytes = userId.toUint8Array();
-
-    // Redundant, moving to vetkd
-    // const userPublicKey =
-    //   uploadType.type === "request"
-    //     ? (uploadType.fileInfo.user.public_key as Uint8Array).buffer
-    //     : new Uint8Array(await crypto.getLocalUserPublicKey());
 
     const fileName =
       uploadType.type === "request"
@@ -72,24 +74,9 @@ export class UploadService {
 
     console.log("fileName: ", fileName);
 
-    // Read file as ArrayBuffer
     const fileBytes = await file.arrayBuffer();
 
-    // Redundant, moving to vetkd
-    // let fileToEncrypt = FileTools.fromUnencrypted(fileName, fileBytes);
-    // console.log("fileToEncrypt done");
-
-    // const encryptedFileKey =
-    //   await fileToEncrypt.getEncryptedFileKey(userPublicKey);
-
-    // console.log("encryptedFileKey done");
-
-    // const encFile = await fileToEncrypt.encrypt();
-    // console.log("encFile done");
-    // const content = new Uint8Array(encFile);
-    // console.log("content done");
-
-    onStarted(0); // Show start progress while encrypting
+    onStarted(0);
     const encryptedData = await this.vetkdCryptoService.encrypt(
       fileBytes,
       userPrincipalBytes,
@@ -102,7 +89,6 @@ export class UploadService {
       return;
     }
 
-    // Split file into chunks of 2MB.
     const numChunks = Math.ceil(encryptedData.length / CHUNK_SIZE);
 
     try {
@@ -111,7 +97,7 @@ export class UploadService {
 
       const firstChunk = encryptedData.subarray(0, CHUNK_SIZE);
       console.log("firstChunk done");
-      let fileId: bigint = 0n;
+      let fileId: bigint;
 
       if (uploadType.type === "request") {
         fileId = uploadType.fileInfo.file_id;
@@ -124,7 +110,7 @@ export class UploadService {
         });
         console.log("res done for request", res);
 
-        if (enumIs(res, "Err")) {
+        if ("Err" in res) {
           onError(
             "An error occurred while uploading the file. Please try again.",
           );
@@ -140,13 +126,25 @@ export class UploadService {
           dataType,
           "numChunks: ",
           numChunks,
+          "parentId: ",
+          parentId
         );
-        fileId = await this.auth.actor.upload_file_atomic({
+        const uploadResult = await this.auth.actor.upload_file_atomic({
           content: firstChunk,
           name: fileName,
           file_type: dataType,
           num_chunks: BigInt(numChunks),
+          parent_id: parentId !== undefined ? [parentId] : [],
         });
+        
+        if ("Err" in uploadResult) {
+          onError(
+            "An error occurred while uploading the file. Please try again.",
+          );
+          return;
+        }
+        
+        fileId = uploadResult.Ok;
         console.log("fileId for self: ", fileId);
       }
 
@@ -177,11 +175,8 @@ export class UploadService {
     onChunkUploaded: (chunkId: number, size: number) => void,
   ) {
     const numChunks = Math.ceil(content.length / CHUNK_SIZE);
-
-    // Create upload pool, supporting upto 5 parallel uploads.
     const uploadPool = pLimit(5);
 
-    // Prepare upload requests.
     const uploadRequests = Array.from(
       { length: numChunks - 1 },
       (_, i) => i + 1,

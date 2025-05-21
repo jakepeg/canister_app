@@ -30,6 +30,8 @@
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
   export let isOpen = false;
+  export let currentFolderId: bigint | undefined = undefined;
+
   let alias: string | null = null;
   let uploadType: UploadType | null = null;
   let state:
@@ -44,17 +46,14 @@
   let dataType: string | null = null;
   let error: string | null = null;
   let fatalError: boolean = false;
+  let preview: { dataType: string; objectUrl: string } | null = null;
   const transferSpeed = createTransferSpeedStore();
   let uploadService: UploadService | null = null;
   const objectUrls = new ObjectUrlManager();
 
-  // tell a global store if an upload is in progress
   $: uploadInProgress.set(state === "uploading");
 
-  let preview: { dataType: string; objectUrl: string } | null = null;
-
   $: {
-    // when Logout is clicked, and we're already initialized for uploading a file for self, then go to the home page
     alias = $page.url.searchParams.get("alias") || "";
     if (!alias && auth.state === "unauthenticated") {
       goto("/");
@@ -62,22 +61,26 @@
   }
 
   onMount(async () => {
-    // vetKeyService = new VetKeyService(auth.actor);
-    // uploadService = new UploadService(auth.actor, vetKeyService);
     alias = $page.url.searchParams.get("alias") || "";
     if (alias) {
       const aliasInfo = await auth.actor.get_alias_info(alias);
 
-      console.log("aliasInfo: ", aliasInfo);
-
       if (enumIs(aliasInfo, "Ok")) {
+        const { user, file_name, item_id } = aliasInfo.Ok;
+        const fileInfo = {
+          user: {
+            ic_principal: user.ic_principal,
+            public_key: user.public_key ? new Uint8Array(user.public_key) : undefined
+          },
+          file_name,
+          file_id: item_id,
+        };
+        
         uploadType = {
           type: "request",
-          fileInfo: aliasInfo.Ok,
+          fileInfo,
         };
-        console.log("uploadType: ", uploadType.type);
-        file_id = aliasInfo.Ok.item_id;
-        console.log("fileId: ", file_id);
+        file_id = fileInfo.file_id;
       } else if (enumIs(aliasInfo, "Err")) {
         state = "error";
         if (enumIs(aliasInfo.Err, "not_found")) {
@@ -89,12 +92,10 @@
         return;
       }
     } else if (auth.state === "authenticated") {
-      // upload file for self
       uploadType = {
         type: "self",
         fileName: "",
       };
-      console.log("uploadType: ", uploadType.type);
     } else {
       goto("/");
     }
@@ -142,6 +143,7 @@
       file: file!,
       dataType: dataType!,
       uploadType: uploadType!,
+      parentId: currentFolderId,
       onAborted() {
         state = "initialized";
       },
@@ -153,7 +155,6 @@
       onCompleted: async (fileId) => {
         state = "uploaded";
         file_id = fileId;
-        // Reload the files list after upload is completed
         if (auth.state === "authenticated") {
           await auth.filesService.reload();
         }
@@ -288,8 +289,8 @@
             >
               <code>{file?.name}</code>
               <div class="">No preview available</div>
-            </div></FilePreview
-          >
+            </div>
+          </FilePreview>
         {:else}
           <button
             class="w-full aspect-square flex justify-center items-center bg-silver-700/20"

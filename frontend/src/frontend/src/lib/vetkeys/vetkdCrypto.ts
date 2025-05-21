@@ -82,15 +82,20 @@ export class VetkdCryptoService {
       if (isSharedFile) {
         console.log("Getting owner principal for shared file");
         try {
-          // Get the file owner's principal directly from our endpoint
-          const ownerPrincipalResponse =
-            await this.actor.get_file_owner_principal(fileId);
-
-          if (!ownerPrincipalResponse || "Err" in ownerPrincipalResponse) {
-            throw new Error("Error getting file owner principal");
+          // Get the sharers (including owner) for this item
+          const sharersResponse = await this.actor.get_item_sharers(fileId);
+          if (!sharersResponse || "Err" in sharersResponse) {
+            throw new Error("Error getting item sharers: " + ("Err" in sharersResponse ? sharersResponse.Err : "empty response"));
           }
-
-          principalToUse = new Uint8Array(ownerPrincipalResponse.Ok);
+          
+          // The first user in the sharers list should be the owner
+          const owner = sharersResponse.Ok[0];
+          if (!owner) {
+            throw new Error("No owner found for item");
+          }
+          
+          // Use the owner's principal for shared files
+          principalToUse = new Uint8Array(owner.ic_principal.toUint8Array());
           console.log(
             "Using owner's principal for shared file:",
             principalToUse,

@@ -76,7 +76,7 @@
   }
 
   async function saveShare() {
-    if (!enumIs(fileData.file_status, "uploaded")) {
+    if (!('File' in fileData.item_type && fileData.size != null)) {
       return;
     }
 
@@ -146,24 +146,20 @@
       }
     }
     // Write back the new state, so the the UI updates
-    fileData.shared_with = newSharedWith.slice();
-    fileData = fileData;
     isOpen = false;
     loading = false;
 
     dispatch("shared", {
       file_id: fileData.id,
-      shared_with: fileData.shared_with,
+      shared_with: [], // No longer available in metadata
     });
   }
 
   function onOpen(isOpen) {
     if (isOpen) {
-      // Keep the old version of the shared users
-      oldSharedWith = fileData.shared_with.slice();
-      // Copy the array and modify this list with the UI
-      newSharedWith = fileData.shared_with.slice();
-
+      // No longer possible to keep old shared users from metadata
+      oldSharedWith = [];
+      newSharedWith = [];
       reset();
     }
   }
@@ -183,8 +179,8 @@
 
   onMount(async () => {
     let res = await auth.actor.get_users();
-    if (enumIs(res, "users")) {
-      users = res.users.filter(
+    if ("Ok" in res) {
+      users = res.Ok.filter(
         (obj) => obj.ic_principal.compareTo(selfPrincipal) !== "eq",
       );
     } else {

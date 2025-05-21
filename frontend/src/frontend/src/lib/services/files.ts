@@ -13,6 +13,8 @@ export type UploadedFile = {
   uploadedAtShort: string;
   file_id: bigint;
   metadata: public_item_metadata;
+  parentId?: bigint; // For hierarchical structure
+  isFolder: boolean; // To distinguish between files and folders
 };
 
 export type FilesState =
@@ -100,44 +102,40 @@ export class FilesService {
   }
 
   private async loadFiles(): Promise<UploadedFile[]> {
-    const files = flatten(
+    // Get both shared items and pending requests
+    const items = flatten(
       await Promise.all([
         this.actor.get_items_shared_with_me(),
         this.actor.get_requests(),
       ]),
     );
 
-    console.log("Files: ", files);
+    // Get contents of root folder
+    const rootItems = await this.actor.list_folder_contents([]);
+    if (enumIs(rootItems, "Err")) {
+      throw new Error(`Failed to load root items: ${rootItems.Err}`);
+    }
+    
+    // Combine all items
+    const allItems = [...items, ...rootItems.Ok];
+    console.log("All items: ", allItems);
 
     const uploadedFiles: UploadedFile[] = [];
 
-    for (const file of files) {
-      if (enumIs(file.file_status, "uploaded")) {
-        // Determine the sharing status
-        let nShared = file.shared_with ? file.shared_with.length : 0;
-        let accessMessage = "";
-        switch (nShared) {
-          case 0:
-            accessMessage = "Only You";
-            break;
-          case 1:
-            accessMessage = "You & 1 other";
-            break;
-          default:
-            accessMessage = "You & " + nShared + " others";
-        }
-
-        uploadedFiles.push({
-          name: file.file_name,
-          access: accessMessage,
-          uploadedAt: formatUploadDate(file.file_status.uploaded.uploaded_at),
-          uploadedAtShort: formatUploadDateShort(
-            file.file_status.uploaded.uploaded_at,
-          ),
-          file_id: file.file_id,
-          metadata: file,
-        });
-      }
+    for (const item of allItems) {
+      const isFolder = 'Folder' in item.item_type;
+      
+      // Convert both files and folders to UploadedFile type
+      uploadedFiles.push({
+        name: item.name,
+        access: "Only You", // Default access, can be updated based on sharing info
+        uploadedAt: formatUploadDate(item.modified_at),
+        uploadedAtShort: formatUploadDateShort(item.modified_at),
+        file_id: item.id,
+        metadata: item,
+        parentId: item.parent_id?.[0], // Optional parent folder ID
+        isFolder: isFolder
+      });
     }
 
     return uploadedFiles;

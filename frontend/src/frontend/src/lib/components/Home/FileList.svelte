@@ -11,81 +11,95 @@
   import PlaceholderLogo from "../icons/PlaceholderLogo.svelte";
   import type { public_item_metadata } from "../../../../../declarations/backend/backend.did";
   import { Button } from "$lib/components/ui/button";
+  import FolderIcon from "../icons/FolderIcon.svelte";
+  import ChevronRightIcon from "../icons/ChevronRightIcon.svelte";
+
+  import type { UploadedFile } from "$lib/services/files";
 
   type Props = {
     auth: AuthStateAuthenticated;
   };
   let { auth }: Props = $props();
 
-  // State (Using Runes where appropriate within the component)
+  // State
   let isOpenRequestModal = $state(false);
   let isOpenShareModal = $state(false);
   let isOpenUploadModal = $state(false);
+  let isCreateFolderModalOpen = $state(false);
+  let newFolderName = $state("");
   let shareFileData: public_item_metadata | undefined = $state(undefined);
-
-  // Sorting variables - Use $state for reactivity
+  let currentFolderId: bigint | undefined = $state(undefined);
+  let folderPath = $state<{id: bigint | undefined, name: string}[]>([
+    { id: undefined, name: "Root" }
+  ]);
   let sortField = $state<"name" | "uploadedAt">("uploadedAt");
   let sortDirection = $state<"asc" | "desc">("desc");
 
-  // Computed sorted files - Use $derived
-  let sortedFiles = $derived(() => {
-    if ($filesStore.state !== "loaded") {
-      return [];
-    }
-    // Get dependencies for derived state
-    const field = sortField;
-    const direction = sortDirection;
-    const files = $filesStore.files;
+  let sortedItems = $state<UploadedFile[]>([]);
 
-    // Perform sorting
-    return [...files].sort((a, b) => {
-      if (field === "name") {
-        const nameA = a.name || "Unnamed file";
-        const nameB = b.name || "Unnamed file";
-        return direction === "asc"
+  $effect(() => {
+    if ($filesStore.state !== "loaded") {
+      sortedItems = [];
+      return;
+    }
+    
+    const currentItems = $filesStore.files.filter(item => item.parentId === currentFolderId);
+    
+    sortedItems = [...currentItems].sort((a, b) => {
+      if (a.isFolder && !b.isFolder) return -1;
+      if (!a.isFolder && b.isFolder) return 1;
+      
+      if (sortField === "name") {
+        const nameA = a.name || "Unnamed";
+        const nameB = b.name || "Unnamed";
+        return sortDirection === "asc"
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA);
       } else {
-        // uploadedAt
-        let dateA = 0n;
-        let dateB = 0n;
-        // Safely access nested properties
-        if (a.metadata?.file_status && "uploaded" in a.metadata.file_status) {
-          dateA = a.metadata.file_status.uploaded.uploaded_at;
-        }
-        if (b.metadata?.file_status && "uploaded" in b.metadata.file_status) {
-          dateB = b.metadata.file_status.uploaded.uploaded_at;
-        }
-        // Comparison logic remains the same
-        return direction === "asc"
-          ? dateA < dateB
-            ? -1
-            : dateA > dateB
-              ? 1
-              : 0
-          : dateA > dateB
-            ? -1
-            : dateA < dateB
-              ? 1
-              : 0;
+        const dateA = a.metadata.modified_at;
+        const dateB = b.metadata.modified_at;
+        return sortDirection === "asc"
+          ? dateA < dateB ? -1 : dateA > dateB ? 1 : 0
+          : dateA > dateB ? -1 : dateA < dateB ? 1 : 0;
       }
     });
   });
+  $effect.root(() => {
+    if (sortField || sortDirection) {
+      // Re-run sorting when sort parameters change
+      if ($filesStore.state === "loaded") {
+        const currentItems = $filesStore.files.filter(item => item.parentId === currentFolderId);
+        sortedItems = [...currentItems].sort((a, b) => {
+          if (a.isFolder && !b.isFolder) return -1;
+          if (!a.isFolder && b.isFolder) return 1;
+          
+          if (sortField === "name") {
+            const nameA = a.name || "Unnamed";
+            const nameB = b.name || "Unnamed";
+            return sortDirection === "asc"
+              ? nameA.localeCompare(nameB)
+              : nameB.localeCompare(nameA);
+          } else {
+            const dateA = a.metadata.modified_at;
+            const dateB = b.metadata.modified_at;
+            return sortDirection === "asc"
+              ? dateA < dateB ? -1 : dateA > dateB ? 1 : 0
+              : dateA > dateB ? -1 : dateA < dateB ? 1 : 0;
+          }
+        });
+      }
+    }
+  });
 
-  // Toggle sort function
   function toggleSort(field: "name" | "uploadedAt") {
-    console.log($filesStore);
     if (sortField === field) {
-      // Toggle direction if clicking the same field
       sortDirection = sortDirection === "asc" ? "desc" : "asc";
     } else {
-      // Set new field and default direction
       sortField = field;
-      sortDirection = field === "name" ? "asc" : "desc"; // Default: A-Z for name, newest first for date
+      sortDirection = field === "name" ? "asc" : "desc";
     }
   }
 
-  // Get sort indicator
   function getSortIndicator(field: "name" | "uploadedAt") {
     if (sortField === field) {
       return sortDirection === "asc" ? "↑" : "↓";
@@ -105,6 +119,34 @@
     shareFileData = file;
     isOpenShareModal = true;
   }
+
+  function enterFolder(folderId: bigint, folderName: string) {
+    currentFolderId = folderId;
+    folderPath = [...folderPath, { id: folderId, name: folderName }];
+  }
+
+  function navigateToFolder(index: number) {
+    if (index >= folderPath.length) return;
+    currentFolderId = folderPath[index].id;
+    folderPath = folderPath.slice(0, index + 1);
+  }
+
+  async function handleCreateFolder() {
+    if (!newFolderName) return;
+
+    try {
+      await auth.actor.create_folder(
+        newFolderName,
+        currentFolderId !== undefined ? [currentFolderId] : []
+      );
+      
+      newFolderName = "";
+      isCreateFolderModalOpen = false;
+      await auth.filesService.reload();
+    } catch (error) {
+      console.error("Failed to create folder:", error);
+    }
+  }
 </script>
 
 {#if $filesStore.state === "idle" || $filesStore.state === "loading"}
@@ -115,21 +157,33 @@
     <p>Error loading files: {$filesStore.error}</p>
   </div>
 {:else if $filesStore.state === "loaded"}
+  <div class="flex items-center gap-2 mb-4">
+    {#each folderPath as folder, index}
+      <button 
+        class="hover:text-blue-400 transition-colors"
+        onclick={() => navigateToFolder(index)}
+      >
+        {folder.name}
+      </button>
+      {#if index < folderPath.length - 1}
+        <ChevronRightIcon class="w-4 h-4" />
+      {/if}
+    {/each}
+  </div>
+
   <div class="flex justify-between items-center mb-6">
     <h1 class="title-1">My Files</h1>
-    <div>
-      <Button variant="outline" onclick={() => (isOpenUploadModal = true)}
-        >Upload</Button
-      >
-      <Button variant="outline" onclick={() => (isOpenRequestModal = true)}
-        >Request</Button
-      >
+    <div class="flex gap-2">
+      <Button onclick={() => isCreateFolderModalOpen = true}>New Folder</Button>
+      <Button onclick={() => isOpenUploadModal = true}>Upload</Button>
+      <Button onclick={() => isOpenRequestModal = true}>Request</Button>
     </div>
   </div>
-  {#if $filesStore.files.length > 0}
-    <div class="hidden md:block w-full rounded-2xl px-2">
+  
+  {#if sortedItems.length > 0}
+    <div class="hidden md:block bg-background w-full rounded-2xl px-2">
       <table class="table-auto w-full border-spacing-y-2 border-separate">
-        <thead class="">
+        <thead>
           <tr class="text-left">
             <th
               class="body-2 pt-4 pb-2 pl-4 cursor-pointer"
@@ -142,47 +196,51 @@
               class="body-2 pt-6 pb-2 cursor-pointer"
               onclick={() => toggleSort("uploadedAt")}
             >
-              Uploaded {getSortIndicator("uploadedAt")}
+              Modified {getSortIndicator("uploadedAt")}
             </th>
             <th></th>
           </tr>
         </thead>
-        <tbody class="">
-          {#each sortedFiles() as file (file.file_id)}
+        <tbody>
+          {#each sortedItems as item (item.file_id)}
             <tr
               class="hover:drop-shadow-xl cursor-pointer"
-              onclick={() => goToDetails(file.file_id)}
+              onclick={() => item.isFolder ? enterFolder(item.file_id, item.name) : goToDetails(item.file_id)}
             >
-              <td class="pl-4 rounded-tl-xl rounded-bl-xl body-1">
-                {#if file.name}
-                  {file.name}
+              <td class="pl-4 rounded-tl-xl rounded-bl-xl body-1 flex items-center gap-2">
+                {#if item.isFolder}
+                  <FolderIcon class="w-5 h-5" />
                 {:else}
-                  <span class="opacity-50">Unnamed file</span>
+                  <div class="w-5 h-5">📄</div>
+                {/if}
+                {#if item.name}
+                  {item.name}
+                {:else}
+                  <span class="opacity-50">Unnamed</span>
                 {/if}
               </td>
-              <td class=" body-1">{file.access}</td>
-              <td class="body-1">{file.uploadedAtShort}</td>
-              <td
-                class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
-              >
-                <button
-                  onclick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    openShareModal(file.metadata);
-                  }}
-                  class="btn btn-icon"
-                >
-                  <ShareIcon />
-                </button>
+              <td class="body-1">{item.access}</td>
+              <td class="body-1">{item.uploadedAtShort}</td>
+              <td class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]">
+                {#if !item.isFolder}
+                  <button
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      openShareModal(item.metadata);
+                    }}
+                    class="btn btn-icon"
+                  >
+                    <ShareIcon />
+                  </button>
+                {/if}
               </td>
             </tr>
           {/each}
         </tbody>
       </table>
     </div>
+
     <div class="md:hidden flex flex-col gap-2">
-      <!-- Mobile sorting controls -->
       <div class="flex justify-between items-center mb-2 px-1">
         <span class="body-2">Sort by:</span>
         <div class="flex gap-2">
@@ -201,64 +259,90 @@
         </div>
       </div>
 
-      {#each sortedFiles() as file}
-        <a
+      {#each sortedItems as item}
+        <div 
           class="bg-background rounded-xl py-3 px-4 flex flex-col"
-          href="/details?fileId={file.file_id}"
+          onclick={() => item.isFolder ? enterFolder(item.file_id, item.name) : goToDetails(item.file_id)}
         >
           <div class="flex justify-between items-center mb-3">
-            <span class="title-2">
-              {#if file.name}
-                {file.name}
+            <span class="title-2 flex items-center gap-2">
+              {#if item.isFolder}
+                <FolderIcon class="w-5 h-5" />
               {:else}
-                <span class="opacity-50">Unnamed file</span>
+                <div class="w-5 h-5">📄</div>
+              {/if}
+              {#if item.name}
+                {item.name}
+              {:else}
+                <span class="opacity-50">Unnamed</span>
               {/if}
             </span>
             <span>
-              <button
-                onclick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  openShareModal(file.metadata);
-                }}
-                class="btn btn-icon"
-              >
-                <ShareIcon />
-              </button>
+              {#if !item.isFolder}
+                <button
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    openShareModal(item.metadata);
+                  }}
+                  class="btn btn-icon"
+                >
+                  <ShareIcon />
+                </button>
+              {/if}
             </span>
           </div>
           <div class="flex flex-col gap-2">
             <div class="flex justify-between items-center">
               <span class="body-1">Access:</span>
-              <span class="body-1">{file.access}</span>
+              <span class="body-1">{item.access}</span>
             </div>
             <div class="flex justify-between items-center">
-              <span class="body-1">Uploaded:</span>
-              <span class="body-1">{file.uploadedAtShort}</span>
+              <span class="body-1">Modified:</span>
+              <span class="body-1">{item.uploadedAtShort}</span>
             </div>
           </div>
-        </a>
+        </div>
       {/each}
     </div>
   {:else}
     <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
       <PlaceholderLogo />
-      <h2 class="">
-        No files found. Upload or request documents to get started.
+      <h2>
+        {#if currentFolderId === undefined}
+          No files found. Upload or request documents to get started.
+        {:else}
+          This folder is empty.
+        {/if}
       </h2>
     </div>
   {/if}
 {:else}
   {unreachable($filesStore)}
 {/if}
-<div class="md:hidden fixed bottom-0 left-0 right-0 bg-background-200 p-4">
-  <button
-    class="btn btn-accent btn-full"
-    onclick={() => (isOpenRequestModal = true)}>Create new file request</button
-  >
-</div>
+
+{#if isCreateFolderModalOpen}
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-background p-6 rounded-xl w-96">
+      <h2 class="text-xl mb-4">Create New Folder</h2>
+      <input
+        type="text"
+        bind:value={newFolderName}
+        placeholder="Folder name"
+        class="w-full p-2 mb-4 bg-background-200 rounded"
+      />
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" onclick={() => {
+          isCreateFolderModalOpen = false;
+          newFolderName = "";
+        }}>Cancel</Button>
+        <Button onclick={handleCreateFolder}>Create</Button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <RequestModal bind:isOpen={isOpenRequestModal} {auth} />
-<UploadModal bind:isOpen={isOpenUploadModal} {auth} />
+<UploadModal bind:isOpen={isOpenUploadModal} {auth} {currentFolderId} />
 {#if shareFileData}
   <ShareModal
     {auth}
@@ -268,20 +352,20 @@
   />
 {/if}
 
-<style lang="postcss">
+<style>
   tbody tr {
     transition: transform 0.2s ease-in-out;
   }
 
   tbody tr:hover {
-    transform: translateX(10px);
+    transform: translate(10px, 0);
   }
 
-  .md\:hidden > a {
+  .md\:hidden > div {
     transition: transform 0.2s ease-in-out;
   }
 
-  .md\:hidden > a:hover {
-    transform: translateX(10px);
+  .md\:hidden > div:hover {
+    transform: translate(10px, 0);
   }
 </style>

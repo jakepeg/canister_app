@@ -104,33 +104,15 @@ export class RequestsService {
     const uploadedFiles: Request[] = [];
 
     for (const file of requests) {
-      if (enumIs(file.file_status, "pending")) {
-        // Determine the sharing status
-        let nShared = file.shared_with ? file.shared_with.length : 0;
-        let accessMessage = "";
-        switch (nShared) {
-          case 0:
-            accessMessage = "Only You";
-            break;
-          case 1:
-            accessMessage = "You & 1 other";
-            break;
-          default:
-            accessMessage = "You & " + nShared + " others";
-        }
-
+      if ('File' in file.item_type && file.size == null) {
         uploadedFiles.push({
-          name: file.file_name,
-          group_name: file.group_name,
-          access: accessMessage,
-          formattedDate: formatUploadDate(
-            file.file_status.pending.requested_at,
-          ),
-          formattedDateShort: formatUploadDateShort(
-            file.file_status.pending.requested_at,
-          ),
-          file_alias: file.file_status.pending.alias,
-          group_alias: file.group_alias?.[0] ?? "",
+          name: file.name,
+          group_name: "",
+          access: "Only You",
+          formattedDate: formatUploadDate(file.modified_at),
+          formattedDateShort: formatUploadDateShort(file.modified_at),
+          file_alias: "",
+          group_alias: file.parent_id?.[0]?.toString() ?? "",
         });
       }
     }

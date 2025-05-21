@@ -64,12 +64,8 @@ export class DecryptService {
       throw new Error("Error: File not found");
     }
 
-    if (enumIs(maybeFile.file_status, "pending")) {
+    if ('File' in maybeFile.item_type && maybeFile.size == null) {
       throw new Error("Error: File not uploaded");
-    }
-
-    if (enumIs(maybeFile.file_status, "partially_uploaded")) {
-      throw new Error("Error: File partially uploaded");
     }
 
     this.progress.update((v) => ({
@@ -77,7 +73,7 @@ export class DecryptService {
       step: "downloading",
     }));
 
-    let downloadedFile = await this.auth.actor.download_file(
+    let downloadedFile = await this.auth.actor.download_file_chunk(
       BigInt(fileId),
       0n,
     );
@@ -92,7 +88,7 @@ export class DecryptService {
         currentChunk: 1,
       }));
       for (let i = 1; i < downloadedFile.found_file.num_chunks; i++) {
-        const downloadedChunk = await this.auth.actor.download_file(
+        const downloadedChunk = await this.auth.actor.download_file_chunk(
           BigInt(fileId),
           BigInt(i),
         );
@@ -143,9 +139,7 @@ export class DecryptService {
         return {
           name: maybeFile.name,
           dataType: downloadedFile.found_file.file_type,
-          uploadDate: formatUploadDate(
-            maybeFile.file_status.uploaded.uploaded_at,
-          ),
+          uploadDate: formatUploadDate(maybeFile.modified_at),
           contents: decryptedData.buffer as ArrayBuffer,
           originalMetadata: maybeFile,
         };

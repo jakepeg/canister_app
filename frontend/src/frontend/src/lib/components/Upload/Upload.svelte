@@ -46,6 +46,7 @@
   const transferSpeed = createTransferSpeedStore();
   let uploadService: UploadService | null = null;
   const objectUrls = new ObjectUrlManager();
+  let parentId: bigint | undefined = undefined; // For folder support, default to root
 
   // tell a global store if an upload is in progress
   $: uploadInProgress.set(state === "uploading");
@@ -70,12 +71,20 @@
       console.log("aliasInfo: ", aliasInfo);
 
       if (enumIs(aliasInfo, "Ok")) {
+        const { user, file_name, item_id } = aliasInfo.Ok;
         uploadType = {
           type: "request",
-          fileInfo: aliasInfo.Ok,
+          fileInfo: {
+            user: {
+              ic_principal: user.ic_principal,
+              public_key: user.public_key ? new Uint8Array(user.public_key) : undefined
+            },
+            file_name,
+            file_id: item_id
+          }
         };
-        console.log("uploadType: ", uploadType.type);
-        file_id = aliasInfo.Ok.item_id;
+        console.log("uploadType: ", uploadType?.type);
+        file_id = item_id;
         console.log("fileId: ", file_id);
       } else if (enumIs(aliasInfo, "Err")) {
         state = "error";
@@ -93,7 +102,7 @@
         type: "self",
         fileName: "",
       };
-      console.log("uploadType: ", uploadType.type);
+      console.log("uploadType: ", uploadType?.type);
     } else {
       goto("/");
     }
@@ -141,6 +150,7 @@
       file: file!,
       dataType: dataType!,
       uploadType: uploadType!,
+      parentId,
       onAborted() {
         state = "initialized";
       },

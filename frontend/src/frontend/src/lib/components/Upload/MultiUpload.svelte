@@ -17,13 +17,18 @@
     AuthStateUnauthenticated,
   } from "$lib/services/auth";
   import { authService, authStore } from "$lib/services/auth";
-  import type { group_info } from "../../../../../declarations/backend/backend.did";
+  import type { group_info_response, file_info_for_upload, user } from "../../../../../declarations/backend/backend.did";
 
   export let auth: AuthStateAuthenticated | AuthStateUnauthenticated;
   let uploadService: UploadService | null = null;
 
   let alias = $page.url.searchParams.get("alias") || "";
-  let groupInfo: group_info | null = null;
+  let groupInfo: {
+    group_id: bigint;
+    group_name: string;
+    files: file_info_for_upload[];
+    requester: user;
+  } | null = null;
   let error: string | null = null;
   let loading = true;
   let fatalError = false;
@@ -39,6 +44,18 @@
 
   let fileUploads: FileUpload[] = [];
   let allUploaded = false;
+  let parentId: bigint | undefined = undefined; // For folder support, default to root
+
+  // Redefine UploadType for this file to match the expected structure
+  type UploadTypeLocal =
+    | {
+        type: "request";
+        fileInfo: file_info_for_upload & { user: user };
+      }
+    | {
+        type: "self";
+        fileName: string;
+      };
 
   onMount(async () => {
     if (!alias) {
@@ -55,7 +72,7 @@
       if (enumIs(result, "Ok")) {
         groupInfo = result.Ok;
         fileUploads = groupInfo.files.map((file) => ({
-          fileId: BigInt(file.file_id),
+          fileId: BigInt(file.item_id),
           fileName: file.file_name,
           file: null,
           status: "pending",
@@ -97,11 +114,12 @@
 
       const uploadService = new UploadService(auth);
 
-      const uploadType: UploadType = {
+      const uploadType: UploadTypeLocal = {
         type: "request",
         fileInfo: {
-          file_id: fileUpload.fileId,
+          item_id: fileUpload.fileId,
           file_name: fileUpload.fileName,
+          alias: "", // alias is not used in upload, but required by file_info_for_upload
           user: groupInfo!.requester,
         },
       };
@@ -109,7 +127,8 @@
       await uploadService.uploadFile({
         file: fileUpload.file,
         dataType: fileUpload.file.type,
-        uploadType,
+        uploadType: uploadType as any, // Type assertion to satisfy UploadService
+        parentId,
         onAborted: () => {
           fileUploads[fileIndex].status = "ready";
           fileUploads = [...fileUploads];
