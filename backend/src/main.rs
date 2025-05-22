@@ -1,10 +1,4 @@
 // ic-docutrack/backend/src/main.rs
-use backend::api::{
-    // Import specific request structs if their names in api.rs differ from lib.rs due to aliasing
-    // For example, if api::upload_file_atomic uses `UploadFileAtomicRequest` locally but it's aliased
-    // as `UploadFileAtomicRequestNew` in lib.rs for the Candid export.
-    // For simplicity, we'll assume the names match or are handled by `backend::*`
-};
 use backend::*; // Imports all necessary types from lib.rs
 use candid::Principal;
 use ic_cdk::api::caller;
@@ -16,7 +10,8 @@ fn set_user(username: String, public_key: Vec<u8>) -> SetUserResponse {
     if with_state(|s| backend::api::username_exists(s, username.clone())) {
         SetUserResponse::UsernameExists
     } else {
-        let user_data = User { // Renamed for clarity
+        let user_data = User {
+            // Renamed for clarity
             username,
             public_key,
         };
@@ -34,7 +29,11 @@ fn username_exists(username: String) -> bool {
 fn who_am_i() -> WhoamiResponse {
     with_state(|s| match s.users.get(&ic_cdk::api::caller()) {
         None => WhoamiResponse::UnknownUser,
-        Some(user_data) => WhoamiResponse::KnownUser(user_data.clone()),
+        Some(user) => WhoamiResponse::KnownUser(PublicUser {
+            username: user.username.clone(),
+            public_key: user.public_key.clone(),
+            ic_principal: ic_cdk::api::caller(),
+        }),
     })
 }
 
@@ -94,19 +93,21 @@ fn get_item_owner_principal(item_id: ItemId) -> Result<Principal, String> {
     })
 }
 
-
 // --- File Upload (Atomic/Direct to a Folder) ---
 #[update]
 fn upload_file_atomic(request: UploadFileAtomicDirectRequest) -> Result<ItemId, String> {
     // Assuming backend::api::upload_file_atomic returns ItemId or panics
     // For a more robust API, it should return Result<ItemId, String>
-    Ok(with_state_mut(|s| backend::api::upload_file_atomic(caller(), request, s)))
+    Ok(with_state_mut(|s| {
+        backend::api::upload_file_atomic(caller(), request, s)
+    }))
 }
 
 // --- File Upload (Alias-based for pre-requested items & Chunks) ---
 #[update]
 fn request_file(request_name: String, parent_id: Option<ItemId>) -> Result<String, String> {
-    let alias = with_state_mut(|s| backend::api::request_file(caller(), request_name, parent_id, s));
+    let alias =
+        with_state_mut(|s| backend::api::request_file(caller(), request_name, parent_id, s));
     // Assuming backend::api::request_file returns empty string on internal failure to create alias
     if alias.is_empty() {
         Err("Failed to create file request alias.".to_string())
@@ -123,7 +124,8 @@ fn get_alias_info(alias: String) -> Result<AliasInfoForUpload, GetAliasInfoError
 #[update]
 fn upload_content_to_item(request: UploadContentToItemRequest) -> DetailedUploadResponse {
     match with_state_mut(|s| {
-        backend::api::upload_file( // This should call the refactored api::upload_file
+        backend::api::upload_file(
+            // This should call the refactored api::upload_file
             request.item_id,
             request.file_content,
             request.file_type,
@@ -132,11 +134,12 @@ fn upload_content_to_item(request: UploadContentToItemRequest) -> DetailedUpload
         )
     }) {
         Ok(()) => DetailedUploadResponse::Ok(None),
-        Err(e) => match e { // Map internal UploadFileError to DetailedUploadResponse
+        Err(e) => match e {
+            // Map internal UploadFileError to DetailedUploadResponse
             UploadFileError::AlreadyUploaded => DetailedUploadResponse::AlreadyUploaded(None),
             UploadFileError::NotRequested => DetailedUploadResponse::NotRequested(None),
             // Add more mappings if UploadFileError gets more variants
-        }
+        },
     }
 }
 
@@ -159,17 +162,26 @@ fn download_file_chunk(item_id: ItemId, chunk_id: u64) -> DownloadChunkResponse 
 fn share_item(user_to_share_with: Principal, item_id: ItemId) -> ItemOperationResponse {
     match with_state_mut(|s| backend::api::share_item(s, caller(), user_to_share_with, item_id)) {
         FileSharingResponse::Ok => ItemOperationResponse::Ok(None),
-        FileSharingResponse::PermissionError => ItemOperationResponse::Err("Permission denied.".to_string()),
-        FileSharingResponse::PendingError => ItemOperationResponse::Err("Item is not in a shareable state (e.g. pending upload).".to_string()),
+        FileSharingResponse::PermissionError => {
+            ItemOperationResponse::Err("Permission denied.".to_string())
+        }
+        FileSharingResponse::PendingError => ItemOperationResponse::Err(
+            "Item is not in a shareable state (e.g. pending upload).".to_string(),
+        ),
     }
 }
 
 #[update]
 fn revoke_item_share(user_to_revoke_from: Principal, item_id: ItemId) -> ItemOperationResponse {
-     match with_state_mut(|s| backend::api::revoke_share(s, caller(), user_to_revoke_from, item_id)) {
+    match with_state_mut(|s| backend::api::revoke_share(s, caller(), user_to_revoke_from, item_id))
+    {
         FileSharingResponse::Ok => ItemOperationResponse::Ok(None),
-        FileSharingResponse::PermissionError => ItemOperationResponse::Err("Permission denied or share not found.".to_string()),
-        FileSharingResponse::PendingError => ItemOperationResponse::Err("Cannot modify share for item in pending state.".to_string()), // Should not happen if item was shared
+        FileSharingResponse::PermissionError => {
+            ItemOperationResponse::Err("Permission denied or share not found.".to_string())
+        }
+        FileSharingResponse::PendingError => {
+            ItemOperationResponse::Err("Cannot modify share for item in pending state.".to_string())
+        } // Should not happen if item was shared
     }
 }
 
@@ -180,32 +192,40 @@ fn get_items_shared_with_me() -> Vec<PublicItemMetadata> {
 
 #[query]
 fn get_item_sharers(item_id: ItemId) -> Result<Vec<PublicUser>, String> {
-    // Assuming backend::api::get_item_sharers is implemented and returns Result<Vec<PublicUser>, String>
-    // It would typically iterate state.item_shares to find all users item_id is shared with.
-    backend::api::get_item_sharers(item_id, &with_state(|s|s)) // Pass state to the api function
+    with_state(|state_ref| {
+        // state_ref is a &'a State where 'a is the lifetime of the closure
+        backend::api::get_item_sharers(item_id, state_ref) // Pass the valid reference
+    })
 }
 
 // --- VetKD ---
-#[update]
-async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>, item_id: Option<ItemId>) -> VetkdEncryptedKeyResponse {
-    match backend::api::vetkd_encrypted_key(encryption_public_key, item_id).await {
-        Ok(key) => VetkdEncryptedKeyResponse::Ok(key),
-        Err(msg) => VetkdEncryptedKeyResponse::Err(msg),
-    }
-}
+// #[update]
+// async fn vetkd_encrypted_key(
+//     encryption_public_key: Vec<u8>,
+//     item_id: Option<ItemId>,
+// ) -> VetkdEncryptedKeyResponse {
+//     match backend::api::vetkd_encrypted_key(encryption_public_key, item_id).await {
+//         Ok(key) => VetkdEncryptedKeyResponse::Ok(key),
+//         Err(msg) => VetkdEncryptedKeyResponse::Err(msg),
+//     }
+// }
 
-#[update]
-async fn vetkd_public_key() -> VetkdPublicKeyResponse {
-     match backend::api::vetkd_public_key().await {
-        Ok(key) => VetkdPublicKeyResponse::Ok(key),
-        Err(msg) => VetkdPublicKeyResponse::Err(msg),
-    }
-}
+// #[update]
+// async fn vetkd_public_key() -> VetkdPublicKeyResponse {
+//     match backend::api::vetkd_public_key().await {
+//         Ok(key) => VetkdPublicKeyResponse::Ok(key),
+//         Err(msg) => VetkdPublicKeyResponse::Err(msg),
+//     }
+// }
 
 // --- "Request Group" and Template features (Legacy or to be integrated) ---
 #[update]
-fn multi_request_legacy(input: MultiRequestInputLegacy) -> Result<MultiRequestResponseLegacy, String> {
-    Ok(with_state_mut(|s| backend::api::multi_request(caller(), input, s)))
+fn multi_request_legacy(
+    input: MultiRequestInputLegacy,
+) -> Result<MultiRequestResponseLegacy, String> {
+    Ok(with_state_mut(|s| {
+        backend::api::multi_request(caller(), input, s)
+    }))
 }
 
 #[query]
@@ -214,20 +234,35 @@ fn get_request_groups_legacy() -> Vec<PublicRequestGroupLegacy> {
 }
 
 #[query] // Changed to query as per did
-fn get_group_by_alias_legacy(alias: String) -> Result<GroupInfoForUploadResponse, GetAliasInfoError> {
+fn get_group_by_alias_legacy(
+    alias: String,
+) -> Result<GroupInfoForUploadResponse, GetAliasInfoError> {
     with_state(|s| backend::api::get_group_by_alias(s, alias))
 }
 
 #[query]
 fn get_template_names_legacy() -> Vec<String> {
-    with_state(|s| backend::api::get_user_templates(s, caller()).into_iter().map(|t| t.name).collect())
+    with_state(|s| {
+        backend::api::get_user_templates(s, caller())
+            .into_iter()
+            .map(|t| t.name)
+            .collect()
+    })
 }
 
 #[query]
 fn get_template_legacy(name: String) -> TemplateResponseLegacy {
     match with_state(|s| backend::api::get_template(s, caller(), name)) {
         Ok(template) => TemplateResponseLegacy::Ok(template),
-        Err(_) => TemplateResponseLegacy::Err(GetAliasInfoError::NotFound {}),
+        Err(get_alias_info_error) => {
+            // e.g. GetAliasInfoError::NotFound
+            // Explicitly map the error
+            match get_alias_info_error {
+                GetAliasInfoError::NotFound => {
+                    TemplateResponseLegacy::Err(TemplateResponseLegacyError::NotFound {})
+                } // If GetAliasInfoError had other variants, you'd map them or panic/default here
+            }
+        }
     }
 }
 
@@ -251,7 +286,6 @@ fn get_my_pending_requests() -> Vec<PublicItemMetadata> {
     // file items owned by the caller that are still in a pending (alias exists, no content) state.
     with_state(|s| backend::api::get_requests(s, caller()))
 }
-
 
 // --- Canister Management ---
 #[query]
@@ -280,7 +314,6 @@ fn hello_world() -> String {
     "Hello from Docutrack!".to_string()
 }
 
-
 // --- Lifecycle Hooks ---
 #[pre_upgrade]
 fn pre_upgrade() {
@@ -294,21 +327,21 @@ fn post_upgrade() {
 
 fn main() {}
 
-#[cfg(test)]
-mod tests {
-    // use super::*; // Not needed if only generate_candid_file is here
-    // use candid_parser::utils::{service_equal, CandidSource};
-    // use std::path::Path;
+// #[cfg(test)]
+// mod tests {
+//     // use super::*; // Not needed if only generate_candid_file is here
+//     // use candid_parser::utils::{service_equal, CandidSource};
+//     // use std::path::Path;
 
-    #[test]
-    #[ignore]
-    fn generate_candid_file() {
-        candid::export_service!();
-        // To print to console:
-        // cargo test --manifest-path ./Cargo.toml --lib --features generate-candid -- generate_candid_file --show-output --ignored
-        println!("{}", __export_service());
-        // To write to file (uncomment and adjust path if needed):
-        // let new_candid = __export_service();
-        // std::fs::write(Path::new("./service.did"), &new_candid).expect("Write to service.did failed.");
-    }
-}
+//     #[test]
+//     #[ignore]
+//     fn generate_candid_file() {
+//         candid::export_service!();
+//         // To print to console:
+//         // cargo test --manifest-path ./Cargo.toml --lib --features generate-candid -- generate_candid_file --show-output --ignored
+//         println!("{}", __export_service());
+//         // To write to file (uncomment and adjust path if needed):
+//         // let new_candid = __export_service();
+//         // std::fs::write(Path::new("./service.did"), &new_candid).expect("Write to service.did failed.");
+//     }
+// }

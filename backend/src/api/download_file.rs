@@ -1,104 +1,100 @@
-// ic-docutrack/backend/src/api/download_file.rs (Consider renaming to download_item_content.rs)
-use crate::{FileData, FileDownloadResponse, ItemId, ItemType, State}; // Removed FileContent, added ItemId, ItemType
+// ic-docutrack/backend/src/api/download_file.rs
+use crate::{DownloadChunkResponse, FoundFileChunk, ItemId, ItemType, State}; // Changed FileData -> FoundFileChunk, FileDownloadResponse -> DownloadChunkResponse
 use candid::Principal;
 
 // Helper for owned item download
-fn get_owned_item_data(s: &State, item_id: ItemId, chunk_id: u64) -> FileDownloadResponse {
-    let item = s.items.get(&item_id).unwrap(); // Assumes item_id is valid
+// The return type and internal logic needs to map to DownloadChunkResponse and FoundFileChunk
+fn get_owned_item_data(s: &State, item_id: ItemId, chunk_id: u64) -> DownloadChunkResponse {
+    let item = match s.items.get(&item_id) {
+        Some(i) => i,
+        None => return DownloadChunkResponse::NotFoundItem, // Item itself not found
+    };
 
     if item.item_type == ItemType::Folder {
-        return FileDownloadResponse::PermissionError; // Or a new "CannotDownloadFolder" variant
+        return DownloadChunkResponse::NotAFile;
     }
 
-    // Check if file has content and chunks defined (i.e., upload process started)
     let content_type = match &item.content_type {
         Some(ct) => ct.clone(),
-        None => return FileDownloadResponse::NotUploadedFile, // File request exists but no upload started
+        None => return DownloadChunkResponse::NotUploadedFile,
     };
     let num_chunks_total = match item.num_chunks {
         Some(nc) => nc,
-        None => return FileDownloadResponse::NotUploadedFile, // Should not happen if content_type is Some
+        None => return DownloadChunkResponse::NotUploadedFile,
     };
 
-    // Check if all chunks are uploaded
     if s.num_chunks_uploaded(item_id) < num_chunks_total {
-        return FileDownloadResponse::NotUploadedFile; // Partially uploaded
+        return DownloadChunkResponse::NotUploadedFile;
     }
 
     match s.file_contents.get(&(item_id, chunk_id)) {
-        Some(contents) => FileDownloadResponse::FoundFile(FileData {
-            contents: contents.clone(), // Clone the Vec<u8>
+        Some(contents) => DownloadChunkResponse::FoundFileChunk(FoundFileChunk {
+            // Updated struct name
+            contents: contents.clone(),
             file_type: content_type,
             num_chunks: num_chunks_total,
         }),
-        None => FileDownloadResponse::NotFoundFile, // Specific chunk not found, though previous checks should catch this.
+        None => DownloadChunkResponse::ChunkNotFound, // Specific chunk not found
     }
 }
 
-// Helper for shared item download (currently same logic as owned, VetKD handles decryption differences)
+// Helper for shared item download
 fn get_shared_item_data(
     s: &State,
     item_id: ItemId,
     chunk_id: u64,
     _user: Principal,
-) -> FileDownloadResponse {
-    // For VetKD, the decryption key derivation involves the _user's principal on the client-side.
-    // The backend serves the same encrypted content regardless of who is downloading (if they have permission).
-    // So, this function can be very similar to get_owned_item_data.
-    get_owned_item_data(s, item_id, chunk_id)
+) -> DownloadChunkResponse {
+    get_owned_item_data(s, item_id, chunk_id) // Logic is similar for now
 }
 
 pub fn download_file(
-    // Consider renaming to download_file_chunk or download_item_content
     s: &State,
-    item_id: ItemId, // Changed from u64
+    item_id: ItemId,
     chunk_id: u64,
     caller: Principal,
-) -> FileDownloadResponse {
-    // 1. Get ItemMetadata
+) -> DownloadChunkResponse {
     let item = match s.items.get(&item_id) {
         Some(meta) => meta,
-        None => return FileDownloadResponse::NotFoundFile,
+        None => return DownloadChunkResponse::NotFoundItem,
     };
 
-    // 2. Check permissions: Owner or Shared With
     let is_owner = item.owner_principal == caller;
     let is_shared = is_item_shared_with_me(s, item_id, caller);
 
     if !is_owner && !is_shared {
-        return FileDownloadResponse::PermissionError;
+        return DownloadChunkResponse::PermissionError;
     }
 
-    // 3. If it's a folder, cannot download content
     if item.item_type == ItemType::Folder {
-        return FileDownloadResponse::PermissionError; // Or specific "CannotDownloadFolder"
+        return DownloadChunkResponse::NotAFile;
     }
 
-    // 4. Check if the file is fully uploaded
-    // (content_type and num_chunks should be Some, and all chunks should be present)
     if item.content_type.is_none() || item.num_chunks.is_none() {
-        return FileDownloadResponse::NotUploadedFile; // Still pending or corrupt metadata
+        return DownloadChunkResponse::NotUploadedFile;
     }
     let total_chunks_expected = item.num_chunks.unwrap();
     if s.num_chunks_uploaded(item_id) < total_chunks_expected {
-        return FileDownloadResponse::NotUploadedFile; // Partially uploaded
+        return DownloadChunkResponse::NotUploadedFile;
     }
 
-    // 5. Get the specific chunk content
+    if chunk_id >= total_chunks_expected {
+        return DownloadChunkResponse::ChunkNotFound;
+    }
+
     match s.file_contents.get(&(item_id, chunk_id)) {
-        Some(contents) => FileDownloadResponse::FoundFile(FileData {
-            contents: contents.clone(), // Clone the chunk data
-            file_type: item.content_type.as_ref().unwrap().clone(), // Known to be Some from check above
+        Some(contents) => DownloadChunkResponse::FoundFileChunk(FoundFileChunk {
+            // Updated struct name
+            contents: contents.clone(),
+            file_type: item.content_type.as_ref().unwrap().clone(),
             num_chunks: total_chunks_expected,
         }),
-        None => FileDownloadResponse::NotFoundFile, // Requested chunk_id does not exist
+        None => DownloadChunkResponse::ChunkNotFound, // Should be caught by chunk_id >= total_chunks_expected, but good to have
     }
 }
 
-// Renamed from is_file_shared_with_me
 fn is_item_shared_with_me(s: &State, item_id: ItemId, caller: Principal) -> bool {
     match s.item_shares.get(&caller) {
-        // Use item_shares
         None => false,
         Some(arr) => arr.contains(&item_id),
     }
@@ -107,20 +103,9 @@ fn is_item_shared_with_me(s: &State, item_id: ItemId, caller: Principal) -> bool
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{
-        // api::{request_file, share_file, upload_file, set_user_info}, // These need full refactoring
-        api::set_user_info,
-        get_time,
-        // FileSharingResponse, // Added new types
-        ItemId,
-        ItemMetadata,
-        ItemType,
-        State,
-        User,
-    };
+    use crate::{api::set_user_info, get_time, ItemId, ItemMetadata, ItemType, State, User};
     use candid::Principal;
 
-    // Helper for test setup (similar to one in delete_item.rs tests)
     fn setup_uploaded_file(
         state: &mut State,
         owner: Principal,
@@ -156,7 +141,6 @@ mod test {
         item_id
     }
 
-    // Helper function to create a pending file item (created via request_file typically)
     fn create_pending_file_item(state: &mut State, owner: Principal, name: &str) -> ItemId {
         let item_id = state.generate_item_id();
         let current_time = get_time();
@@ -176,7 +160,6 @@ mod test {
             },
         );
         state.item_owners.entry(owner).or_default().push(item_id);
-        // Simulate alias creation for pending status
         state
             .file_alias_index
             .insert(format!("{}-alias", name), item_id);
@@ -185,7 +168,6 @@ mod test {
 
     #[test]
     fn download_owned_file_correctly() {
-        // Renamed
         let mut state = State::default();
         let owner = Principal::anonymous();
         set_user_info(
@@ -205,24 +187,22 @@ mod test {
             vec![vec![1, 2, 3], vec![4, 5]],
         );
 
-        // Download chunk 0
         let result_chunk0 = download_file(&state, file_id, 0, owner);
         match result_chunk0 {
-            FileDownloadResponse::FoundFile(data) => {
+            DownloadChunkResponse::FoundFileChunk(data) => {
                 assert_eq!(data.contents, vec![1, 2, 3]);
                 assert_eq!(data.file_type, "text/plain");
                 assert_eq!(data.num_chunks, 2);
             }
-            _ => panic!("Expected FoundFile for chunk 0"),
+            _ => panic!("Expected FoundFileChunk for chunk 0"),
         }
 
-        // Download chunk 1
         let result_chunk1 = download_file(&state, file_id, 1, owner);
         match result_chunk1 {
-            FileDownloadResponse::FoundFile(data) => {
+            DownloadChunkResponse::FoundFileChunk(data) => {
                 assert_eq!(data.contents, vec![4, 5]);
             }
-            _ => panic!("Expected FoundFile for chunk 1"),
+            _ => panic!("Expected FoundFileChunk for chunk 1"),
         }
     }
 
@@ -255,8 +235,6 @@ mod test {
             "application/octet-stream",
             vec![vec![10, 20]],
         );
-
-        // Share the item (using a simplified direct share for testing)
         state
             .item_shares
             .entry(recipient)
@@ -265,11 +243,11 @@ mod test {
 
         let result = download_file(&state, file_id, 0, recipient);
         match result {
-            FileDownloadResponse::FoundFile(data) => {
+            DownloadChunkResponse::FoundFileChunk(data) => {
                 assert_eq!(data.contents, vec![10, 20]);
                 assert_eq!(data.file_type, "application/octet-stream");
             }
-            _ => panic!("Expected FoundFile for shared file"),
+            _ => panic!("Expected FoundFileChunk for shared file"),
         }
     }
 
@@ -285,11 +263,9 @@ mod test {
                 public_key: vec![],
             },
         );
-
         let pending_file_id = create_pending_file_item(&mut state, owner, "pending.doc");
-
         let result = download_file(&state, pending_file_id, 0, owner);
-        assert_eq!(result, FileDownloadResponse::NotUploadedFile);
+        assert_eq!(result, DownloadChunkResponse::NotUploadedFile);
     }
 
     #[test]
@@ -313,7 +289,6 @@ mod test {
                 public_key: vec![],
             },
         );
-
         let file_id = setup_uploaded_file(
             &mut state,
             owner,
@@ -321,9 +296,8 @@ mod test {
             "text/plain",
             vec![vec![1]],
         );
-
         let result = download_file(&state, file_id, 0, other_user);
-        assert_eq!(result, FileDownloadResponse::PermissionError);
+        assert_eq!(result, DownloadChunkResponse::PermissionError);
     }
 
     #[test]
@@ -338,7 +312,6 @@ mod test {
                 public_key: vec![],
             },
         );
-
         let folder_id = state.generate_item_id();
         state.items.insert(
             folder_id,
@@ -356,8 +329,32 @@ mod test {
             },
         );
         state.item_owners.entry(owner).or_default().push(folder_id);
-
         let result = download_file(&state, folder_id, 0, owner);
-        assert_eq!(result, FileDownloadResponse::PermissionError); // Or custom CannotDownloadFolder
+        assert_eq!(result, DownloadChunkResponse::NotAFile);
+    }
+
+    #[test]
+    fn download_chunk_not_found() {
+        let mut state = State::default();
+        let owner = Principal::anonymous();
+        set_user_info(
+            &mut state,
+            owner,
+            User {
+                username: "Owner".to_string(),
+                public_key: vec![],
+            },
+        );
+        let file_id = setup_uploaded_file(
+            &mut state,
+            owner,
+            "single_chunk.txt",
+            "text/plain",
+            vec![vec![1, 2, 3]],
+        ); // Only 1 chunk (id 0)
+
+        // Try to download chunk 1 (which doesn't exist)
+        let result = download_file(&state, file_id, 1, owner);
+        assert_eq!(result, DownloadChunkResponse::ChunkNotFound);
     }
 }

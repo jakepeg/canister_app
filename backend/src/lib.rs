@@ -1,3 +1,4 @@
+// ic-docutrack/backend/src/lib.rs
 mod aliases;
 pub mod api;
 mod memory;
@@ -26,13 +27,10 @@ pub mod vetkd;
 pub struct CanisterInfo {
     pub id: Principal,
     pub name: String,
-    // Add other relevant metadata if needed in the future, e.g., creation_timestamp
 }
 
-// Implement Storable and BoundedStorable for StableBTreeMap compatibility
 impl Storable for CanisterInfo {
     fn to_bytes(&self) -> Cow<[u8]> {
-        // Using ciborium for efficient encoding
         let mut bytes = vec![];
         ciborium::ser::into_writer(self, &mut bytes).unwrap();
         Cow::Owned(bytes)
@@ -44,14 +42,11 @@ impl Storable for CanisterInfo {
 
     const BOUND: ic_stable_structures::storable::Bound =
         ic_stable_structures::storable::Bound::Bounded {
-            // Explicitly qualify Bound
-            // Max size for Principal text representation (~63 chars) + name + overhead
-            max_size: 128 + 256, // Example: Max 256 chars for name
+            max_size: 128 + 256,
             is_fixed_size: false,
         };
 }
 
-// Define a wrapper type for Vec<CanisterInfo> to implement Storable
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 struct CanisterInfoVec(Vec<CanisterInfo>);
 
@@ -68,56 +63,34 @@ impl Storable for CanisterInfoVec {
 
     const BOUND: ic_stable_structures::storable::Bound =
         ic_stable_structures::storable::Bound::Bounded {
-            // Explicitly qualify Bound
-            // Estimate max size: N canisters * (size of CanisterInfo) + Vec overhead
-            max_size: 100 * (128 + 256) + 1024, // Example: Max 100 canisters per user
+            max_size: 100 * (128 + 256) + 1024,
             is_fixed_size: false,
         };
 }
 
-// --- End New Structs ---
-
-// Memory IDs - Assuming existing IDs are 0, 1, 2 in memory.rs
-const USER_CANISTERS_MEMORY_ID: MemoryId = MemoryId::new(3); // Ensure this ID is unique
+const USER_CANISTERS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 thread_local! {
-    /// Initialize the state randomness with the current time.
     static STATE: RefCell<State> = RefCell::new(State::new(&get_randomness_seed()[..]));
-
-    // The memory manager is used for managing memory chunks
-    // Assuming MEMORY_MANAGER is already defined similarly in memory.rs or here
-    // If not, it needs to be defined like this:
-    // static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
-    //     RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-
-    // The StableBTreeMap for user canisters
     static USER_CANISTERS: RefCell<StableBTreeMap<Principal, CanisterInfoVec, Memory>> = RefCell::new(
-        StableBTreeMap::init(get_user_canisters_memory()) // Use helper from memory.rs
+        StableBTreeMap::init(get_user_canisters_memory())
     );
 }
 
 pub type ItemId = u64;
 type ChunkId = u64;
 
-// --- Helper functions for new stable map ---
-
-/// A helper method to read the user canisters map.
 pub fn with_user_canisters<R>(
     f: impl FnOnce(&StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R,
 ) -> R {
     USER_CANISTERS.with(|p| f(&p.borrow()))
 }
 
-/// A helper method to mutate the user canisters map.
 pub fn with_user_canisters_mut<R>(
     f: impl FnOnce(&mut StableBTreeMap<Principal, CanisterInfoVec, Memory>) -> R,
 ) -> R {
     USER_CANISTERS.with(|p| f(&mut p.borrow_mut()))
 }
-
-// --- End Helper Functions ---
-
-// --- START: Hierarchical File System Changes ---
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ItemType {
@@ -125,27 +98,20 @@ pub enum ItemType {
     Folder,
 }
 
-/// Metadata for an item (file or folder) in the hierarchical system.
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct ItemMetadata {
-    // --- Core Hierarchy Fields ---
     pub id: ItemId,
     pub name: String,
     pub item_type: ItemType,
-    pub parent_id: Option<ItemId>, // None for root items
-
-    // --- Common Fields ---
+    pub parent_id: Option<ItemId>,
     pub owner_principal: Principal,
-    pub created_at: u64,  // Timestamp for creation
-    pub modified_at: u64, // Timestamp for last modification
-
-    // --- File-Specific Fields (will be None for Folders) ---
-    pub content_type: Option<String>, // Mime type like "image/jpeg" for files
-    pub size: Option<u64>,            // File size in bytes for files
-    pub num_chunks: Option<u64>,      // Total number of chunks for the file
+    pub created_at: u64,
+    pub modified_at: u64,
+    pub content_type: Option<String>,
+    pub size: Option<u64>,
+    pub num_chunks: Option<u64>,
 }
 
-/// Public representation of an item's metadata, returned to the frontend.
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct PublicItemMetadata {
     pub id: ItemId,
@@ -153,95 +119,212 @@ pub struct PublicItemMetadata {
     pub item_type: ItemType,
     pub parent_id: Option<ItemId>,
     pub modified_at: u64,
-    pub size: Option<u64>, // For files, None for folders
-                           // pub owner_principal: Principal, // Consider adding if frontend needs it for display directly
+    pub size: Option<u64>,
 }
 
-// The FileContent enum might be simplified or its data incorporated elsewhere
-// For now, its direct usage in `State` via `File` struct is removed.
-// Information like num_chunks and file_type (content_type) are now in ItemMetadata.
-// The `Pending { alias }` state is handled by `file_alias_index` and items not yet having content metadata.
-/*
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum FileContent { // This might be removed or significantly refactored
-    Pending {
-        alias: String,
-    },
-    Uploaded {
-        num_chunks: u64, // Now in ItemMetadata
-        file_type: String, // Now in ItemMetadata as content_type
-    },
-    PartiallyUploaded {
-        num_chunks: u64, // Now in ItemMetadata
-        file_type: String, // Now in ItemMetadata as content_type
-    },
-}
-*/
+// --- DTOs matching main.rs and service.did ---
 
-// The `File` struct is removed. `ItemMetadata` is stored directly in the state.
-/*
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct File {
-    pub metadata: FileMetadata, // Old FileMetadata, to be replaced by ItemMetadata logic
-    pub content: FileContent,
-}
-*/
-
-// --- END: Hierarchical File System Changes ---
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct RequestGroup {
-    pub group_id: u64,
+// Request Structs
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UploadFileAtomicDirectRequest {
+    // Matches upload_file_atomic_request_new from DID
     pub name: String,
-    pub files: Vec<u64>, // file_ids in this group
-    pub requester: Principal,
-    pub created_at: u64,
+    pub content: Vec<u8>,
+    pub file_type: String,
+    pub num_chunks: u64,
+    pub parent_id: Option<ItemId>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UploadContentToItemRequest {
+    // Matches upload_file_to_item_request from DID
+    pub item_id: ItemId,
+    pub file_content: Vec<u8>,
+    pub file_type: String,
+    pub num_chunks: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct UploadChunkContinueRequest {
+    // Matches upload_chunk_continue_request from DID
+    pub item_id: ItemId, // field name was file_id, changed to item_id to match DID and main.rs expectations
+    pub chunk_id: u64,
+    pub contents: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct MultiRequestInput {
+pub struct MultiRequestInputLegacy {
+    // Matches multi_request_input from DID
     pub group_name: String,
     pub file_names: Vec<String>,
     pub save_as_template: bool,
+    // parent_id: Option<ItemId>, // Optional field from DID, main.rs does not seem to use it. Keeping it simple for now.
+}
+
+// Response Structs
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct FoundFileChunk {
+    // Matches found_file_chunk from DID
+    pub contents: Vec<u8>,
+    pub file_type: String,
+    pub num_chunks: u64,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub enum DownloadChunkResponse {
+    // Matches download_file_chunk_response from DID
+    #[serde(rename = "not_found_item")]
+    NotFoundItem,
+    #[serde(rename = "not_a_file")]
+    NotAFile,
+    #[serde(rename = "not_uploaded_file")]
+    NotUploadedFile,
+    #[serde(rename = "chunk_not_found")]
+    ChunkNotFound,
+    #[serde(rename = "permission_error")]
+    PermissionError,
+    #[serde(rename = "found_file_chunk")]
+    FoundFileChunk(FoundFileChunk),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct MultiRequestResponse {
-    pub group_id: u64,
-    pub group_alias: String, // Changed from file_aliases
+pub enum ItemOperationResponse {
+    // Matches item_operation_response from DID
+    Ok(Option<()>), // Ok: null in DID becomes Option<()> or a unit struct
+    Err(String),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct PublicRequestGroup {
-    pub group_id: u64,
+pub enum DetailedUploadResponse {
+    // Matches item_operation_response_detailed from DID
+    Ok(Option<()>),
+    PermissionError(Option<()>),
+    ItemNotFound(Option<()>),
+    FolderNotEmpty(Option<()>),
+    NotAFile(Option<()>),
+    NotAFolder(Option<()>),
+    PendingError(Option<()>),
+    AlreadyUploaded(Option<()>),
+    NotRequested(Option<()>),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct PublicUser {
+    // Already present, just confirming
+    pub username: String,
+    pub public_key: Vec<u8>,
+    pub ic_principal: Principal,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct AliasInfoForUpload {
+    // Matches alias_info_response from DID
+    pub item_id: ItemId,
+    pub file_name: String,
+    pub user: PublicUser,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum GetAliasInfoError {
+    // Matches get_alias_info_error from DID
+    #[serde(rename = "not_found")]
+    NotFound,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum VetkdEncryptedKeyResponse {
+    Ok(Vec<u8>),
+    Err(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum VetkdPublicKeyResponse {
+    Ok(Vec<u8>),
+    Err(String),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct MultiRequestResponseLegacy {
+    // Matches multi_request_response from DID
+    pub group_id: ItemId,
+    pub group_alias: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct PublicRequestGroupLegacy {
+    // Matches public_request_group from DID
+    pub group_id: ItemId,
     pub name: String,
     pub files: Vec<PublicItemMetadata>,
     pub created_at: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct FileInfo {
-    pub file_id: ItemId,
+pub struct FileInfoForUpload {
+    // Matches file_info_for_upload from DID
+    pub item_id: ItemId,
     pub file_name: String,
     pub alias: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct GroupInfo {
-    pub group_id: u64,
+pub struct GroupInfoForUploadResponse {
+    // Matches group_info_response from DID
+    pub group_id: ItemId,
     pub group_name: String,
-    pub files: Vec<FileInfo>,
+    pub files: Vec<FileInfoForUpload>,
     pub requester: PublicUser,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct TemplateLegacy {
+    // Matches template from DID
+    pub name: String,
+    pub file_names: Vec<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum TemplateResponseLegacyError {
+    // For Err variant of TemplateResponseLegacy
+    #[serde(rename = "not_found")]
+    NotFound,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub enum TemplateResponseLegacy {
+    // Matches template_response from DID
+    Ok(TemplateLegacy),
+    Err(TemplateResponseLegacyError),
+}
+
+// --- Legacy / Internal Structs (may be mapped to new DTOs or used internally) ---
+// These are kept if main.rs still depends on them for mapping internal logic.
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct RequestGroup {
+    // Used internally by multi_request
+    pub group_id: ItemId, // ItemId of the folder representing the group
+    pub name: String,
+    pub files: Vec<ItemId>, // ItemIds of files in this group
+    pub requester: Principal,
+    pub created_at: u64,
+}
+
+// MultiRequestInput and MultiRequestResponse are now suffixed with Legacy
+// as they pertain to the older "group" concept.
+
+// FileInfo and GroupInfo are now FileInfoForUpload and GroupInfoForUploadResponse for clarity
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct User {
+    // Internal User struct
     pub username: String,
     pub public_key: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub enum SetUserResponse {
+    // For set_user endpoint
     #[serde(rename = "ok")]
     Ok,
     #[serde(rename = "username_exists")]
@@ -250,22 +333,19 @@ pub enum SetUserResponse {
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub enum WhoamiResponse {
+    // For who_am_i endpoint
     #[serde(rename = "known_user")]
     KnownUser(PublicUser),
     #[serde(rename = "unknown_user")]
     UnknownUser,
 }
 
-/// File metadata.
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct FileMetadata {
-    pub file_name: String,
-    pub user_public_key: Vec<u8>,
-    pub requester_principal: Principal,
-    pub requested_at: u64,
-    pub uploaded_at: Option<u64>,
-}
+// FileMetadata (old, largely replaced by ItemMetadata logic)
+// If any API still uses it internally before converting, it can stay.
+// For now, assuming it's not directly needed in the refactored state struct.
 
+// FileStatus (old, status is now derived)
+// Kept if get_requests.rs still uses it for mapping temporarily
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum FileStatus {
     #[serde(rename = "pending")]
@@ -273,85 +353,30 @@ pub enum FileStatus {
     #[serde(rename = "partially_uploaded")]
     PartiallyUploaded,
     #[serde(rename = "uploaded")]
-    Uploaded {
-        uploaded_at: u64,
-        // No document_key needed here as we moved to vertkeys
-        // document_key: Vec<u8>,
-    },
+    Uploaded { uploaded_at: u64 },
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct PublicFileMetadata {
-    pub file_id: u64,
-    pub file_name: String,
-    pub group_name: String,
-    pub group_alias: Option<String>,
-    pub file_status: FileStatus,
-    pub shared_with: Vec<PublicUser>,
-}
+// PublicFileMetadata (old, replaced by PublicItemMetadata)
+// Kept if get_requests.rs still uses it for mapping temporarily
+// #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+// pub struct PublicFileMetadata {
+//     pub file_id: u64,
+//     pub file_name: String,
+//     pub group_name: String,
+//     pub group_alias: Option<String>,
+//     pub file_status: FileStatus,
+//     pub shared_with: Vec<PublicUser>,
+// }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub enum GetAliasInfoError {
-    #[serde(rename = "not_found")]
-    NotFound,
-}
+// AliasInfo is now AliasInfoForUpload
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct AliasInfo {
-    pub file_id: u64,
-    pub file_name: String,
-    pub user: PublicUser,
-}
+// File and FileContent (old, replaced by ItemMetadata and derived status)
+// These are removed from the State struct.
 
-// A file is composed of its metadata and its content, which is a blob.
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct File {
-    pub metadata: FileMetadata,
-    pub content: FileContent,
-}
+// FileData is now FoundFileChunk
+// FileDownloadResponse is now DownloadChunkResponse
 
-#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum FileContent {
-    Pending {
-        alias: String,
-    },
-    Uploaded {
-        num_chunks: u64,
-        file_type: String,
-        // owner_key: Vec<u8>, // VetKD public key
-        // No need for shared_keys map as we are moving to vetkeys
-        // shared_keys: BTreeMap<Principal, Vec<u8>>,
-    },
-    PartiallyUploaded {
-        num_chunks: u64,
-        file_type: String,
-        // owner_key: Vec<u8>, // VetKD public key
-        // No need for shared_keys map as we are moving to vetkeys
-        // shared_keys: BTreeMap<Principal, Vec<u8>>,
-    },
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq)]
-pub struct FileData {
-    contents: Vec<u8>,
-    file_type: String,
-    // Remove owner_key field as it's not needed with VetKD
-    // owner_key: Vec<u8>,
-    num_chunks: u64,
-}
-
-#[derive(CandidType, Serialize, Deserialize, PartialEq, Debug)]
-pub enum FileDownloadResponse {
-    #[serde(rename = "not_found_file")]
-    NotFoundFile,
-    #[serde(rename = "not_uploaded_file")]
-    NotUploadedFile,
-    #[serde(rename = "permission_error")]
-    PermissionError,
-    #[serde(rename = "found_file")]
-    FoundFile(FileData),
-}
-
+// Internal Error Enums (used by api modules, mapped in main.rs)
 #[derive(Debug, CandidType, Serialize, Deserialize)]
 pub enum UploadFileError {
     #[serde(rename = "not_requested")]
@@ -370,74 +395,55 @@ pub enum FileSharingResponse {
     Ok,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct Template {
-    pub name: String,
-    pub file_names: Vec<String>,
-}
+// Template is now TemplateLegacy
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
-    // Keeps track of how many files have been requested so far
-    // and is used to assign IDs to newly requested files.
-    // file_count: u64,
-    item_id_counter: u64, // Renamed from file_count
-
-    /// Keeps track of usernames vs. their principals.
+    item_id_counter: u64,
     pub users: BTreeMap<Principal, User>,
-
-    /// Mapping between items IDs and item information.
-    pub items: BTreeMap<ItemId, ItemMetadata>, // New map for all items (was pub file_data: BTreeMap<u64, File> before)
-
-    /// Mapping between file aliases (randomly generated links) and item ID.
-    /// This is primarily for alias-based file uploads.
+    pub items: BTreeMap<ItemId, ItemMetadata>,
     pub file_alias_index: BTreeMap<String, ItemId>,
-
-    /// Mapping between a user's principal and the list of items (files/folders) owned by the user.
-    pub item_owners: BTreeMap<Principal, Vec<ItemId>>, // Renamed from file_owners
-
-    /// Mapping between a user's principal and the list of items (files/folders) shared with them.
-    pub item_shares: BTreeMap<Principal, Vec<ItemId>>, // Renamed from file_shares
-
-    /// The contents of the file (stored in stable memory).
+    pub item_owners: BTreeMap<Principal, Vec<ItemId>>,
+    pub item_shares: BTreeMap<Principal, Vec<ItemId>>,
     #[serde(skip, default = "init_file_contents")]
-    pub file_contents: StableBTreeMap<(ItemId, ChunkId), Vec<u8>, Memory>, // Key is (ItemId, ChunkId)
-
-    // Generates aliases for file requests.
+    pub file_contents: StableBTreeMap<(ItemId, ChunkId), Vec<u8>, Memory>,
     #[serde(skip, default = "init_alias_generator")]
     alias_generator: AliasGenerator,
-
-    /// Counter for group IDs
-    group_count: u64,
-
-    /// Mapping between group IDs and request groups
-    pub request_groups: BTreeMap<u64, RequestGroup>,
-
-    /// Mapping between group aliases and group IDs
-    group_alias_index: BTreeMap<String, u64>,
-    /// Mapping between group IDs and their file IDs
-    group_files: BTreeMap<u64, Vec<ItemId>>,
-
-    user_templates: BTreeMap<Principal, BTreeMap<String, Template>>,
-    // Note: user_canisters map is now managed separately via USER_CANISTERS thread_local
+    group_count: u64, // For legacy multi_request group IDs (which are folder ItemIds now)
+    // request_groups maps the group_folder_id to RequestGroup details
+    pub request_groups: BTreeMap<ItemId, RequestGroup>, // Key is ItemId of the folder
+    // group_alias_index maps an alias string to a group_folder_id (ItemId)
+    group_alias_index: BTreeMap<String, ItemId>, // Value is ItemId of the folder
+    // group_files maps a group_folder_id (ItemId) to Vec<ItemId> of files within it
+    group_files: BTreeMap<ItemId, Vec<ItemId>>, // Key and Value are ItemId
+    user_templates: BTreeMap<Principal, BTreeMap<String, TemplateLegacy>>,
 }
 
 impl State {
-    // Note: State::new might not need to initialize anything related to user_canisters
-    // if it's purely managed by the thread_local static.
     pub(crate) fn generate_item_id(&mut self) -> ItemId {
-        // The file ID is an auto-incrementing integer.
-
-        let file_id = self.item_id_counter;
+        let item_id = self.item_id_counter;
         self.item_id_counter += 1;
-        file_id
+        item_id
     }
 
-    pub(crate) fn generate_group_id(&mut self) -> u64 {
+    // This function is for the legacy "group_id" which is now just an ItemId for a folder.
+    // It might be redundant if generate_item_id() is used for creating group folders.
+    // However, multi_request.rs uses it for a conceptual group ID.
+    // For consistency, let's assume group folders also get IDs from generate_item_id.
+    // If group_count is truly separate, it needs careful handling.
+    // Given current multi_request.rs creates a folder with generate_item_id,
+    // this generate_group_id might be for the legacy RequestGroup struct's key if it's not the folder's ItemId.
+    // The current multi_request.rs uses the folder_id as the key for request_groups.
+    // So, generate_group_id may not be needed if group_id in RequestGroup is the folder's ItemId.
+    // The provided multi_request.rs uses group_folder_id for RequestGroup.group_id.
+    // Let's remove generate_group_id to avoid confusion, assuming folder IDs are sufficient.
+    /*
+    pub(crate) fn generate_group_id(&mut self) -> u64 { // Or ItemId
         let group_id = self.group_count;
         self.group_count += 1;
         group_id
     }
+    */
 
     fn new(rand_seed: &[u8]) -> Self {
         Self {
@@ -449,7 +455,7 @@ impl State {
             item_shares: BTreeMap::new(),
             alias_generator: AliasGenerator::new(Randomness::try_from(rand_seed).unwrap()),
             file_contents: init_file_contents(),
-            group_count: 0,
+            group_count: 0, // Potentially unused if group IDs are just item IDs
             request_groups: BTreeMap::new(),
             group_alias_index: BTreeMap::new(),
             group_files: BTreeMap::new(),
@@ -457,7 +463,6 @@ impl State {
         }
     }
 
-    /// Returns the number of uploaded chunks for the given file id
     pub(crate) fn num_chunks_uploaded(&self, item_id: ItemId) -> u64 {
         self.file_contents
             .range((Included((item_id, 0u64)), Excluded(((item_id + 1), 0u64))))
@@ -471,30 +476,16 @@ impl Default for State {
     }
 }
 
-/// A helper method to read the state.
-///
-/// Precondition: the state is already initialized.
 pub fn with_state<R>(f: impl FnOnce(&State) -> R) -> R {
     STATE.with(|cell| f(&cell.borrow()))
 }
 
-/// A helper method to mutate the state.
-///
-/// Precondition: the state is already initialized.
 pub fn with_state_mut<R>(f: impl FnOnce(&mut State) -> R) -> R {
     STATE.with(|cell| f(&mut cell.borrow_mut()))
 }
 
-/// Returns an unused file alias.
 pub fn generate_alias() -> String {
     with_state_mut(|s| s.alias_generator.next())
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct PublicUser {
-    pub username: String,
-    pub public_key: Vec<u8>,
-    pub ic_principal: Principal,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -505,12 +496,11 @@ pub enum GetUsersResponse {
     Users(Vec<PublicUser>),
 }
 
-// --- New Canister Management Response Types (Moved from canister_management.rs) ---
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum RegisterCanisterResponse {
     Ok,
-    NotAuthorized,              // If caller doesn't control the canister_id
-    VerificationFailed(String), // If canister_status call fails
+    NotAuthorized,
+    VerificationFailed(String),
     AlreadyRegistered,
     InternalError(String),
 }
@@ -537,26 +527,9 @@ pub enum DeleteCanisterResponse {
     DeletionFailed(String),
     InternalError(String),
 }
-// --- End New Types ---
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct UploadFileRequest {
-    pub file_id: ItemId,
-    pub file_content: Vec<u8>,
-    pub file_type: String,
-    // Not needed for VetKD
-    // pub owner_key: Vec<u8>,
-    pub num_chunks: u64,
-    // pub parent_id: Option<ItemId>, // Required for new plan
-    // pub name: Option<String>, // Required if uploading a new file not tied to an alias
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct UploadFileContinueRequest {
-    pub file_id: ItemId,
-    pub chunk_id: u64,
-    pub contents: Vec<u8>,
-}
+// UploadFileRequest from old lib.rs is replaced by UploadContentToItemRequest
+// UploadFileContinueRequest is updated to use item_id
 
 #[cfg(target_arch = "wasm32")]
 pub fn get_time() -> u64 {
@@ -565,14 +538,11 @@ pub fn get_time() -> u64 {
 
 #[cfg(not(target_arch = "wasm32"))]
 pub fn get_time() -> u64 {
-    // This is used only in tests and we need a fixed value we can test against.
     12345
 }
 
 fn get_randomness_seed() -> Vec<u8> {
-    // this is an array of u8 of length 8.
     let time_seed = ic_cdk::api::time().to_be_bytes();
-    // we need to extend this to an array of size 32 by adding to it an array of size 24 full of 0s.
     let zeroes_arr: [u8; 24] = [0; 24];
     [&time_seed[..], &zeroes_arr[..]].concat()
 }
