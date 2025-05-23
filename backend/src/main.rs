@@ -64,7 +64,7 @@ fn list_folder_contents(folder_id: Option<ItemId>) -> Result<Vec<PublicItemMetad
 fn rename_item(item_id: ItemId, new_name: String) -> ItemOperationResponse {
     // Assuming backend::api::rename_item now returns Result<(), String>
     match with_state_mut(|s| backend::api::rename_item(s, caller(), item_id, new_name)) {
-        Ok(()) => ItemOperationResponse::Ok(None), // Candid expects record for Ok variant if Ok:null
+        Ok(()) => ItemOperationResponse::Ok, // Candid expects record for Ok variant if Ok:null
         Err(e) => ItemOperationResponse::Err(e),
     }
 }
@@ -73,7 +73,7 @@ fn rename_item(item_id: ItemId, new_name: String) -> ItemOperationResponse {
 fn delete_item(item_id: ItemId) -> ItemOperationResponse {
     // Assuming backend::api::delete_item now returns Result<(), String>
     match with_state_mut(|s| backend::api::delete_item(s, caller(), item_id)) {
-        Ok(()) => ItemOperationResponse::Ok(None),
+        Ok(()) => ItemOperationResponse::Ok,
         Err(e) => ItemOperationResponse::Err(e),
     }
 }
@@ -82,7 +82,7 @@ fn delete_item(item_id: ItemId) -> ItemOperationResponse {
 fn move_item(item_id: ItemId, new_parent_id: Option<ItemId>) -> ItemOperationResponse {
     // Assuming backend::api::move_item now returns Result<(), String>
     match with_state_mut(|s| backend::api::move_item(s, caller(), item_id, new_parent_id)) {
-        Ok(()) => ItemOperationResponse::Ok(None),
+        Ok(()) => ItemOperationResponse::Ok,
         Err(e) => ItemOperationResponse::Err(e),
     }
 }
@@ -165,7 +165,7 @@ fn download_file_chunk(item_id: ItemId, chunk_id: u64) -> DownloadChunkResponse 
 #[update]
 fn share_item(user_to_share_with: Principal, item_id: ItemId) -> ItemOperationResponse {
     match with_state_mut(|s| backend::api::share_item(s, caller(), user_to_share_with, item_id)) {
-        FileSharingResponse::Ok => ItemOperationResponse::Ok(None),
+        FileSharingResponse::Ok => ItemOperationResponse::Ok,
         FileSharingResponse::PermissionError => {
             ItemOperationResponse::Err("Permission denied.".to_string())
         }
@@ -179,7 +179,7 @@ fn share_item(user_to_share_with: Principal, item_id: ItemId) -> ItemOperationRe
 fn revoke_item_share(user_to_revoke_from: Principal, item_id: ItemId) -> ItemOperationResponse {
     match with_state_mut(|s| backend::api::revoke_share(s, caller(), user_to_revoke_from, item_id))
     {
-        FileSharingResponse::Ok => ItemOperationResponse::Ok(None),
+        FileSharingResponse::Ok => ItemOperationResponse::Ok,
         FileSharingResponse::PermissionError => {
             ItemOperationResponse::Err("Permission denied or share not found.".to_string())
         }
@@ -273,7 +273,7 @@ fn get_template_legacy(name: String) -> TemplateResponseLegacy {
 #[update]
 fn delete_template_legacy(name: String) -> ItemOperationResponse {
     match with_state_mut(|s| backend::api::delete_template(s, caller(), name)) {
-        Ok(()) => ItemOperationResponse::Ok(None),
+        Ok(()) => ItemOperationResponse::Ok,
         Err(_) => ItemOperationResponse::Err("Template not found or permission error.".to_string()),
     }
 }

@@ -2,7 +2,10 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export interface Account {
+export type AccountDelegationError = { 'NoSuchDelegation' : null } |
+  { 'InternalCanisterError' : string } |
+  { 'Unauthorized' : Principal };
+export interface AccountInfo {
   'name' : [] | [string],
   'origin' : string,
   'account_number' : [] | [AccountNumber],
@@ -110,7 +113,9 @@ export interface CheckCaptchaArg { 'solution' : string }
 export type CheckCaptchaError = { 'NoRegistrationFlow' : null } |
   { 'UnexpectedCall' : { 'next_step' : RegistrationFlowNextStep } } |
   { 'WrongSolution' : { 'new_captcha_png_base64' : string } };
-export type CreateAccountError = { 'InternalCanisterError' : string };
+export type CreateAccountError = { 'AccountLimitReached' : null } |
+  { 'InternalCanisterError' : string } |
+  { 'Unauthorized' : Principal };
 export type CredentialId = Uint8Array | number[];
 export interface Delegation {
   'pubkey' : PublicKey,
@@ -153,6 +158,8 @@ export interface DeviceWithUsage {
   'credential_id' : [] | [CredentialId],
 }
 export type FrontendHostname = string;
+export type GetAccountsError = { 'InternalCanisterError' : string } |
+  { 'Unauthorized' : Principal };
 export type GetDelegationResponse = { 'no_such_delegation' : null } |
   { 'signed_delegation' : SignedDelegation };
 export type GetIdAliasError = { 'InternalCanisterError' : string } |
@@ -233,6 +240,7 @@ export interface InternetIdentityInit {
   'is_production' : [] | [boolean],
   'enable_dapps_explorer' : [] | [boolean],
   'assigned_user_number_range' : [] | [[bigint, bigint]],
+  'new_flow_origins' : [] | [Array<string>],
   'archive_config' : [] | [ArchiveConfig],
   'canister_creation_cycles_cost' : [] | [bigint],
   'analytics_config' : [] | [[] | [AnalyticsConfig]],
@@ -298,6 +306,10 @@ export interface OpenIdPrepareDelegationResponse {
   'expiration' : Timestamp,
   'anchor_number' : UserNumber,
 }
+export interface PrepareAccountDelegation {
+  'user_key' : UserKey,
+  'timestamp' : Timestamp,
+}
 export type PrepareIdAliasError = { 'InternalCanisterError' : string } |
   { 'Unauthorized' : Principal };
 export interface PrepareIdAliasRequest {
@@ -346,7 +358,9 @@ export type StreamingStrategy = {
 export type Sub = string;
 export type Timestamp = bigint;
 export type Token = {};
-export type UpdateAccountError = { 'InternalCanisterError' : string };
+export type UpdateAccountError = { 'AccountLimitReached' : null } |
+  { 'InternalCanisterError' : string } |
+  { 'Unauthorized' : Principal };
 export type UserKey = PublicKey;
 export type UserNumber = bigint;
 export type VerifyTentativeDeviceResponse = {
@@ -423,7 +437,7 @@ export interface _SERVICE {
   'config' : ActorMethod<[], InternetIdentityInit>,
   'create_account' : ActorMethod<
     [UserNumber, FrontendHostname, string],
-    { 'Ok' : Account } |
+    { 'Ok' : AccountInfo } |
       { 'Err' : CreateAccountError }
   >,
   'create_challenge' : ActorMethod<[], Challenge>,
@@ -432,10 +446,15 @@ export interface _SERVICE {
   'exit_device_registration_mode' : ActorMethod<[UserNumber], undefined>,
   'fetch_entries' : ActorMethod<[], Array<BufferedArchiveEntry>>,
   'get_account_delegation' : ActorMethod<
-    [UserNumber, FrontendHostname, AccountNumber, SessionKey, Timestamp],
-    GetDelegationResponse
+    [UserNumber, FrontendHostname, [] | [AccountNumber], SessionKey, Timestamp],
+    { 'Ok' : SignedDelegation } |
+      { 'Err' : AccountDelegationError }
   >,
-  'get_accounts' : ActorMethod<[UserNumber, FrontendHostname], Array<Account>>,
+  'get_accounts' : ActorMethod<
+    [UserNumber, FrontendHostname],
+    { 'Ok' : Array<AccountInfo> } |
+      { 'Err' : GetAccountsError }
+  >,
   'get_anchor_credentials' : ActorMethod<[UserNumber], AnchorCredentials>,
   'get_anchor_info' : ActorMethod<[UserNumber], IdentityAnchorInfo>,
   'get_delegation' : ActorMethod<
@@ -514,7 +533,8 @@ export interface _SERVICE {
       SessionKey,
       [] | [bigint],
     ],
-    [UserKey, Timestamp]
+    { 'Ok' : PrepareAccountDelegation } |
+      { 'Err' : AccountDelegationError }
   >,
   'prepare_delegation' : ActorMethod<
     [UserNumber, FrontendHostname, SessionKey, [] | [bigint]],
@@ -535,7 +555,7 @@ export interface _SERVICE {
   'update' : ActorMethod<[UserNumber, DeviceKey, DeviceData], undefined>,
   'update_account' : ActorMethod<
     [UserNumber, FrontendHostname, [] | [AccountNumber], AccountUpdate],
-    { 'Ok' : Account } |
+    { 'Ok' : AccountInfo } |
       { 'Err' : UpdateAccountError }
   >,
   'verify_tentative_device' : ActorMethod<

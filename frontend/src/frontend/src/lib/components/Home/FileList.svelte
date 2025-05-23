@@ -3,7 +3,7 @@
   import UploadModal from "../Upload/UploadModal.svelte";
   import ShareModal from "../ShareModal.svelte";
   import type { AuthStateAuthenticated } from "$lib/services/auth";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { filesStore } from "$lib/services/files";
   import { unreachable } from "$lib/shared/unreachable";
   import { goto } from "$app/navigation";
@@ -12,12 +12,15 @@
   import type {
     public_item_metadata,
     item_id,
-  } from "../../../../../declarations/backend/backend.did"; // Import item_id
+  } from "../../../../../declarations/backend/backend.did";
   import { Button } from "$lib/components/ui/button";
   import FolderIcon from "../icons/FolderIcon.svelte";
   import ChevronRightIcon from "../icons/ChevronRightIcon.svelte";
+  import { EllipsisIcon, EllipsisVertical } from "lucide-svelte";
+  import { page } from "$app/stores";
 
   import type { UploadedFile } from "$lib/services/files";
+  import { clickOutside } from "$lib/utils/clickOutside"; // Helper for dropdown
 
   type Props = {
     auth: AuthStateAuthenticated;
@@ -33,26 +36,33 @@
   let shareFileData: public_item_metadata | undefined = $state(undefined);
   let currentFolderId: item_id | undefined = $state(undefined);
   let folderPath = $state<{ id: item_id | undefined; name: string }[]>([
-    // Use item_id
     { id: undefined, name: "Root" },
   ]);
-  let sortField = $state<"name" | "uploadedAt">("uploadedAt"); // uploadedAt corresponds to modified_at
+  let sortField = $state<"name" | "uploadedAt">("uploadedAt");
   let sortDirection = $state<"asc" | "desc">("desc");
 
   let sortedItems = $state<UploadedFile[]>([]);
 
-  // Moved $effect for sorting to the top level of the script block
+  // More options dropdown state
+  let activeDropdownItemId: item_id | null = $state(null);
+
+  // Rename modal state
+  let isRenameModalOpen = $state(false);
+  let itemToRename: public_item_metadata | undefined = $state(undefined);
+  let renameNewName = $state("");
+  let renameError = $state<string | null>(null);
+
+  // Delete state (can be simpler if just using window.confirm)
+  let deleteError = $state<string | null>(null);
+
   $effect(() => {
     if ($filesStore.state !== "loaded") {
       sortedItems = [];
       return;
     }
-    // filesStore.files should now *only* contain items for the currentFolderId
-
     sortedItems = [...$filesStore.files].sort((a, b) => {
       if (a.isFolder && !b.isFolder) return -1;
       if (!a.isFolder && b.isFolder) return 1;
-
       if (sortField === "name") {
         const nameA = a.name || "Unnamed";
         const nameB = b.name || "Unnamed";
@@ -60,7 +70,6 @@
           ? nameA.localeCompare(nameB)
           : nameB.localeCompare(nameA);
       } else {
-        // "uploadedAt" which maps to modified_at
         const dateA = a.metadata.modified_at;
         const dateB = b.metadata.modified_at;
         return sortDirection === "asc"
@@ -84,25 +93,25 @@
     }
   });
 
+  function getCanisterId() {
+    const canisterId = parseInt($page.url.searchParams.get("canisterId") || "");
+    return canisterId.toString();
+  }
+
   onMount(() => {
     if (auth && auth.filesService) {
       if ($filesStore.state === "idle") {
-        // Only load if not already loading/loaded
-        auth.filesService.loadFolderContents(undefined); // Load root content
+        auth.filesService.loadFolderContents(undefined);
       }
     }
   });
-
-  // The $effect.root for sortField/sortDirection is redundant if the main $effect for sorting
-  // already depends on sortField and sortDirection (which it does because they are $state variables).
-  // You can remove the $effect.root block if the sorting logic is fully contained in the main $effect.
 
   function toggleSort(field: "name" | "uploadedAt") {
     if (sortField === field) {
       sortDirection = sortDirection === "asc" ? "desc" : "asc";
     } else {
       sortField = field;
-      sortDirection = field === "name" ? "asc" : "desc"; // Default for name asc, for date desc
+      sortDirection = field === "name" ? "asc" : "desc";
     }
   }
 
@@ -113,48 +122,129 @@
     return "";
   }
 
-  function goToDetails(file_id: bigint) {
-    goto(`/details?fileId=${file_id}`);
+  function goToDetails(canisterIdStr: string, file_id: bigint) {
+    goto(`/canister/${canisterIdStr}/details?fileId=${file_id}`);
   }
 
-  function openShareModal(file: public_item_metadata) {
-    shareFileData = file;
+  function openShareModalForItem(itemMeta: public_item_metadata) {
+    shareFileData = itemMeta;
     isOpenShareModal = true;
+    activeDropdownItemId = null; // Close dropdown
   }
 
   function enterFolder(folderId: item_id, folderName: string) {
-    currentFolderId = folderId; // This will trigger the $effect to load new folder content
+    currentFolderId = folderId;
     folderPath = [...folderPath, { id: folderId, name: folderName }];
   }
 
   function navigateToFolder(index: number) {
     if (index >= folderPath.length) return;
-    currentFolderId = folderPath[index].id; // This will trigger the $effect to load new folder content
+    currentFolderId = folderPath[index].id;
     folderPath = folderPath.slice(0, index + 1);
   }
 
   async function handleCreateFolder() {
     if (!newFolderName.trim()) {
-      // Add some user feedback, e.g., an alert or a message
       console.warn("Folder name cannot be empty.");
+      // TODO: Show user feedback
       return;
     }
-
     try {
-      // Ensure currentFolderId is passed correctly as Option<item_id>
       const parentFolderOpt: [] | [item_id] =
         currentFolderId !== undefined ? [currentFolderId] : [];
-      await auth.actor.create_folder(newFolderName, parentFolderOpt);
-
+      const result = await auth.actor.create_folder(
+        newFolderName,
+        parentFolderOpt,
+      );
+      if ("Err" in result) {
+        alert(`Error creating folder: ${result.Err}`);
+        return;
+      }
       newFolderName = "";
       isCreateFolderModalOpen = false;
       if (auth && auth.filesService) {
-        // Reload the current folder's content
         auth.filesService.loadFolderContents(currentFolderId);
       }
     } catch (error) {
       console.error("Failed to create folder:", error);
-      // Optionally, display an error message to the user
+      alert(`Failed to create folder: ${error}`);
+    }
+  }
+
+  function toggleItemDropdown(itemId: item_id) {
+    if (activeDropdownItemId === itemId) {
+      activeDropdownItemId = null;
+    } else {
+      activeDropdownItemId = itemId;
+    }
+  }
+
+  function closeAllDropdowns() {
+    activeDropdownItemId = null;
+  }
+
+  function openRenameModalForItem(itemMeta: public_item_metadata) {
+    itemToRename = itemMeta;
+    renameNewName = itemMeta.name;
+    isRenameModalOpen = true;
+    renameError = null;
+    activeDropdownItemId = null; // Close dropdown
+  }
+
+  async function handleRenameItem() {
+    if (!itemToRename || !renameNewName.trim()) {
+      renameError = "New name cannot be empty.";
+      return;
+    }
+    renameError = null;
+    try {
+      const result = await auth.actor.rename_item(
+        itemToRename.id,
+        renameNewName,
+      );
+      if ("Err" in result) {
+        renameError = result.Err;
+        // alert(`Error renaming item: ${result.Err}`); // Or use renameError in modal
+      } else {
+        isRenameModalOpen = false;
+        itemToRename = undefined;
+        renameNewName = "";
+        if (auth && auth.filesService) {
+          auth.filesService.loadFolderContents(currentFolderId);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to rename item:", error);
+      renameError = `Failed to rename item: ${error}`;
+      // alert(`Failed to rename item: ${error}`);
+    }
+  }
+
+  async function handleDeleteItem(itemMeta: public_item_metadata) {
+    activeDropdownItemId = null; // Close dropdown
+    const itemTypeDisplay = "Folder" in itemMeta.item_type ? "folder" : "file";
+    if (
+      !window.confirm(
+        `Are you sure you want to delete this ${itemTypeDisplay} "${itemMeta.name}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    deleteError = null;
+    try {
+      const result = await auth.actor.delete_item(itemMeta.id);
+      if ("Err" in result) {
+        deleteError = result.Err;
+        alert(`Error deleting item: ${result.Err}`); // Show error to user
+      } else {
+        if (auth && auth.filesService) {
+          auth.filesService.loadFolderContents(currentFolderId);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to delete item:", error);
+      deleteError = `Failed to delete item: ${error}`;
+      alert(`Failed to delete item: ${error}`);
     }
   }
 </script>
@@ -167,10 +257,6 @@
     <p>Error loading files: {$filesStore.error}</p>
   </div>
 {:else if $filesStore.state === "loaded"}
-  <!-- Display logic using sortedItems derived from $filesStore.files -->
-  <!-- Make sure `sortedItems` is correctly populated based on $filesStore.files -->
-  <!-- The $effect for sortedItems should now correctly use $filesStore.files which only has current folder items -->
-
   <div class="flex items-center gap-2 mb-4">
     {#each folderPath as folder, index}
       <button
@@ -214,20 +300,20 @@
             >
               Modified {getSortIndicator("uploadedAt")}
             </th>
-            <th></th>
+            <th class="w-12"></th>
+            <!-- Column for ... button -->
           </tr>
         </thead>
         <tbody>
           {#each sortedItems as item (item.file_id)}
-            <tr
-              class="hover:drop-shadow-xl cursor-pointer"
-              onclick={() =>
-                item.isFolder
-                  ? enterFolder(item.file_id, item.name)
-                  : goToDetails(item.file_id)}
-            >
+            <tr class="hover:drop-shadow-xl relative">
+              <!-- Added relative for dropdown positioning -->
               <td
-                class="pl-4 rounded-tl-xl rounded-bl-xl body-1 flex items-center gap-2"
+                class="pl-4 rounded-tl-xl rounded-bl-xl body-1 flex items-center gap-2 cursor-pointer"
+                onclick={() =>
+                  item.isFolder
+                    ? enterFolder(item.file_id, item.name)
+                    : goToDetails(getCanisterId(), item.file_id)}
               >
                 {#if item.isFolder}
                   <FolderIcon class="w-5 h-5" />
@@ -240,21 +326,78 @@
                   <span class="opacity-50">Unnamed</span>
                 {/if}
               </td>
-              <td class="body-1">{item.access}</td>
-              <td class="body-1">{item.uploadedAtShort}</td>
               <td
-                class="pr-4 rounded-tr-xl rounded-br-xl body-1 w-32 text-right h-[52px]"
+                class="body-1 cursor-pointer"
+                onclick={() =>
+                  item.isFolder
+                    ? enterFolder(item.file_id, item.name)
+                    : goToDetails(getCanisterId(), item.file_id)}
+                >{item.access}</td
               >
-                {#if !item.isFolder}
-                  <button
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      openShareModal(item.metadata);
-                    }}
-                    class="btn btn-icon"
+              <td
+                class="body-1 cursor-pointer"
+                onclick={() =>
+                  item.isFolder
+                    ? enterFolder(item.file_id, item.name)
+                    : goToDetails(getCanisterId(), item.file_id)}
+                >{item.uploadedAtShort}</td
+              >
+              <td
+                class="pr-4 rounded-tr-xl rounded-br-xl body-1 text-right h-[52px]"
+              >
+                <button
+                  class="p-2 hover:bg-gray-200 rounded-full"
+                  aria-label="More options for {item.name}"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    toggleItemDropdown(item.file_id);
+                  }}
+                >
+                  <EllipsisVertical class="w-5 h-5" />
+                </button>
+                {#if activeDropdownItemId === item.file_id}
+                  <div
+                    use:clickOutside={closeAllDropdowns}
+                    class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10"
                   >
-                    <ShareIcon />
-                  </button>
+                    <ul>
+                      {#if !item.isFolder}
+                        <li>
+                          <button
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onclick={(e) => {
+                              e.stopPropagation();
+                              openShareModalForItem(item.metadata);
+                            }}
+                          >
+                            Share
+                          </button>
+                        </li>
+                      {/if}
+                      <li>
+                        <button
+                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            openRenameModalForItem(item.metadata);
+                          }}
+                        >
+                          Rename
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          onclick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteItem(item.metadata);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
                 {/if}
               </td>
             </tr>
@@ -263,6 +406,7 @@
       </table>
     </div>
 
+    <!-- Mobile View -->
     <div class="md:hidden flex flex-col gap-2">
       <div class="flex justify-between items-center mb-2 px-1">
         <span class="body-2">Sort by:</span>
@@ -283,72 +427,109 @@
       </div>
 
       {#each sortedItems as item}
-        <button
-          class="bg-background rounded-xl py-3 px-4 flex flex-col"
-          onclick={() =>
-            item.isFolder
-              ? enterFolder(item.file_id, item.name)
-              : goToDetails(item.file_id)}
-          onkeydown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
+        <div class="bg-background rounded-xl py-3 px-4 flex flex-col relative">
+          <div
+            role="button"
+            tabindex="0"
+            class="flex-grow"
+            onclick={() =>
               item.isFolder
                 ? enterFolder(item.file_id, item.name)
-                : goToDetails(item.file_id);
-            }
-          }}
-        >
-          <div class="flex justify-between items-center mb-3">
-            <span class="title-2 flex items-center gap-2">
-              {#if item.isFolder}
-                <FolderIcon class="w-5 h-5" />
-              {:else}
-                <div class="w-5 h-5">📄</div>
-              {/if}
-              {#if item.name}
-                {item.name}
-              {:else}
-                <span class="opacity-50">Unnamed</span>
-              {/if}
-            </span>
-            <span>
-              {#if !item.isFolder}
-                <span
-                  role="button"
-                  tabindex="0"
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    openShareModal(item.metadata);
-                  }}
-                  onkeydown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
+                : goToDetails(getCanisterId(), item.file_id)}
+            onkeydown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                item.isFolder
+                  ? enterFolder(item.file_id, item.name)
+                  : goToDetails(getCanisterId(), item.file_id);
+              }
+            }}
+          >
+            <div class="flex justify-between items-center mb-3">
+              <span class="title-2 flex items-center gap-2">
+                {#if item.isFolder}
+                  <FolderIcon class="w-5 h-5" />
+                {:else}
+                  <div class="w-5 h-5">📄</div>
+                {/if}
+                {#if item.name}
+                  {item.name}
+                {:else}
+                  <span class="opacity-50">Unnamed</span>
+                {/if}
+              </span>
+              <!-- Mobile More Options Button -->
+              <button
+                class="p-1 -mr-1 hover:bg-gray-200 rounded-full z-20"
+                aria-label="More options for {item.name}"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  toggleItemDropdown(item.file_id);
+                }}
+              >
+                <EllipsisIcon class="w-5 h-5" />
+              </button>
+            </div>
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center">
+                <span class="body-1">Access:</span>
+                <span class="body-1">{item.access}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="body-1">Modified:</span>
+                <span class="body-1">{item.uploadedAtShort}</span>
+              </div>
+            </div>
+          </div>
+          <!-- Mobile Dropdown -->
+          {#if activeDropdownItemId === item.file_id}
+            <div
+              use:clickOutside={closeAllDropdowns}
+              class="absolute right-4 top-12 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-30"
+            >
+              <ul>
+                {#if !item.isFolder}
+                  <li>
+                    <button
+                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onclick={(e) => {
+                        e.stopPropagation();
+                        openShareModalForItem(item.metadata);
+                      }}
+                    >
+                      Share
+                    </button>
+                  </li>
+                {/if}
+                <li>
+                  <button
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    onclick={(e) => {
                       e.stopPropagation();
-                      openShareModal(item.metadata);
-                    }
-                  }}
-                  class="btn btn-icon"
-                >
-                  <ShareIcon />
-                </span>
-              {/if}
-            </span>
-          </div>
-          <div class="flex flex-col gap-2">
-            <div class="flex justify-between items-center">
-              <span class="body-1">Access:</span>
-              <span class="body-1">{item.access}</span>
+                      openRenameModalForItem(item.metadata);
+                    }}
+                  >
+                    Rename
+                  </button>
+                </li>
+                <li>
+                  <button
+                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    onclick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteItem(item.metadata);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </li>
+              </ul>
             </div>
-            <div class="flex justify-between items-center">
-              <span class="body-1">Modified:</span>
-              <span class="body-1">{item.uploadedAtShort}</span>
-            </div>
-          </div>
-        </button>
+          {/if}
+        </div>
       {/each}
     </div>
   {:else if $filesStore.state === "loaded"}
-    <!-- Only show "empty" message if loaded and empty -->
     <div class="pt-10 pb-4 text-center flex flex-col items-center gap-4 mt-6">
       <PlaceholderLogo />
       <h2>
@@ -366,7 +547,7 @@
 
 {#if isCreateFolderModalOpen}
   <div
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40"
   >
     <div class="bg-background p-6 rounded-xl w-96">
       <h2 class="text-xl mb-4">Create New Folder</h2>
@@ -374,7 +555,10 @@
         type="text"
         bind:value={newFolderName}
         placeholder="Folder name"
-        class="w-full p-2 mb-4 bg-background-200 rounded"
+        class="w-full p-2 mb-4 bg-input border border-border rounded focus:ring-ring focus:border-ring"
+        onkeydown={(e) => {
+          if (e.key === "Enter") handleCreateFolder();
+        }}
       />
       <div class="flex justify-end gap-2">
         <Button
@@ -390,6 +574,45 @@
   </div>
 {/if}
 
+{#if isRenameModalOpen && itemToRename}
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40"
+  >
+    <div class="bg-background p-6 rounded-xl w-96">
+      <h2 class="text-xl mb-4">
+        Rename {"Folder" in itemToRename.item_type ? "Folder" : "File"}
+      </h2>
+      <input
+        type="text"
+        bind:value={renameNewName}
+        placeholder="New name"
+        class="w-full p-2 mb-1 bg-input border border-border rounded focus:ring-ring focus:border-ring"
+        onkeydown={(e) => {
+          if (e.key === "Enter") handleRenameItem();
+        }}
+      />
+      {#if renameError}
+        <p class="text-red-500 text-sm mb-3">{renameError}</p>
+      {:else}
+        <div class="mb-4"></div>
+        <!-- Spacer to keep layout consistent -->
+      {/if}
+      <div class="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onclick={() => {
+            isRenameModalOpen = false;
+            itemToRename = undefined;
+            renameNewName = "";
+            renameError = null;
+          }}>Cancel</Button
+        >
+        <Button onclick={handleRenameItem}>Save</Button>
+      </div>
+    </div>
+  </div>
+{/if}
+
 <RequestModal bind:isOpen={isOpenRequestModal} {auth} />
 <UploadModal bind:isOpen={isOpenUploadModal} {auth} {currentFolderId} />
 {#if shareFileData}
@@ -397,7 +620,7 @@
     {auth}
     bind:isOpen={isOpenShareModal}
     bind:fileData={shareFileData}
-    on:shared={() => auth.filesService.reload()}
+    on:shared={() => auth.filesService.reload(currentFolderId)}
   />
 {/if}
 
@@ -405,16 +628,15 @@
   tbody tr {
     transition: transform 0.2s ease-in-out;
   }
-
-  tbody tr:hover {
+  /*tbody tr:hover {
     transform: translate(10px, 0);
-  }
+  } Keep this commented if dropdowns are used */
 
-  .md\:hidden > div {
+  .md\:hidden > div.bg-background {
+    /* Target the card specifically */
     transition: transform 0.2s ease-in-out;
   }
-
-  .md\:hidden > div:hover {
+  /* .md\:hidden > div.bg-background:hover {
     transform: translate(10px, 0);
-  }
+  } Keep this commented if dropdowns are used */
 </style>

@@ -190,7 +190,7 @@ pub enum DownloadChunkResponse {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum ItemOperationResponse {
     // Matches item_operation_response from DID
-    Ok(Option<()>), // Ok: null in DID becomes Option<()> or a unit struct
+    Ok, // Ok: null in DID becomes Option<()> or a unit struct
     Err(String),
 }
 

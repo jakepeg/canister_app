@@ -147,7 +147,7 @@ type upload_chunk_continue_request = record { // Renamed from upload_file_contin
 
 // General response for operations like upload, share, delete, rename
 type item_operation_response = variant { // New: Generalizing FileSharingResponse
-  Ok: null;
+  Ok;
   Err: text; // String containing an error message (e.g., "PermissionDenied", "NotFound", "FolderNotEmpty")
 };
 // OR, keep more specific variants if preferred:
