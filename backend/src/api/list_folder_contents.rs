@@ -7,7 +7,11 @@ pub fn list_folder_contents(
     caller: Principal,
     folder_id: Option<ItemId>,
 ) -> Result<Vec<PublicItemMetadata>, String> {
-    // If folder_id is Some, check if the caller has access to this folder
+    ic_cdk::println!(
+        "api/list_folder_contents.rs - received folder_id: {:?}",
+        folder_id
+    ); // <--- ADD THIS
+       // If folder_id is Some, check if the caller has access to this folder
     if let Some(f_id) = folder_id {
         match state.items.get(&f_id) {
             Some(folder_item) => {

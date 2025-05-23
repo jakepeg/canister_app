@@ -53,6 +53,10 @@ fn create_folder(name: String, parent_id: Option<ItemId>) -> Result<PublicItemMe
 
 #[query]
 fn list_folder_contents(folder_id: Option<ItemId>) -> Result<Vec<PublicItemMetadata>, String> {
+    ic_cdk::println!(
+        "main.rs - list_folder_contents received folder_id: {:?}",
+        folder_id
+    ); // <--- ADD THIS
     with_state(|s| backend::api::list_folder_contents(s, caller(), folder_id))
 }
 
