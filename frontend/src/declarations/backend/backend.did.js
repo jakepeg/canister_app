@@ -174,6 +174,11 @@ export const idlFactory = ({ IDL }) => {
         ],
         [],
       ),
+    'get_item_metadata_by_id' : IDL.Func(
+        [item_id],
+        [IDL.Variant({ 'Ok' : public_item_metadata, 'Err' : IDL.Text })],
+        ['query'],
+      ),
     'get_item_sharers' : IDL.Func(
         [item_id],
         [IDL.Variant({ 'Ok' : IDL.Vec(user), 'Err' : IDL.Text })],
@@ -184,12 +189,16 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(public_item_metadata)],
         ['query'],
       ),
+    'get_my_pending_requests' : IDL.Func(
+        [],
+        [IDL.Vec(public_item_metadata)],
+        ['query'],
+      ),
     'get_request_groups' : IDL.Func(
         [],
         [IDL.Vec(public_request_group)],
         ['query'],
       ),
-    'get_requests' : IDL.Func([], [IDL.Vec(public_item_metadata)], ['query']),
     'get_template' : IDL.Func([IDL.Text], [template_response], ['query']),
     'get_template_names' : IDL.Func([], [IDL.Vec(IDL.Text)], ['query']),
     'get_user_canisters' : IDL.Func([], [GetUserCanistersResponse], ['query']),

@@ -202,6 +202,35 @@ fn get_item_sharers(item_id: ItemId) -> Result<Vec<PublicUser>, String> {
     })
 }
 
+#[query]
+fn get_item_metadata_by_id(item_id: ItemId) -> Result<PublicItemMetadata, String> {
+    with_state(|s| {
+        match s.items.get(&item_id) {
+            Some(item) => {
+                // Permission Check: Caller must own the item or have it shared with them.
+                let caller = ic_cdk::api::caller();
+                if item.owner_principal == caller
+                    || s.item_shares
+                        .get(&caller)
+                        .map_or(false, |shared_ids| shared_ids.contains(&item_id))
+                {
+                    Ok(PublicItemMetadata {
+                        id: item.id,
+                        name: item.name.clone(),
+                        item_type: item.item_type.clone(),
+                        parent_id: item.parent_id,
+                        modified_at: item.modified_at,
+                        size: item.size,
+                    })
+                } else {
+                    Err("Permission denied to access this item's metadata.".to_string())
+                }
+            }
+            None => Err("Item not found.".to_string()),
+        }
+    })
+}
+
 // --- VetKD ---
 // #[update]
 // async fn vetkd_encrypted_key(

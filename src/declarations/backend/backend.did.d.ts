@@ -155,14 +155,19 @@ export interface _SERVICE {
     { 'Ok' : group_info_response } |
       { 'Err' : get_alias_info_error }
   >,
+  'get_item_metadata_by_id' : ActorMethod<
+    [item_id],
+    { 'Ok' : public_item_metadata } |
+      { 'Err' : string }
+  >,
   'get_item_sharers' : ActorMethod<
     [item_id],
     { 'Ok' : Array<user> } |
       { 'Err' : string }
   >,
   'get_items_shared_with_me' : ActorMethod<[], Array<public_item_metadata>>,
+  'get_my_pending_requests' : ActorMethod<[], Array<public_item_metadata>>,
   'get_request_groups' : ActorMethod<[], Array<public_request_group>>,
-  'get_requests' : ActorMethod<[], Array<public_item_metadata>>,
   'get_template' : ActorMethod<[string], template_response>,
   'get_template_names' : ActorMethod<[], Array<string>>,
   'get_user_canisters' : ActorMethod<[], GetUserCanistersResponse>,

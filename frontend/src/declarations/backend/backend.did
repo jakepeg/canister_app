@@ -261,6 +261,9 @@ service docutrack : {
   get_items_shared_with_me : () -> (vec public_item_metadata) query; // Renamed
   get_item_sharers: (item_id: item_id) -> (variant{Ok: vec user; Err: text}) query; // New: list users an item is shared with
 
+  // --- Metadata ---
+  get_item_metadata_by_id: (item_id) -> (variant { Ok: public_item_metadata; Err: text }) query;
+
   // --- VetKD ---
   vetkd_encrypted_key : (encryption_public_key: blob, item_id: opt item_id) -> (VetkdEncryptedKeyResponse); // item_id instead of file_id
   vetkd_public_key : () -> (VetkdPublicKeyResponse);
@@ -277,7 +280,7 @@ service docutrack : {
 
 
   // --- Legacy/Review Endpoints (These might be redundant or need different return types) ---
-  get_requests : () -> (vec public_item_metadata) query; // What does this list now? Owned items at root? Pending alias items?
+  get_my_pending_requests : () -> (vec public_item_metadata) query; // What does this list now? Owned items at root? Pending alias items?
   // get_file_owner_principal : (item_id : item_id) -> (variant { Ok : principal; Err : text }); // Replaced by owner_principal in PublicItemMetadata or get_item_metadata
 
 

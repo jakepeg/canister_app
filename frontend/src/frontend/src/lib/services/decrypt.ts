@@ -57,64 +57,30 @@ export class DecryptService {
   private async getFileMetadata(
     fileId: item_id,
   ): Promise<public_item_metadata | undefined> {
-    // Option 1: If FileList.svelte or another service keeps a cache of items, use that.
-    // Option 2: Fetch directly if not found (less efficient if called often).
-    // For this example, we'll stick to the provided logic of searching a pre-fetched list,
-    // but acknowledge this is a simplification and might not reflect how a file's metadata
-    // should be obtained in a details view (it should ideally be passed or fetched by ID specifically).
-
-    // The current logic fetches all requests and shared items.
-    // This might not include items the user owns but hasn't explicitly shared or requested.
-    // A better approach for a details page would be to have an endpoint like `get_item_metadata(item_id)`.
-    // Lacking that, this is an approximation.
-    console.warn(
-      "getFileMetadata in DecryptService is using a potentially incomplete list of files (requests & shared). For a robust details view, consider fetching item metadata directly by ID.",
+    if (this.aborted) return undefined;
+    console.log(
+      `DecryptService: Fetching metadata directly for fileId: ${fileId}`,
     );
-
-    // To get ANY item (owned, shared, etc.), we might need a different approach
-    // or assume the FileList has already loaded relevant items into a store.
-    // For now, let's assume the item is either a request or shared with me, or was listed in root.
-    // This part is tricky without knowing how 'maybeFile' is guaranteed to be found.
-    // Let's simulate a more direct fetch or rely on a broader list if available.
-    // The most robust way is to have an endpoint `get_item_metadata(id: item_id) -> (opt public_item_metadata)`.
-    // Since we don't have that, we'll use the existing logic which might fail if the file is just "owned" and in a subfolder.
-
-    // This fetching logic is problematic for general file access.
-    // The fileId comes from the URL, it could be any file the user has access to.
-    // The `list_folder_contents` with the item's parent_id would be more appropriate to get siblings,
-    // and one of those siblings would be the item itself.
-    // Or, `list_folder_contents` could be modified to optionally take an item_id and return just that item's metadata.
-    // For now, the code uses a combined list, which is kept.
-
-    let files: public_item_metadata[] = [];
     try {
-      const requests = await this.auth.actor.get_requests(); // My pending items
-      const sharedItems = await this.auth.actor.get_items_shared_with_me();
-      // To find an owned item, we'd ideally list its parent folder.
-      // This is a simplification:
-      const rootItemsResponse = await this.auth.actor.list_folder_contents([]);
-      let ownedRootItems: public_item_metadata[] = [];
-      if (enumIs(rootItemsResponse, "Ok")) {
-        ownedRootItems = rootItemsResponse.Ok;
+      const result = await this.auth.actor.get_item_metadata_by_id(fileId);
+      if (enumIs(result, "Ok")) {
+        return result.Ok;
+      } else {
+        console.error(
+          `Failed to get metadata for fileId ${fileId}: ${result.Err}`,
+        );
+        // Optionally, throw the error message from result.Err to be displayed to the user
+        throw new Error(`Failed to load file details: ${result.Err}`);
+        // return undefined;
       }
-
-      // This is a very broad way to find an item and might be inefficient or incomplete.
-      const combined = [...requests, ...sharedItems, ...ownedRootItems];
-      const uniqueFiles = new Map<bigint, public_item_metadata>();
-      combined.forEach((f) => {
-        if (!uniqueFiles.has(f.id)) {
-          uniqueFiles.set(f.id, f);
-        }
-      });
-      files = Array.from(uniqueFiles.values());
     } catch (e) {
-      console.error("Failed to fetch file lists for metadata lookup:", e);
-      return undefined;
+      console.error(`Error in getFileMetadata for fileId ${fileId}:`, e);
+      if (e instanceof Error) throw e; // Re-throw if it's already an error
+      throw new Error(
+        `Network or canister error fetching metadata for file ID ${fileId}.`,
+      );
+      // return undefined;
     }
-
-    if (this.aborted) return undefined; // Check for abort
-
-    return files.find((entry) => entry.id === fileId);
   }
 
   async decryptFile({ fileId }: { fileId: item_id }): Promise<

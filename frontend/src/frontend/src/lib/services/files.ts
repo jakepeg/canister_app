@@ -167,7 +167,7 @@ export class FilesService {
     // This old logic combined owned root, shared, and pending.
     // This is not suitable for folder-by-folder navigation.
     const itemsSharedWithMe = await this.actor.get_items_shared_with_me();
-    const pendingRequests = await this.actor.get_requests(); // My pending items
+    const pendingRequests = await this.actor.get_my_pending_requests(); // My pending items
 
     // Get contents of root folder owned by me
     const rootItemsResult = await this.actor.list_folder_contents([]);

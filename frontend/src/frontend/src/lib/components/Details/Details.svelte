@@ -23,6 +23,7 @@
 
   const decryptService: DecryptService = new DecryptService(auth);
   const objectUrls = new ObjectUrlManager();
+  $: canisterId = $page.params.canisterId;
 
   function getFileId() {
     return parseInt($page.url.searchParams.get("fileId") || "");
@@ -136,7 +137,11 @@
 </script>
 
 <section style="padding-bottom:5rem">
-  <a href="/" class="btn btn-ghost text-sm" style="padding-left:0; height:0">
+  <a
+    href="/canister/{canisterId}/files"
+    class="btn btn-ghost text-sm"
+    style="padding-left:0; height:0"
+  >
     <BackIcon /> Back to files
   </a>
 

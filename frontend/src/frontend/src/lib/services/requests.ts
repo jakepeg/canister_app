@@ -99,12 +99,12 @@ export class RequestsService {
   }
 
   private async loadRequests(): Promise<Request[]> {
-    const requests = await this.actor.get_requests();
+    const requests = await this.actor.get_my_pending_requests();
 
     const uploadedFiles: Request[] = [];
 
     for (const file of requests) {
-      if ('File' in file.item_type && file.size == null) {
+      if ("File" in file.item_type && file.size == null) {
         uploadedFiles.push({
           name: file.name,
           group_name: "",
