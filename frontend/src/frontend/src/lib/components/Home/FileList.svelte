@@ -27,6 +27,8 @@
   };
   let { auth }: Props = $props();
 
+  const canisterId = $page.params.canisterId;
+
   // State
   let isOpenRequestModal = $state(false);
   let isOpenShareModal = $state(false);
@@ -93,10 +95,10 @@
     }
   });
 
-  function getCanisterId() {
-    const canisterId = parseInt($page.url.searchParams.get("canisterId") || "");
-    return canisterId.toString();
-  }
+  // function getCanisterId() {
+  //   const canisterId = parseInt($page.url.searchParams.get("canisterId") || "");
+  //   return canisterId.toString();
+  // }
 
   onMount(() => {
     if (auth && auth.filesService) {
@@ -313,7 +315,7 @@
                 onclick={() =>
                   item.isFolder
                     ? enterFolder(item.file_id, item.name)
-                    : goToDetails(getCanisterId(), item.file_id)}
+                    : goToDetails(canisterId, item.file_id)}
               >
                 {#if item.isFolder}
                   <FolderIcon class="w-5 h-5" />
@@ -331,15 +333,14 @@
                 onclick={() =>
                   item.isFolder
                     ? enterFolder(item.file_id, item.name)
-                    : goToDetails(getCanisterId(), item.file_id)}
-                >{item.access}</td
+                    : goToDetails(canisterId, item.file_id)}>{item.access}</td
               >
               <td
                 class="body-1 cursor-pointer"
                 onclick={() =>
                   item.isFolder
                     ? enterFolder(item.file_id, item.name)
-                    : goToDetails(getCanisterId(), item.file_id)}
+                    : goToDetails(canisterId, item.file_id)}
                 >{item.uploadedAtShort}</td
               >
               <td
@@ -435,13 +436,13 @@
             onclick={() =>
               item.isFolder
                 ? enterFolder(item.file_id, item.name)
-                : goToDetails(getCanisterId(), item.file_id)}
+                : goToDetails(canisterId, item.file_id)}
             onkeydown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 item.isFolder
                   ? enterFolder(item.file_id, item.name)
-                  : goToDetails(getCanisterId(), item.file_id);
+                  : goToDetails(canisterId, item.file_id);
               }
             }}
           >

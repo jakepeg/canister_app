@@ -137,40 +137,30 @@ export class DecryptService {
       throw new Error(`Error: File metadata not found for ID ${fileId}.`);
     }
 
-    // Check if it's a file and if it has size (implies it's uploaded)
-    if (!("File" in maybeFile.item_type)) {
+    // Check if it's a file
+    // Assuming item_type is like { File: null } or { Folder: null }
+    if (!maybeFile.item_type || !("File" in maybeFile.item_type)) {
       throw new Error("Error: The specified item is not a file.");
     }
-    if (
-      maybeFile.size === null ||
-      maybeFile.size === undefined ||
-      (Array.isArray(maybeFile.size) && maybeFile.size.length === 0)
-    ) {
-      // size is opt nat64, so it can be [value] or []. In JS, value or null/undefined.
-      // Assuming if size is not a positive number, it's not uploaded.
-      // Note: size: opt nat64 becomes `[] | [bigint]` (empty array or array with one bigint)
-      // So check if `maybeFile.size` is `[]` or if `maybeFile.size[0]` is null/undefined.
-      // For simplicity, let's assume `maybeFile.size` directly from DID becomes `bigint | undefined` in JS.
-      // The backend seems to use `Option<u64>` which becomes `[] | [bigint]`.
-      // `maybeFile.size[0]` is the actual value if present.
-      let hasSize = false;
-      if (
-        Array.isArray(maybeFile.size) &&
-        maybeFile.size.length > 0 &&
-        typeof maybeFile.size[0] === "bigint" &&
-        maybeFile.size[0] > 0n
-      ) {
-        hasSize = true;
-      } else if (typeof maybeFile.size === "bigint" && maybeFile.size > 0n) {
-        // If it's directly a bigint (less likely from Candid opt)
-        hasSize = true;
-      }
 
-      if (!hasSize) {
-        throw new Error(
-          "Error: File not uploaded or has no content (size is missing/zero).",
-        );
+    // Check if it has size (implies it's uploaded)
+    let hasSize = false;
+    const sizeOpt = maybeFile.size; // size is: [] | [bigint]
+
+    if (Array.isArray(sizeOpt) && sizeOpt.length > 0) {
+      // Now we know sizeOpt is [bigint]
+      const actualSize = sizeOpt[0];
+      if (typeof actualSize === "bigint" && actualSize > 0n) {
+        hasSize = true;
       }
+    }
+    // The case `else if (typeof maybeFile.size === "bigint" ...)` is generally not needed
+    // if the types are strictly from Candid `opt nat64`.
+
+    if (!hasSize) {
+      throw new Error(
+        "Error: File not uploaded or has no content (size is missing, zero, or invalid).",
+      );
     }
 
     this.progress.update((v) => ({
@@ -309,6 +299,6 @@ export class DecryptService {
   }
 
   // Expose subscribe and set if needed, though usually progress is just subscribed to.
-  // subscribe = this.progress.subscribe;
-  // set = this.progress.set;
+  subscribe = this.progress.subscribe;
+  set = this.progress.set;
 }
