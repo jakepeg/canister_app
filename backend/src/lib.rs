@@ -421,6 +421,11 @@ pub struct State {
 
 impl State {
     pub(crate) fn generate_item_id(&mut self) -> ItemId {
+        // If the counter is currently 0 (initial state for a new canister or after a wipe),
+        // set it to 1 before assigning the first ID. This ensures the first ID is 1.
+        if self.item_id_counter == 0 {
+            self.item_id_counter = 1;
+        }
         let item_id = self.item_id_counter;
         self.item_id_counter += 1;
         item_id
