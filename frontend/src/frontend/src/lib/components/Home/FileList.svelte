@@ -38,7 +38,7 @@
   let shareFileData: public_item_metadata | undefined = $state(undefined);
   let currentFolderId: item_id | undefined = $state(undefined);
   let folderPath = $state<{ id: item_id | undefined; name: string }[]>([
-    { id: undefined, name: "Root" },
+    { id: undefined, name: "My Files" },
   ]);
   let sortField = $state<"name" | "uploadedAt">("uploadedAt");
   let sortDirection = $state<"asc" | "desc">("desc");
@@ -56,6 +56,10 @@
 
   // Delete state (can be simpler if just using window.confirm)
   let deleteError = $state<string | null>(null);
+
+  // Drag and drop state
+  let draggedItem: UploadedFile | null = $state(null);
+  let dropTargetFolderId: item_id | null = $state(null);
 
   $effect(() => {
     if ($filesStore.state !== "loaded") {
@@ -261,32 +265,109 @@
       },
     };
   }
+
+  // Drag and drop functions
+  function handleDragStart(e: DragEvent, item: UploadedFile) {
+    if (!e.dataTransfer) return;
+    draggedItem = item;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", item.file_id.toString());
+
+    // Add visual feedback
+    if (e.target instanceof HTMLElement) {
+      e.target.style.opacity = "0.5";
+    }
+  }
+
+  function handleDragEnd(e: DragEvent) {
+    draggedItem = null;
+    dropTargetFolderId = null;
+
+    // Reset visual feedback
+    if (e.target instanceof HTMLElement) {
+      e.target.style.opacity = "1";
+    }
+  }
+
+  function handleDragOver(e: DragEvent, targetFolder: UploadedFile) {
+    if (
+      !draggedItem ||
+      !targetFolder.isFolder ||
+      draggedItem.file_id === targetFolder.file_id
+    ) {
+      return;
+    }
+
+    e.preventDefault();
+    e.dataTransfer!.dropEffect = "move";
+    dropTargetFolderId = targetFolder.file_id;
+  }
+
+  function handleDragLeave(e: DragEvent, targetFolder: UploadedFile) {
+    // Only clear if we're actually leaving the folder element
+    if (e.currentTarget === e.target) {
+      dropTargetFolderId = null;
+    }
+  }
+
+  async function handleDrop(e: DragEvent, targetFolder: UploadedFile) {
+    e.preventDefault();
+    dropTargetFolderId = null;
+
+    if (
+      !draggedItem ||
+      !targetFolder.isFolder ||
+      draggedItem.file_id === targetFolder.file_id
+    ) {
+      return;
+    }
+
+    try {
+      const result = await auth.actor.move_item(draggedItem.metadata.id, [
+        targetFolder.file_id,
+      ]);
+      if ("Err" in result) {
+        alert(`Error moving item: ${result.Err}`);
+      } else {
+        // Reload the current folder to reflect changes
+        if (auth && auth.filesService) {
+          auth.filesService.loadFolderContents(currentFolderId);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to move item:", error);
+      alert(`Failed to move item: ${error}`);
+    }
+
+    draggedItem = null;
+  }
 </script>
 
 {#if $filesStore.state === "idle" || $filesStore.state === "loading"}
   <h1 class="title-1">Loading...</h1>
 {:else if $filesStore.state === "error"}
   <div class="">
-    <h1 class="title-1">My Files</h1>
+    <!-- <h1 class="title-1">My Files</h1> -->
     <p>Error loading files: {$filesStore.error}</p>
   </div>
 {:else if $filesStore.state === "loaded"}
-  <div class="flex items-center gap-2 mb-4">
-    {#each folderPath as folder, index}
-      <button
-        class="hover:text-blue-400 transition-colors"
-        onclick={() => navigateToFolder(index)}
-      >
-        {folder.name}
-      </button>
-      {#if index < folderPath.length - 1}
-        <ChevronRightIcon class="w-4 h-4" />
-      {/if}
-    {/each}
-  </div>
-
   <div class="flex justify-between items-center mb-6">
-    <h1 class="title-1">My Files</h1>
+    <!-- <h1 class="title-1">My Files</h1> -->
+
+    <div class="flex items-center gap-2 mb-4">
+      {#each folderPath as folder, index}
+        <button
+          class="hover:text-blue-400 transition-colors"
+          onclick={() => navigateToFolder(index)}
+        >
+          {folder.name}
+        </button>
+        {#if index < folderPath.length - 1}
+          <ChevronRightIcon class="w-4 h-4" />
+        {/if}
+      {/each}
+    </div>
+
     <div class="flex gap-2">
       <Button onclick={() => (isCreateFolderModalOpen = true)}
         >New Folder</Button
@@ -326,11 +407,20 @@
                 : sortedItems.length - index}"
             >
               <td
-                class="pl-4 rounded-tl-xl rounded-bl-xl body-1 flex items-center gap-2 cursor-pointer"
+                class="pl-4 rounded-tl-xl rounded-bl-xl body-1 flex items-center gap-2 cursor-pointer {item.isFolder &&
+                dropTargetFolderId === item.file_id
+                  ? 'bg-blue-100 border-2 border-blue-300 border-dashed'
+                  : ''}"
                 onclick={() =>
                   item.isFolder
                     ? enterFolder(item.file_id, item.name)
                     : goToDetails(canisterId, item.file_id)}
+                draggable={!item.isFolder}
+                ondragstart={(e) => !item.isFolder && handleDragStart(e, item)}
+                ondragend={handleDragEnd}
+                ondragover={(e) => item.isFolder && handleDragOver(e, item)}
+                ondragleave={(e) => item.isFolder && handleDragLeave(e, item)}
+                ondrop={(e) => item.isFolder && handleDrop(e, item)}
               >
                 {#if item.isFolder}
                   <FolderIcon class="w-5 h-5" />
@@ -348,7 +438,11 @@
                 onclick={() =>
                   item.isFolder
                     ? enterFolder(item.file_id, item.name)
-                    : goToDetails(canisterId, item.file_id)}>{item.access}</td
+                    : goToDetails(canisterId, item.file_id)}
+                ondragover={(e) => item.isFolder && handleDragOver(e, item)}
+                ondragleave={(e) => item.isFolder && handleDragLeave(e, item)}
+                ondrop={(e) => item.isFolder && handleDrop(e, item)}
+                >{item.access}</td
               >
               <td
                 class="body-1 cursor-pointer"
@@ -356,6 +450,9 @@
                   item.isFolder
                     ? enterFolder(item.file_id, item.name)
                     : goToDetails(canisterId, item.file_id)}
+                ondragover={(e) => item.isFolder && handleDragOver(e, item)}
+                ondragleave={(e) => item.isFolder && handleDragLeave(e, item)}
+                ondrop={(e) => item.isFolder && handleDrop(e, item)}
                 >{item.uploadedAtShort}</td
               >
               <td
@@ -449,7 +546,10 @@
 
       {#each sortedItems as item, index}
         <div
-          class="bg-background rounded-xl py-3 px-4 flex flex-col relative"
+          class="bg-background rounded-xl py-3 px-4 flex flex-col relative {item.isFolder &&
+          dropTargetFolderId === item.file_id
+            ? 'bg-blue-50 border-2 border-blue-300 border-dashed'
+            : ''}"
           style="z-index: {activeDropdownItemId === item.file_id
             ? 1000
             : sortedItems.length - index}"
@@ -458,6 +558,12 @@
             role="button"
             tabindex="0"
             class="flex-grow"
+            draggable={!item.isFolder}
+            ondragstart={(e) => !item.isFolder && handleDragStart(e, item)}
+            ondragend={handleDragEnd}
+            ondragover={(e) => item.isFolder && handleDragOver(e, item)}
+            ondragleave={(e) => item.isFolder && handleDragLeave(e, item)}
+            ondrop={(e) => item.isFolder && handleDrop(e, item)}
             onclick={() =>
               item.isFolder
                 ? enterFolder(item.file_id, item.name)
@@ -659,5 +765,20 @@
 
   .md\:hidden > div.bg-background {
     transition: transform 0.2s ease-in-out;
+  }
+
+  /* Drag and drop styles */
+  [draggable="true"] {
+    cursor: grab;
+  }
+
+  [draggable="true"]:active {
+    cursor: grabbing;
+  }
+
+  /* Visual feedback for drag operations */
+  .drag-over {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 2px dashed #3b82f6;
   }
 </style>
