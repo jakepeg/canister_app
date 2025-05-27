@@ -95,11 +95,6 @@
     }
   });
 
-  // function getCanisterId() {
-  //   const canisterId = parseInt($page.url.searchParams.get("canisterId") || "");
-  //   return canisterId.toString();
-  // }
-
   onMount(() => {
     if (auth && auth.filesService) {
       if ($filesStore.state === "idle") {
@@ -148,7 +143,6 @@
   async function handleCreateFolder() {
     if (!newFolderName.trim()) {
       console.warn("Folder name cannot be empty.");
-      // TODO: Show user feedback
       return;
     }
     try {
@@ -206,7 +200,6 @@
       );
       if ("Err" in result) {
         renameError = result.Err;
-        // alert(`Error renaming item: ${result.Err}`); // Or use renameError in modal
       } else {
         isRenameModalOpen = false;
         itemToRename = undefined;
@@ -218,7 +211,6 @@
     } catch (error) {
       console.error("Failed to rename item:", error);
       renameError = `Failed to rename item: ${error}`;
-      // alert(`Failed to rename item: ${error}`);
     }
   }
 
@@ -237,7 +229,7 @@
       const result = await auth.actor.delete_item(itemMeta.id);
       if ("Err" in result) {
         deleteError = result.Err;
-        alert(`Error deleting item: ${result.Err}`); // Show error to user
+        alert(`Error deleting item: ${result.Err}`);
       } else {
         if (auth && auth.filesService) {
           auth.filesService.loadFolderContents(currentFolderId);
@@ -248,6 +240,26 @@
       deleteError = `Failed to delete item: ${error}`;
       alert(`Failed to delete item: ${error}`);
     }
+  }
+
+  // Handle clicks outside dropdown
+  function handleClickOutside(node: HTMLElement, callback: () => void) {
+    function handleClick(event: MouseEvent) {
+      if (!node.contains(event.target as Node)) {
+        callback();
+      }
+    }
+
+    // Small delay to prevent immediate closure when opening dropdown
+    setTimeout(() => {
+      document.addEventListener("click", handleClick, true);
+    }, 0);
+
+    return {
+      destroy() {
+        document.removeEventListener("click", handleClick, true);
+      },
+    };
   }
 </script>
 
@@ -303,13 +315,16 @@
               Modified {getSortIndicator("uploadedAt")}
             </th>
             <th class="w-12"></th>
-            <!-- Column for ... button -->
           </tr>
         </thead>
         <tbody>
-          {#each sortedItems as item (item.file_id)}
-            <tr class="hover:drop-shadow-xl relative">
-              <!-- Added relative for dropdown positioning -->
+          {#each sortedItems as item, index (item.file_id)}
+            <tr
+              class="hover:drop-shadow-xl relative"
+              style="z-index: {activeDropdownItemId === item.file_id
+                ? 1000
+                : sortedItems.length - index}"
+            >
               <td
                 class="pl-4 rounded-tl-xl rounded-bl-xl body-1 flex items-center gap-2 cursor-pointer"
                 onclick={() =>
@@ -344,13 +359,14 @@
                 >{item.uploadedAtShort}</td
               >
               <td
-                class="pr-4 rounded-tr-xl rounded-br-xl body-1 text-right h-[52px]"
+                class="pr-4 rounded-tr-xl rounded-br-xl body-1 text-right h-[52px] relative"
               >
                 <button
-                  class="p-2 hover:bg-gray-200 rounded-full"
+                  class="p-2 hover:bg-gray-200 rounded-full relative z-10"
                   aria-label="More options for {item.name}"
                   onclick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     toggleItemDropdown(item.file_id);
                   }}
                 >
@@ -358,16 +374,18 @@
                 </button>
                 {#if activeDropdownItemId === item.file_id}
                   <div
-                    use:clickOutside={closeAllDropdowns}
-                    class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-10"
+                    use:handleClickOutside={closeAllDropdowns}
+                    class="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg"
+                    style="z-index: 1001;"
                   >
-                    <ul>
+                    <ul class="py-1">
                       {#if !item.isFolder}
                         <li>
                           <button
-                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                             onclick={(e) => {
                               e.stopPropagation();
+                              e.preventDefault();
                               openShareModalForItem(item.metadata);
                             }}
                           >
@@ -377,9 +395,10 @@
                       {/if}
                       <li>
                         <button
-                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                           onclick={(e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             openRenameModalForItem(item.metadata);
                           }}
                         >
@@ -388,9 +407,10 @@
                       </li>
                       <li>
                         <button
-                          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                           onclick={(e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             handleDeleteItem(item.metadata);
                           }}
                         >
@@ -427,8 +447,13 @@
         </div>
       </div>
 
-      {#each sortedItems as item}
-        <div class="bg-background rounded-xl py-3 px-4 flex flex-col relative">
+      {#each sortedItems as item, index}
+        <div
+          class="bg-background rounded-xl py-3 px-4 flex flex-col relative"
+          style="z-index: {activeDropdownItemId === item.file_id
+            ? 1000
+            : sortedItems.length - index}"
+        >
           <div
             role="button"
             tabindex="0"
@@ -459,12 +484,12 @@
                   <span class="opacity-50">Unnamed</span>
                 {/if}
               </span>
-              <!-- Mobile More Options Button -->
               <button
-                class="p-1 -mr-1 hover:bg-gray-200 rounded-full z-20"
+                class="p-1 -mr-1 hover:bg-gray-200 rounded-full relative z-10"
                 aria-label="More options for {item.name}"
                 onclick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   toggleItemDropdown(item.file_id);
                 }}
               >
@@ -482,19 +507,20 @@
               </div>
             </div>
           </div>
-          <!-- Mobile Dropdown -->
           {#if activeDropdownItemId === item.file_id}
             <div
-              use:clickOutside={closeAllDropdowns}
-              class="absolute right-4 top-12 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-30"
+              use:handleClickOutside={closeAllDropdowns}
+              class="absolute right-4 top-12 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg"
+              style="z-index: 1001;"
             >
-              <ul>
+              <ul class="py-1">
                 {#if !item.isFolder}
                   <li>
                     <button
-                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                       onclick={(e) => {
                         e.stopPropagation();
+                        e.preventDefault();
                         openShareModalForItem(item.metadata);
                       }}
                     >
@@ -504,9 +530,10 @@
                 {/if}
                 <li>
                   <button
-                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     onclick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault();
                       openRenameModalForItem(item.metadata);
                     }}
                   >
@@ -515,9 +542,10 @@
                 </li>
                 <li>
                   <button
-                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     onclick={(e) => {
                       e.stopPropagation();
+                      e.preventDefault();
                       handleDeleteItem(item.metadata);
                     }}
                   >
@@ -596,7 +624,6 @@
         <p class="text-red-500 text-sm mb-3">{renameError}</p>
       {:else}
         <div class="mb-4"></div>
-        <!-- Spacer to keep layout consistent -->
       {/if}
       <div class="flex justify-end gap-2">
         <Button
@@ -629,15 +656,8 @@
   tbody tr {
     transition: transform 0.2s ease-in-out;
   }
-  /*tbody tr:hover {
-    transform: translate(10px, 0);
-  } Keep this commented if dropdowns are used */
 
   .md\:hidden > div.bg-background {
-    /* Target the card specifically */
     transition: transform 0.2s ease-in-out;
   }
-  /* .md\:hidden > div.bg-background:hover {
-    transform: translate(10px, 0);
-  } Keep this commented if dropdowns are used */
 </style>
