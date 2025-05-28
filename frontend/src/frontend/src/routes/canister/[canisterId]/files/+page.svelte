@@ -24,9 +24,7 @@
       <h1 class="text-xl text-white">Loading...</h1>
     </div>
   {:else if $authStore.state === "authenticated"}
-    <!-- Display the FileList for the specific canister -->
-    <!-- Add a title or breadcrumb indicating the current canister -->
-    <h1 class="text-lg mb-4 px-4 pt-4">Files in Canister: {canisterId}</h1>
+    <!-- <h1 class="text-lg mb-4 px-4 pt-4">Files in Canister: {canisterId}</h1> -->
     <FileList auth={$authStore} />
   {:else}
     <NotAuthenticated />
