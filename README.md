@@ -1,6 +1,6 @@
 # Canister Cloud
 
-Canister Cloud is a secure, scalable, and fully on-chain document storage and management dApp. Built on the **Internet Computer (ICP)** by **Dfinity**, it leverages blockchain technology to provide a decentralized, tamper-proof solution for document management. 
+Canister Cloud is a secure, scalable, and fully on-chain document storage and management dApp. Built on the **Internet Computer (ICP)** by **Dfinity**, it leverages blockchain technology to provide a decentralized, tamper-proof solution for document management.
 
 ## Features
 
@@ -12,6 +12,7 @@ Canister Cloud is a secure, scalable, and fully on-chain document storage and ma
 ## Technology Stack
 
 Canister Cloud is developed using:
+
 - **Rust**
 - **Svelte**
 - **TailwindCSS**
@@ -25,6 +26,7 @@ To run the dApp locally, start the Internet Computer backend:
 ```sh
 # Start the local DFX environment
 dfx start --clean
+dfx nns install
 ```
 
 In another terminal, install dependencies and deploy the canisters:
